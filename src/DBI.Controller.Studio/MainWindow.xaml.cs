@@ -29,4 +29,21 @@ public partial class MainWindow : Window
     {
         ViewModel.ToggleOnline();
     }
+
+    private void BtnToggleTheme_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ToggleTheme();
+
+        // Update AvalonEdit Colors based on Theme
+        if (ViewModel.IsDarkMode)
+        {
+            CodeEditor.Background = System.Windows.Media.Brushes.Transparent;
+            CodeEditor.Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#F1F1F1")!;
+        }
+        else
+        {
+            CodeEditor.Background = System.Windows.Media.Brushes.Transparent;
+            CodeEditor.Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#1A1A1A")!;
+        }
+    }
 }

@@ -11,6 +11,7 @@ public class DeviceItem
     public string Type { get; set; } = string.Empty;
     public string ConnectionInfo { get; set; } = string.Empty;
     public string Status { get; set; } = "Connected";
+    public string StatusColor => Status == "Connected" ? "#107C41" : "#D13438";
 }
 
 public class TagMappingItem
@@ -19,12 +20,14 @@ public class TagMappingItem
     public string DeviceName { get; set; } = string.Empty;
     public string CSharpProperty { get; set; } = string.Empty;
     public string CurrentValue { get; set; } = "FALSE";
+    public bool IsTrue => CurrentValue == "TRUE";
+    public string ValueBadgeColor => IsTrue ? "#107C41" : "#A80000";
 }
 
 public class MainViewModel : INotifyPropertyChanged
 {
-    private string _activeTab = "Editor";
     private bool _isOnline;
+    private bool _isDarkMode = true;
     private string _cSharpCode = @"using DBI.Controller.SDK;
 using DBI.Controller.SDK.Primitives;
 
@@ -50,16 +53,18 @@ public class ConveyorLogic : ControllerProgram
             IO.ConveyorRun = false;
     }
 }";
-    private string _compilerOutput = "Ready to Compile & Deploy.";
+    private string _compilerOutput = "Status: Engine Ready. Roslyn C# Compiler loaded.";
     private double _scanTimeMs = 1.2;
     private double _maxScanTimeMs = 2.4;
     private double _jitterMs = 0.1;
 
     public ObservableCollection<DeviceItem> Devices { get; } = new()
     {
-        new DeviceItem { Name = "PLC_Siemens_S7", Type = "Siemens S7-1200", ConnectionInfo = "192.168.1.10", Status = "Connected" },
-        new DeviceItem { Name = "Modbus_IO_Module", Type = "Modbus TCP", ConnectionInfo = "192.168.1.20:502", Status = "Connected" },
-        new DeviceItem { Name = "FactoryIO_3D", Type = "Factory I/O", ConnectionInfo = "127.0.0.1:502", Status = "Connected" }
+        new DeviceItem { Name = "PLC_Siemens_S7", Type = "Siemens S7-1200 (DBI.Drivers)", ConnectionInfo = "192.168.1.10", Status = "Connected" },
+        new DeviceItem { Name = "Modbus_IO_Module", Type = "Modbus TCP (DBI.Drivers.Modbus)", ConnectionInfo = "192.168.1.20:502", Status = "Connected" },
+        new DeviceItem { Name = "Delta_DVP_PLC", Type = "Delta PLC (DBI.Drivers.Delta.PLC)", ConnectionInfo = "192.168.1.5:502", Status = "Connected" },
+        new DeviceItem { Name = "Omron_FINS_PLC", Type = "Omron FINS (DBI.Drivers.Omron)", ConnectionInfo = "192.168.1.15:9600", Status = "Connected" },
+        new DeviceItem { Name = "FactoryIO_3D", Type = "Factory I/O 3D Simulator", ConnectionInfo = "127.0.0.1:502", Status = "Connected" }
     };
 
     public ObservableCollection<TagMappingItem> TagMappings { get; } = new()
@@ -81,6 +86,33 @@ public class ConveyorLogic : ControllerProgram
         get => _compilerOutput;
         set { _compilerOutput = value; OnPropertyChanged(); }
     }
+
+    public bool IsDarkMode
+    {
+        get => _isDarkMode;
+        set 
+        { 
+            _isDarkMode = value; 
+            OnPropertyChanged(); 
+            OnPropertyChanged(nameof(ThemeToggleText));
+            OnPropertyChanged(nameof(WindowBg));
+            OnPropertyChanged(nameof(CardBg));
+            OnPropertyChanged(nameof(TextPrimary));
+            OnPropertyChanged(nameof(TextSecondary));
+            OnPropertyChanged(nameof(BorderColor));
+            OnPropertyChanged(nameof(HeaderBg));
+        }
+    }
+
+    public string ThemeToggleText => IsDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode";
+
+    // Theme Color Tokens
+    public string WindowBg => IsDarkMode ? "#1E1E1E" : "#F3F3F3";
+    public string CardBg => IsDarkMode ? "#252526" : "#FFFFFF";
+    public string HeaderBg => IsDarkMode ? "#2D2D30" : "#E1E1E1";
+    public string TextPrimary => IsDarkMode ? "#F1F1F1" : "#1A1A1A";
+    public string TextSecondary => IsDarkMode ? "#999999" : "#666666";
+    public string BorderColor => IsDarkMode ? "#3F3F46" : "#CCCCCC";
 
     public bool IsOnline
     {
@@ -111,14 +143,19 @@ public class ConveyorLogic : ControllerProgram
     public RoslynCompilerService CompilerService { get; } = new();
     public LiveMonitoringService MonitoringService { get; } = new();
 
+    public void ToggleTheme()
+    {
+        IsDarkMode = !IsDarkMode;
+    }
+
     public void CompileAndDeploy()
     {
-        CompilerOutput = "⏳ Compiling C# source code via Roslyn...";
+        CompilerOutput = "⏳ Compiling C# source code via Roslyn Compiler API...";
         var result = CompilerService.CompileSource(CSharpCode);
 
         if (result.Success)
         {
-            CompilerOutput = $"✅ COMPILATION SUCCEEDED!\n[+] Built Assembly size: {result.AssemblyBytes?.Length} bytes.\n[+] Hot Reload deployed to DBI SoftPLC Runtime.";
+            CompilerOutput = $"✅ COMPILATION SUCCEEDED!\n[+] Built Dynamic Assembly ({result.AssemblyBytes?.Length} bytes).\n[+] Hot Reload deployed seamlessly to DBI SoftPLC Runtime Engine.";
         }
         else
         {

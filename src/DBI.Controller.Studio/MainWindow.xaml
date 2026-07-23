@@ -2,109 +2,147 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
-        Title="DBI Studio - Industrial Soft PLC Control Center" Height="800" Width="1200"
-        Background="#1E1E1E" Foreground="#CCCCCC" WindowStartupLocation="CenterScreen">
+        Title="DBI Studio - Industrial Soft PLC Control Center" Height="850" Width="1280"
+        Background="{Binding WindowBg}" Foreground="{Binding TextPrimary}" WindowStartupLocation="CenterScreen">
     
     <Window.Resources>
+        <!-- Modern Rounded Button Style -->
         <Style TargetType="Button">
-            <Setter Property="Background" Value="#2D2D30"/>
+            <Setter Property="Background" Value="#0078D4"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
-            <Setter Property="BorderBrush" Value="#3F3F46"/>
-            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="14,8"/>
             <Setter Property="Margin" Value="4"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
-            <!-- Top Toolbar -->
+            <!-- Top App Bar -->
             <RowDefinition Height="Auto"/>
-            <!-- Main Content Area -->
+            <!-- Main Content Tabs -->
             <RowDefinition Height="*"/>
             <!-- Bottom Status Bar -->
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Top Header & Toolbar -->
-        <Border Grid.Row="0" Background="#2D2D30" BorderBrush="#3F3F46" BorderThickness="0,0,0,1" Padding="12,8">
+        <!-- Top App Bar / Header Navigation -->
+        <Border Grid.Row="0" Background="{Binding HeaderBg}" BorderBrush="{Binding BorderColor}" BorderThickness="0,0,0,1" Padding="16,10">
             <DockPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                    <TextBlock Text="⚡ DBI STUDIO" FontSize="18" FontWeight="Bold" Foreground="#007ACC" VerticalAlignment="Center" Margin="0,0,20,0"/>
-                    <Button Content="🚀 1-Click Save &amp; Deploy" Click="BtnDeploy_Click" Background="#0E639C"/>
-                    <Button Content="{Binding OnlineStatusText}" Click="BtnToggleOnline_Click" Background="#27272D"/>
+                    <!-- Brand Logo -->
+                    <Border Background="#0078D4" CornerRadius="6" Padding="8,4" Margin="0,0,12,0">
+                        <TextBlock Text="⚡ DBI STUDIO" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
+                    </Border>
+
+                    <!-- Primary Actions -->
+                    <Button Content="🚀 1-Click Save &amp; Deploy" Click="BtnDeploy_Click" Background="#107C41" Margin="0,0,8,0"/>
+                    <Button Content="{Binding OnlineStatusText}" Click="BtnToggleOnline_Click" Background="#2B2B2B"/>
+                    <Button Content="{Binding ThemeToggleText}" Click="BtnToggleTheme_Click" Background="#5C2D91" Margin="8,0,0,0"/>
                 </StackPanel>
 
+                <!-- Metrics Dashboard Badges (Right Aligned) -->
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
-                    <TextBlock Text="Scan Time: " VerticalAlignment="Center" Foreground="#AAAAAA"/>
-                    <TextBlock Text="{Binding ScanTimeMs, StringFormat={}{0:F1}ms}" VerticalAlignment="Center" FontWeight="Bold" Foreground="#4EC9B0" Margin="0,0,15,0"/>
+                    <Border Background="{Binding CardBg}" BorderBrush="{Binding BorderColor}" BorderThickness="1" CornerRadius="6" Padding="10,4" Margin="4,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Scan Time: " Foreground="{Binding TextSecondary}"/>
+                            <TextBlock Text="{Binding ScanTimeMs, StringFormat={}{0:F1}ms}" FontWeight="Bold" Foreground="#0078D4"/>
+                        </StackPanel>
+                    </Border>
 
-                    <TextBlock Text="Max Scan: " VerticalAlignment="Center" Foreground="#AAAAAA"/>
-                    <TextBlock Text="{Binding MaxScanTimeMs, StringFormat={}{0:F1}ms}" VerticalAlignment="Center" FontWeight="Bold" Foreground="#DCDCAA" Margin="0,0,15,0"/>
+                    <Border Background="{Binding CardBg}" BorderBrush="{Binding BorderColor}" BorderThickness="1" CornerRadius="6" Padding="10,4" Margin="4,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Max Scan: " Foreground="{Binding TextSecondary}"/>
+                            <TextBlock Text="{Binding MaxScanTimeMs, StringFormat={}{0:F1}ms}" FontWeight="Bold" Foreground="#D13438"/>
+                        </StackPanel>
+                    </Border>
 
-                    <TextBlock Text="Jitter: " VerticalAlignment="Center" Foreground="#AAAAAA"/>
-                    <TextBlock Text="{Binding JitterMs, StringFormat={}{0:F1}ms}" VerticalAlignment="Center" FontWeight="Bold" Foreground="#CE9178"/>
+                    <Border Background="{Binding CardBg}" BorderBrush="{Binding BorderColor}" BorderThickness="1" CornerRadius="6" Padding="10,4" Margin="4,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Jitter: " Foreground="{Binding TextSecondary}"/>
+                            <TextBlock Text="{Binding JitterMs, StringFormat={}{0:F1}ms}" FontWeight="Bold" Foreground="#B4009E"/>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </DockPanel>
         </Border>
 
-        <!-- Main Workspace Tabs -->
-        <TabControl Grid.Row="1" Background="#1E1E1E" BorderBrush="#3F3F46" Foreground="#FFFFFF">
+        <!-- Main Workspace Area -->
+        <TabControl Grid.Row="1" Background="{Binding WindowBg}" BorderBrush="{Binding BorderColor}" Foreground="{Binding TextPrimary}" Margin="8">
             
             <!-- TAB 1: C# CODE EDITOR & TIA PORTAL LIVE DEBUGGER -->
             <TabItem Header="💻 C# Code Editor &amp; Live Debugger">
-                <Grid Margin="10">
+                <Grid Margin="12">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
-                        <RowDefinition Height="150"/>
+                        <RowDefinition Height="160"/>
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="300"/>
+                            <ColumnDefinition Width="320"/>
                         </Grid.ColumnDefinitions>
 
                         <!-- AvalonEdit Code Editor -->
-                        <Border Grid.Column="0" BorderBrush="#3F3F46" BorderThickness="1" Margin="0,0,10,0">
+                        <Border Grid.Column="0" BorderBrush="{Binding BorderColor}" BorderThickness="1" CornerRadius="8" Margin="0,0,12,0" ClipToBounds="True">
                             <avalonEdit:TextEditor x:Name="CodeEditor" 
                                                    FontFamily="Consolas" 
-                                                   FontSize="14" 
+                                                   FontSize="14.5" 
                                                    ShowLineNumbers="True" 
-                                                   Background="#1E1E1E" 
-                                                   Foreground="#D4D4D4"/>
+                                                   Background="{Binding CardBg}" 
+                                                   Foreground="{Binding TextPrimary}"/>
                         </Border>
 
                         <!-- TIA Portal Live Monitoring Glasses Panel -->
-                        <Border Grid.Column="1" Background="#252526" BorderBrush="#3F3F46" BorderThickness="1" Padding="10">
-                            <StackPanel>
-                                <TextBlock Text="👓 Live Values (Glasses Mode)" FontWeight="Bold" FontSize="14" Foreground="#4EC9B0" Margin="0,0,0,10"/>
-                                <Separator Background="#3F3F46" Margin="0,0,0,10"/>
+                        <Border Grid.Column="1" Background="{Binding CardBg}" BorderBrush="{Binding BorderColor}" BorderThickness="1" CornerRadius="8" Padding="14">
+                            <DockPanel>
+                                <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                                    <TextBlock Text="👓 TIA Portal Live Monitor" FontWeight="Bold" FontSize="15" Foreground="#0078D4"/>
+                                    <TextBlock Text="Inline TRUE/FALSE Value Overlay Stream" FontSize="11" Foreground="{Binding TextSecondary}"/>
+                                    <Separator Background="{Binding BorderColor}" Margin="0,8,0,0"/>
+                                </StackPanel>
 
-                                <ItemsControl ItemsSource="{Binding TagMappings}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="#2D2D30" CornerRadius="4" Padding="8" Margin="0,0,0,6">
-                                                <DockPanel>
-                                                    <StackPanel DockPanel.Dock="Left">
-                                                        <TextBlock Text="{Binding CSharpProperty}" FontWeight="Bold" Foreground="#9CDCFE"/>
-                                                        <TextBlock Text="{Binding HardwareTag}" FontSize="11" Foreground="#808080"/>
-                                                    </StackPanel>
-                                                    <TextBlock Text="{Binding CurrentValue}" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" FontWeight="Bold" Foreground="#4EC9B0" FontSize="13"/>
-                                                </DockPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding TagMappings}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="{Binding DataContext.WindowBg, RelativeSource={RelativeSource AncestorType=Window}}" CornerRadius="6" Padding="10" Margin="0,0,0,8" BorderBrush="{Binding DataContext.BorderColor, RelativeSource={RelativeSource AncestorType=Window}}" BorderThickness="1">
+                                                    <DockPanel>
+                                                        <StackPanel DockPanel.Dock="Left">
+                                                            <TextBlock Text="{Binding CSharpProperty}" FontWeight="Bold" Foreground="#0078D4" FontSize="13"/>
+                                                            <TextBlock Text="{Binding HardwareTag}" FontSize="11" Foreground="{Binding DataContext.TextSecondary, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                        </StackPanel>
+                                                        
+                                                        <Border DockPanel.Dock="Right" Background="{Binding ValueBadgeColor}" CornerRadius="4" Padding="8,3" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding CurrentValue}" FontWeight="Bold" Foreground="#FFFFFF" FontSize="12"/>
+                                                        </Border>
+                                                    </DockPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </DockPanel>
                         </Border>
                     </Grid>
 
-                    <!-- Compiler Output Window -->
-                    <Border Grid.Row="1" Background="#181818" BorderBrush="#3F3F46" BorderThickness="1" Margin="0,10,0,0" Padding="8">
+                    <!-- Compiler Output & Console Log Window -->
+                    <Border Grid.Row="1" Background="{Binding CardBg}" BorderBrush="{Binding BorderColor}" BorderThickness="1" CornerRadius="8" Margin="0,12,0,0" Padding="12">
                         <DockPanel>
-                            <TextBlock Text="📋 Output &amp; Diagnostics Log" DockPanel.Dock="Top" FontWeight="Bold" Foreground="#569CD6" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding CompilerOutput}" Background="Transparent" Foreground="#DCDCAA" BorderThickness="0" IsReadOnly="True" VerticalScrollBarVisibility="Auto" FontFamily="Consolas"/>
+                            <TextBlock Text="📋 Output &amp; Diagnostics Console Log" DockPanel.Dock="Top" FontWeight="Bold" Foreground="#0078D4" Margin="0,0,0,6"/>
+                            <TextBox Text="{Binding CompilerOutput}" Background="Transparent" Foreground="{Binding TextPrimary}" BorderThickness="0" IsReadOnly="True" VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="13"/>
                         </DockPanel>
                     </Border>
                 </Grid>
@@ -112,15 +150,19 @@
 
             <!-- TAB 2: DRAG & DROP TAG MAPPER -->
             <TabItem Header="🔀 Tag Mapper">
-                <Grid Margin="10">
+                <Grid Margin="12">
                     <DockPanel>
-                        <TextBlock Text="🔀 Drag-and-Drop Hardware Tag to C# IO Mapping" DockPanel.Dock="Top" FontSize="16" FontWeight="Bold" Foreground="#569CD6" Margin="0,0,0,10"/>
-                        <DataGrid ItemsSource="{Binding TagMappings}" AutoGenerateColumns="False" Background="#252526" Foreground="#FFFFFF" RowBackground="#1E1E1E" AlternatingRowBackground="#252526" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#3F3F46">
+                        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                            <TextBlock Text="🔀 Drag-and-Drop Hardware Tag to C# IO Mapping" FontSize="18" FontWeight="Bold" Foreground="#0078D4"/>
+                            <TextBlock Text="Map physical PLC/Protocol registers directly to C# ControllerProgram IO Properties." Foreground="{Binding TextSecondary}" FontSize="12"/>
+                        </StackPanel>
+
+                        <DataGrid ItemsSource="{Binding TagMappings}" AutoGenerateColumns="False" Background="{Binding CardBg}" Foreground="{Binding TextPrimary}" RowBackground="{Binding WindowBg}" AlternatingRowBackground="{Binding CardBg}" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{Binding BorderColor}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="C# IO Property" Binding="{Binding CSharpProperty}" Width="*"/>
                                 <DataGridTextColumn Header="Connected Device" Binding="{Binding DeviceName}" Width="*"/>
                                 <DataGridTextColumn Header="Hardware Tag Address" Binding="{Binding HardwareTag}" Width="*"/>
-                                <DataGridTextColumn Header="Live Value" Binding="{Binding CurrentValue}" Width="120"/>
+                                <DataGridTextColumn Header="Live State" Binding="{Binding CurrentValue}" Width="140"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>
@@ -129,19 +171,19 @@
 
             <!-- TAB 3: DEVICE MANAGER -->
             <TabItem Header="🔌 Device Manager">
-                <Grid Margin="10">
+                <Grid Margin="12">
                     <DockPanel>
-                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock Text="🔌 Industrial Device &amp; Driver Connections" FontSize="16" FontWeight="Bold" Foreground="#569CD6" VerticalAlignment="Center" Margin="0,0,20,0"/>
-                            <Button Content="+ Add New Device"/>
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,12">
+                            <TextBlock Text="🔌 Industrial Device &amp; Driver Connections" FontSize="18" FontWeight="Bold" Foreground="#0078D4" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                            <Button Content="+ Add New Hardware Device" Background="#107C41"/>
                         </StackPanel>
 
-                        <DataGrid ItemsSource="{Binding Devices}" AutoGenerateColumns="False" Background="#252526" Foreground="#FFFFFF" RowBackground="#1E1E1E" AlternatingRowBackground="#252526" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#3F3F46">
+                        <DataGrid ItemsSource="{Binding Devices}" AutoGenerateColumns="False" Background="{Binding CardBg}" Foreground="{Binding TextPrimary}" RowBackground="{Binding WindowBg}" AlternatingRowBackground="{Binding CardBg}" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{Binding BorderColor}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Device Name" Binding="{Binding Name}" Width="*"/>
-                                <DataGridTextColumn Header="Driver Type" Binding="{Binding Type}" Width="*"/>
+                                <DataGridTextColumn Header="Driver Type (DBI.Drivers)" Binding="{Binding Type}" Width="1.5*"/>
                                 <DataGridTextColumn Header="Connection Info" Binding="{Binding ConnectionInfo}" Width="*"/>
-                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="120"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="140"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>
@@ -150,10 +192,10 @@
             
         </TabControl>
 
-        <!-- Bottom Status Bar -->
-        <StatusBar Grid.Row="2" Background="#007ACC" Foreground="#FFFFFF">
+        <!-- Bottom App Status Bar -->
+        <StatusBar Grid.Row="2" Background="#0078D4" Foreground="#FFFFFF" Padding="8,4">
             <StatusBarItem>
-                <TextBlock Text="DBI.Controller Soft PLC Engine: RUNNING | Scan Cycle: 20ms | Status: OK"/>
+                <TextBlock Text="DBI.Controller Soft PLC Engine: RUNNING | Target: 20ms High-Precision Cycle | Safety Catch: ACTIVE | Status: OK" FontWeight="SemiBold"/>
             </StatusBarItem>
         </StatusBar>
     </Grid>
