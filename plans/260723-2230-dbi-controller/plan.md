@@ -22,8 +22,8 @@ DBI.Controller là một **Soft PLC Runtime** viết bằng C#/.NET 8+, đóng v
 | 02 | Core Interfaces & SDK Primitives | ✅ Complete | 100% | `DBI.Controller.Core`, `DBI.Controller.SDK` |
 | 03 | Runtime Scan Engine & Memory Image | ✅ Complete | 100% | `DBI.Controller.Runtime` |
 | 04 | MVP Protocol Drivers Implementation | ✅ Complete | 100% | `Simulation`, `ModbusAdapter`, `DeltaAdapter`, `OmronAdapter`, `FactoryIO` |
-| 05 | Testing Harness & Sample Projects | ⬜ Pending | 0% | `DBI.Controller.Testing`, `Sample.Conveyor` |
-| 06 | Diagnostics & Studio Configuration GUI | ⬜ Pending | 0% | `DBI.Controller.Diagnostics`, `DBI.Controller.Studio` |
+| 05 | Testing Harness & Sample Projects | ✅ Complete | 100% | `DBI.Controller.Testing`, `Sample.Conveyor` |
+| 06 | Diagnostics & Studio Configuration GUI | ✅ Complete | 100% | `DBI.Controller.Diagnostics`, `DBI.Controller.Studio` |
 
 ## Quick Commands
 - Start Phase 1: `/code phase-01`
