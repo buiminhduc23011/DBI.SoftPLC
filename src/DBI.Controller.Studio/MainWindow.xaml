@@ -28,11 +28,26 @@
             </Setter>
         </Style>
 
-        <!-- Flat TabControl Style -->
-        <Style TargetType="TabItem">
-            <Setter Property="Padding" Value="12,6"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
+        <!-- Professional DataGrid Header Style -->
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="{Binding DataContext.HeaderBg, RelativeSource={RelativeSource AncestorType=Window}}"/>
+            <Setter Property="Foreground" Value="{Binding DataContext.TextPrimary, RelativeSource={RelativeSource AncestorType=Window}}"/>
+            <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="BorderBrush" Value="{Binding DataContext.BorderColor, RelativeSource={RelativeSource AncestorType=Window}}"/>
+        </Style>
+
+        <!-- Professional DataGrid Row Style -->
+        <Style TargetType="DataGridRow">
+            <Setter Property="Padding" Value="4,4"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E5F3FF"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
 
@@ -157,7 +172,7 @@
                 </Grid>
             </TabItem>
 
-            <!-- TAB 2: TAG MAPPER -->
+            <!-- TAB 2: TAG MAPPER (STYLED PROFESSIONAL DATAGRID) -->
             <TabItem Header="🔀 Tag Mapper">
                 <Grid Margin="6">
                     <DockPanel>
@@ -166,19 +181,68 @@
                             <TextBlock Text="Map physical PLC registers to C# ControllerProgram IO Properties." Foreground="{Binding TextSecondary}" FontSize="11"/>
                         </StackPanel>
 
-                        <DataGrid ItemsSource="{Binding TagMappings}" AutoGenerateColumns="False" Background="{Binding CardBg}" Foreground="{Binding TextPrimary}" RowBackground="{Binding WindowBg}" AlternatingRowBackground="{Binding CardBg}" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{Binding BorderColor}" BorderBrush="{Binding BorderColor}">
+                        <DataGrid ItemsSource="{Binding TagMappings}" 
+                                  AutoGenerateColumns="False" 
+                                  Background="{Binding CardBg}" 
+                                  Foreground="{Binding TextPrimary}" 
+                                  RowBackground="{Binding CardBg}" 
+                                  AlternatingRowBackground="{Binding WindowBg}" 
+                                  GridLinesVisibility="All" 
+                                  HorizontalGridLinesBrush="{Binding BorderColor}" 
+                                  VerticalGridLinesBrush="{Binding BorderColor}"
+                                  BorderBrush="{Binding BorderColor}" 
+                                  BorderThickness="1"
+                                  CanUserAddRows="False">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="C# IO Property" Binding="{Binding CSharpProperty}" Width="*"/>
-                                <DataGridTextColumn Header="Connected Device" Binding="{Binding DeviceName}" Width="*"/>
-                                <DataGridTextColumn Header="Hardware Tag Address" Binding="{Binding HardwareTag}" Width="*"/>
-                                <DataGridTextColumn Header="Live State" Binding="{Binding CurrentValue}" Width="120"/>
+                                <!-- C# IO Property Column -->
+                                <DataGridTemplateColumn Header="C# IO Property" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding CSharpProperty}" FontWeight="Bold" Foreground="#005A9E" VerticalAlignment="Center" Padding="8,4"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Connected Device Column -->
+                                <DataGridTemplateColumn Header="Connected Device" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,4">
+                                                <TextBlock Text="🔌 " FontSize="11"/>
+                                                <TextBlock Text="{Binding DeviceName}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Hardware Tag Address Column -->
+                                <DataGridTemplateColumn Header="Hardware Tag Address" Width="1.5*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#E8E8E8" CornerRadius="2" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding HardwareTag}" FontFamily="Consolas" FontWeight="SemiBold" Foreground="#333333" FontSize="11"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Live State Badge Column -->
+                                <DataGridTemplateColumn Header="Live State" Width="120">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding ValueBadgeColor}" CornerRadius="2" Padding="8,3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding CurrentValue}" FontWeight="Bold" Foreground="#FFFFFF" FontSize="11"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>
                 </Grid>
             </TabItem>
 
-            <!-- TAB 3: DEVICE MANAGER -->
+            <!-- TAB 3: DEVICE MANAGER (STYLED DATAGRID) -->
             <TabItem Header="🔌 Device Manager">
                 <Grid Margin="6">
                     <DockPanel>
@@ -187,12 +251,33 @@
                             <Button Content="+ Add Device" Background="#107C41" BorderBrush="#0E6133"/>
                         </StackPanel>
 
-                        <DataGrid ItemsSource="{Binding Devices}" AutoGenerateColumns="False" Background="{Binding CardBg}" Foreground="{Binding TextPrimary}" RowBackground="{Binding WindowBg}" AlternatingRowBackground="{Binding CardBg}" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{Binding BorderColor}" BorderBrush="{Binding BorderColor}">
+                        <DataGrid ItemsSource="{Binding Devices}" 
+                                  AutoGenerateColumns="False" 
+                                  Background="{Binding CardBg}" 
+                                  Foreground="{Binding TextPrimary}" 
+                                  RowBackground="{Binding CardBg}" 
+                                  AlternatingRowBackground="{Binding WindowBg}" 
+                                  GridLinesVisibility="All" 
+                                  HorizontalGridLinesBrush="{Binding BorderColor}" 
+                                  VerticalGridLinesBrush="{Binding BorderColor}"
+                                  BorderBrush="{Binding BorderColor}"
+                                  BorderThickness="1"
+                                  CanUserAddRows="False">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Device Name" Binding="{Binding Name}" Width="*"/>
                                 <DataGridTextColumn Header="Driver Type (DBI.Drivers Integration)" Binding="{Binding Type}" Width="1.5*"/>
                                 <DataGridTextColumn Header="Connection Info" Binding="{Binding ConnectionInfo}" Width="*"/>
-                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="120"/>
+                                
+                                <!-- Status Badge Column -->
+                                <DataGridTemplateColumn Header="Status" Width="120">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#107C41" CornerRadius="2" Padding="8,3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Status}" FontWeight="Bold" Foreground="#FFFFFF" FontSize="11"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>
