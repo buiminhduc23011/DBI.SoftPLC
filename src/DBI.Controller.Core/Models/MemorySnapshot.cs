@@ -96,4 +96,9 @@ public class MemorySnapshot : IMemoryImage
     {
         return _outputBuffer.TryGetValue(key, out var val) && val;
     }
+
+    public IReadOnlyDictionary<string, bool> GetAllOutputs()
+    {
+        return _outputSnapshot;
+    }
 }

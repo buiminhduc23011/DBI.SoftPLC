@@ -34,9 +34,9 @@ public class SimulationDriver : IDriver
     {
         if (memoryImage is MemorySnapshot snapshot)
         {
-            foreach (var key in _simulatedOutputs.Keys)
+            foreach (var kvp in snapshot.GetAllOutputs())
             {
-                _simulatedOutputs[key] = snapshot.GetRawOutputBool(key);
+                _simulatedOutputs[kvp.Key] = kvp.Value;
             }
         }
         return Task.CompletedTask;

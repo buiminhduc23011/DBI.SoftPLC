@@ -1,5 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <ItemGroup>
+    <ProjectReference Include="..\DBI.Controller.Core\DBI.Controller.Core.csproj" />
+    <ProjectReference Include="..\DBI.Controller.SDK\DBI.Controller.SDK.csproj" />
+    <ProjectReference Include="..\DBI.Controller.Runtime\DBI.Controller.Runtime.csproj" />
+    <ProjectReference Include="..\..\Drivers\DBI.Controller.Driver.Simulation\DBI.Controller.Driver.Simulation.csproj" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

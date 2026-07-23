@@ -6,12 +6,18 @@
     <Project Path="Drivers/DBI.Controller.Driver.Omron/DBI.Controller.Driver.Omron.csproj" />
     <Project Path="Drivers/DBI.Controller.Driver.Simulation/DBI.Controller.Driver.Simulation.csproj" />
   </Folder>
+  <Folder Name="/Samples/">
+    <Project Path="Samples/Sample.Conveyor/Sample.Conveyor.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/DBI.Controller.Core/DBI.Controller.Core.csproj" />
     <Project Path="src/DBI.Controller.Diagnostics/DBI.Controller.Diagnostics.csproj" />
     <Project Path="src/DBI.Controller.Runtime/DBI.Controller.Runtime.csproj" />
     <Project Path="src/DBI.Controller.SDK/DBI.Controller.SDK.csproj" />
     <Project Path="src/DBI.Controller.Testing/DBI.Controller.Testing.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DBI.Controller.Tests/DBI.Controller.Tests.csproj" />
   </Folder>
   <Project Path="../DBI.Drivers/DBI.Drivers.Delta.PLC/DBI.Drivers.Delta.PLC.csproj" />
   <Project Path="../DBI.Drivers/DBI.Drivers.Modbus/DBI.Drivers.Modbus.csproj" />

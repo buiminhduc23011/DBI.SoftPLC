@@ -71,20 +71,20 @@ public class ScanEngine
 
             try
             {
-                // 1. Swap Input Buffers (Lock-Free Interlocked)
-                _memoryImage.SwapInputBuffers();
-
-                // 2. Sync Read Inputs from Drivers into Memory Snapshot
+                // 1. Sync Read Inputs from Drivers into Memory InputBuffer
                 _driverManager.ReadInputsAsync(_memoryImage).GetAwaiter().GetResult();
+
+                // 2. Swap Input Buffers (InputBuffer -> InputSnapshot)
+                _memoryImage.SwapInputBuffers();
 
                 // 3. Execute User Logic (ControllerProgram.Execute())
                 _program?.Execute();
 
-                // 4. Sync Write Outputs from Memory Snapshot to Drivers
-                _driverManager.WriteOutputsAsync(_memoryImage).GetAwaiter().GetResult();
-
-                // 5. Swap Output Buffers (Lock-Free Interlocked)
+                // 4. Swap Output Buffers (OutputSnapshot -> OutputBuffer)
                 _memoryImage.SwapOutputBuffers();
+
+                // 5. Sync Write Outputs from Memory Snapshot to Drivers
+                _driverManager.WriteOutputsAsync(_memoryImage).GetAwaiter().GetResult();
 
                 Metrics.CycleCount++;
             }
