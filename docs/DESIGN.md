@@ -192,7 +192,32 @@ sequenceDiagram
 
 ---
 
-## 6. HANDOVER & TIẾP THEO
+## 5. THIẾT KẾ STUDIO UI & LIVE DEBUGGING ENGINE (WPF .NET 8)
+
+### 5.1. Công nghệ UI Framework
+- **Framework:** WPF (.NET 8.0 Windows Native Desktop UI).
+- **Code Editor Component:** `AvalonEdit` (hoặc `Monaco Editor` WPF WebView2 wrapper) tích hợp C# Syntax Highlighting và IntelliSense.
+- **In-Memory C# Compiler:** Roslyn API (`Microsoft.CodeAnalysis.CSharp`) cho phép biên dịch trực tiếp C# code thành DLL byte array và nạp vào Runtime qua `AssemblyLoadContext`.
+
+### 5.2. Live Monitoring & "Glasses Mode" (Kiểu TIA Portal)
+Khi bật nút **"Go Online"**:
+1. Studio khởi tạo gRPC / WebSockets connection tới Runtime `DiagnosticsCollector`.
+2. Runtime stream dữ liệu giá trị I/O snapshot (TRUE/FALSE, Int, Float, Timer ET) mỗi Scan Cycle (20ms/50ms throttling).
+3. `AvalonEdit` Text Marker Extension vẽ màu xanh sáng/đỏ và hiển thị giá trị live đè trực tiếp lên lề phải của từng dòng code C# tương ứng (Live Value Inline Overlay).
+
+```
+Dòng code C# trong Editor                 Live Value Overlay (Glasses Mode)
+---------------------------------------   ----------------------------------
+if (IO.StartButton)                       [ 🟢 TRUE ]
+    IO.ConveyorRun = true;                [ 🟢 TRUE ]
+
+delayStop.In = IO.SensorProduct;          [ 🔴 FALSE ]
+                                          [ ⏱️ ET: 1450ms / 3000ms ]
+```
+
+---
+
+## 6. BÀI KIỂM TRA & TEST CASES (ACCEPTANCE CRITERIA)
 
 Bản thiết kế kỹ thuật **`docs/DESIGN.md`** đã hoàn thiện 100%.
 
