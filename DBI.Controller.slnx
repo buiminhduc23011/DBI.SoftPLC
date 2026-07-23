@@ -1,7 +1,9 @@
 <Solution>
   <Folder Name="/Drivers/">
+    <Project Path="Drivers/DBI.Controller.Driver.Delta/DBI.Controller.Driver.Delta.csproj" />
     <Project Path="Drivers/DBI.Controller.Driver.FactoryIO/DBI.Controller.Driver.FactoryIO.csproj" />
     <Project Path="Drivers/DBI.Controller.Driver.Modbus/DBI.Controller.Driver.Modbus.csproj" />
+    <Project Path="Drivers/DBI.Controller.Driver.Omron/DBI.Controller.Driver.Omron.csproj" />
     <Project Path="Drivers/DBI.Controller.Driver.Simulation/DBI.Controller.Driver.Simulation.csproj" />
   </Folder>
   <Folder Name="/src/">
@@ -11,4 +13,7 @@
     <Project Path="src/DBI.Controller.SDK/DBI.Controller.SDK.csproj" />
     <Project Path="src/DBI.Controller.Testing/DBI.Controller.Testing.csproj" />
   </Folder>
+  <Project Path="../DBI.Drivers/DBI.Drivers.Delta.PLC/DBI.Drivers.Delta.PLC.csproj" />
+  <Project Path="../DBI.Drivers/DBI.Drivers.Modbus/DBI.Drivers.Modbus.csproj" />
+  <Project Path="../DBI.Drivers/DBI.Drivers.Omron/DBI.Drivers.Omron.csproj" />
 </Solution>

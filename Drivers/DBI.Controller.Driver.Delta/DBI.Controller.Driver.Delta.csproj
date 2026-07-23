@@ -2,11 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DBI.Controller.Core\DBI.Controller.Core.csproj" />
-    <ProjectReference Include="..\..\..\DBI.Drivers\DBI.Drivers.Modbus\DBI.Drivers.Modbus.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="NModbus" Version="3.0.83" />
+    <ProjectReference Include="..\..\..\DBI.Drivers\DBI.Drivers.Delta.PLC\DBI.Drivers.Delta.PLC.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -64,10 +64,13 @@ Lập trình PLC truyền thống (dùng Ladder Logic, Structured Text trên Sie
   - Double/Triple Buffering Memory Image (`InputImage` -> `Logic` -> `OutputImage`).
   - Assembly Load Engine (`AssemblyLoadContext`) hỗ trợ nạp User DLL linh hoạt.
   - Driver Manager & Safety Exception Catching (Dừng an toàn khi DLL crash).
-- [ ] **Drivers (MVP):**
+- [ ] **Drivers (MVP - Dựa trên DBI.Drivers):**
+  - **Quy tắc bắt buộc:** 100% Protocol Drivers phải sử dụng core communication client từ **`DBI.Drivers`** (`C:\Users\ducbu\Documents\GitHub\DBI.Drivers`). Nếu cần giao thức mới, core client phải được viết trong `DBI.Drivers` trước.
   - `SimulationDriver`: Giả lập Input/Output trong bộ nhớ để test logic mà không cần phần cứng.
-  - `ModbusDriver` (Modbus TCP): Chuẩn giao tiếp phổ biến nhất.
-  - `FactoryIODriver`: Tích hợp giả lập 3D máy móc Factory I/O.
+  - `ModbusDriver`: Adapter bọc `DBI.Drivers.Modbus` (Modbus TCP/RTU/ASCII).
+  - `DeltaPlcDriver`: Adapter bọc `DBI.Drivers.Delta.PLC` (Delta PLC D/M/X/Y/S/C/T).
+  - `OmronPlcDriver`: Adapter bọc `DBI.Drivers.Omron` (Omron FINS / HostLink).
+  - `FactoryIODriver`: Adapter bọc `DBI.Drivers.Modbus` kết nối giả lập 3D máy móc Factory I/O.
 - [ ] **Samples & Testing:**
   - Demo Băng tải (Conveyor), Sorting System trên Factory I/O.
   - Unit Test Suite mẫu bằng xUnit.
