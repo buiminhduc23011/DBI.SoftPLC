@@ -11,7 +11,6 @@ public class DeviceItem
     public string Type { get; set; } = string.Empty;
     public string ConnectionInfo { get; set; } = string.Empty;
     public string Status { get; set; } = "Connected";
-    public string StatusColor => Status == "Connected" ? "#107C41" : "#D13438";
 }
 
 public class TagMappingItem
@@ -21,13 +20,13 @@ public class TagMappingItem
     public string CSharpProperty { get; set; } = string.Empty;
     public string CurrentValue { get; set; } = "FALSE";
     public bool IsTrue => CurrentValue == "TRUE";
-    public string ValueBadgeColor => IsTrue ? "#107C41" : "#A80000";
+    public string ValueBadgeColor => IsTrue ? "#107C41" : "#C72C3B";
 }
 
 public class MainViewModel : INotifyPropertyChanged
 {
     private bool _isOnline;
-    private bool _isDarkMode = true;
+    private bool _isDarkMode = false; // Default to Clean Professional Industrial Light Theme
     private string _cSharpCode = @"using DBI.Controller.SDK;
 using DBI.Controller.SDK.Primitives;
 
@@ -39,21 +38,21 @@ public class ConveyorLogic : ControllerProgram
 
     public override void Execute()
     {
-        // 1. Nhấn nút Start -> Chạy băng tải
+        // 1. Start Conveyor
         if (IO.StartButton)
             IO.ConveyorRun = true;
 
-        // 2. Nhấn nút Stop -> Dừng băng tải
+        // 2. Stop Conveyor
         if (IO.StopButton)
             IO.ConveyorRun = false;
 
-        // 3. Sensor thấy hàng -> Trễ 1000ms rồi dừng băng tải
+        // 3. Product Sensor -> 1000ms delay then stop
         _delayStop.In = IO.SensorProduct;
         if (_delayStop.Q)
             IO.ConveyorRun = false;
     }
 }";
-    private string _compilerOutput = "Status: Engine Ready. Roslyn C# Compiler loaded.";
+    private string _compilerOutput = "Engine Ready. Roslyn C# Compiler loaded.";
     private double _scanTimeMs = 1.2;
     private double _maxScanTimeMs = 2.4;
     private double _jitterMs = 0.1;
@@ -101,18 +100,20 @@ public class ConveyorLogic : ControllerProgram
             OnPropertyChanged(nameof(TextSecondary));
             OnPropertyChanged(nameof(BorderColor));
             OnPropertyChanged(nameof(HeaderBg));
+            OnPropertyChanged(nameof(AccentColor));
         }
     }
 
     public string ThemeToggleText => IsDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode";
 
-    // Theme Color Tokens
+    // Industrial Minimalist Color Tokens
     public string WindowBg => IsDarkMode ? "#1E1E1E" : "#F3F3F3";
     public string CardBg => IsDarkMode ? "#252526" : "#FFFFFF";
-    public string HeaderBg => IsDarkMode ? "#2D2D30" : "#E1E1E1";
-    public string TextPrimary => IsDarkMode ? "#F1F1F1" : "#1A1A1A";
-    public string TextSecondary => IsDarkMode ? "#999999" : "#666666";
+    public string HeaderBg => IsDarkMode ? "#2D2D30" : "#E8E8E8";
+    public string TextPrimary => IsDarkMode ? "#CCCCCC" : "#1A1A1A";
+    public string TextSecondary => IsDarkMode ? "#808080" : "#555555";
     public string BorderColor => IsDarkMode ? "#3F3F46" : "#CCCCCC";
+    public string AccentColor => IsDarkMode ? "#007ACC" : "#005A9E";
 
     public bool IsOnline
     {
@@ -150,16 +151,16 @@ public class ConveyorLogic : ControllerProgram
 
     public void CompileAndDeploy()
     {
-        CompilerOutput = "⏳ Compiling C# source code via Roslyn Compiler API...";
+        CompilerOutput = "Compiling C# source code via Roslyn Compiler API...";
         var result = CompilerService.CompileSource(CSharpCode);
 
         if (result.Success)
         {
-            CompilerOutput = $"✅ COMPILATION SUCCEEDED!\n[+] Built Dynamic Assembly ({result.AssemblyBytes?.Length} bytes).\n[+] Hot Reload deployed seamlessly to DBI SoftPLC Runtime Engine.";
+            CompilerOutput = $"[SUCCESS] Dynamic Assembly built ({result.AssemblyBytes?.Length} bytes).\n[INFO] Hot Reload deployed to DBI SoftPLC Runtime Engine.";
         }
         else
         {
-            CompilerOutput = $"❌ COMPILATION FAILED:\n" + string.Join("\n", result.Errors);
+            CompilerOutput = $"[ERROR] COMPILATION FAILED:\n" + string.Join("\n", result.Errors);
         }
     }
 
@@ -169,12 +170,12 @@ public class ConveyorLogic : ControllerProgram
         if (IsOnline)
         {
             MonitoringService.GoOnline();
-            CompilerOutput = "👓 TIA Portal-Style Live Glasses Mode Activated! Realtime inline value overlay stream enabled.";
+            CompilerOutput = "TIA Portal-Style Live Glasses Mode Activated.";
         }
         else
         {
             MonitoringService.GoOffline();
-            CompilerOutput = "⚪ Disconnected from Live Glasses Mode.";
+            CompilerOutput = "Disconnected from Live Glasses Mode.";
         }
     }
 
