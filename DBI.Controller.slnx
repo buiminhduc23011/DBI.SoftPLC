@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/Drivers/">
+    <Project Path="Drivers/DBI.Controller.Driver.FactoryIO/DBI.Controller.Driver.FactoryIO.csproj" />
+    <Project Path="Drivers/DBI.Controller.Driver.Modbus/DBI.Controller.Driver.Modbus.csproj" />
+    <Project Path="Drivers/DBI.Controller.Driver.Simulation/DBI.Controller.Driver.Simulation.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/DBI.Controller.Core/DBI.Controller.Core.csproj" />
+    <Project Path="src/DBI.Controller.Diagnostics/DBI.Controller.Diagnostics.csproj" />
+    <Project Path="src/DBI.Controller.Runtime/DBI.Controller.Runtime.csproj" />
+    <Project Path="src/DBI.Controller.SDK/DBI.Controller.SDK.csproj" />
+    <Project Path="src/DBI.Controller.Testing/DBI.Controller.Testing.csproj" />
+  </Folder>
+</Solution>
