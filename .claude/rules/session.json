@@ -1,0 +1,41 @@
+{
+  "working_on": {
+    "feature": "DBI.Studio — TIA Portal-style IDE",
+    "current_plan_path": "plans/260726-2316-dbi-studio-tia-ide/",
+    "current_phase": "phase-01",
+    "task": "Project Model & Persistence — .dbiproj JSON schema, load/save, Git-friendly layout",
+    "status": "coding"
+  },
+  "pending_tasks": [
+    "phase-01 — Project Model & Persistence",
+    "phase-02 — IPC Contract & Runtime Host (B-4, B-5)",
+    "phase-03 — Studio Runtime Client",
+    "phase-04 — AvalonDock Shell & MVVM",
+    "phase-05 — Project Tree & Block Templates",
+    "phase-06 — Tag Table & Code Generator",
+    "phase-07 — Multi-file Compile & Deploy (MVP boundary)",
+    "phase-08 → phase-13"
+  ],
+  "errors_encountered": [],
+  "skipped_tests": [],
+  "decisions_made": [
+    "ADR-001: Runtime chạy tiến trình riêng + IPC (NamedPipe). Studio bỏ ProjectReference tới Runtime sau phase-03.",
+    "ADR-002: Tag Table là nguồn sự thật, sinh Generated/IO.g.cs. IOContainer bỏ DynamicObject.",
+    "ADR-003: AvalonDock 4 vùng thay TabControl. Theme phải là ResourceDictionary, không phải string binding.",
+    "ADR-004: Deploy dùng Cold Restart, tách IProgramSwapper để sau cắm Hot Reload.",
+    "ADR-005: Runtime tự chạy lại sau mất điện. Hai chốt chặn: không tự chạy sau Fault; tệp .norun.",
+    "Spike 2026-07-27: RoslynPad.Editor DÙNG ĐƯỢC (10/10). Điều kiện: ghim Roslyn 5.3.0.",
+    "Spike 2026-07-27: AvalonDock DÙNG ĐƯỢC (7/7). Theme override về flat industrial OK cả Light lẫn Dark.",
+    "Tag truyền qua IPC bằng TÊN dạng chuỗi (không phải số thứ tự). Ngưỡng an toàn ~500 tag.",
+    "Tag trỏ trực tiếp (Device, Address), không có tầng %I0.0 trung gian.",
+    "phase-00 2026-07-27: CHỈ input hoán đổi tham chiếu. Output giữ publish-copy vì output là trạng thái GIỮ (latch) — hoán đổi tham chiếu sẽ làm băng tải tự tắt sau 1 chu kỳ. Xem phase-00 Task 00.4."
+  ],
+  "known_gaps": [
+    "B-6: cả 5 driver phần cứng (Modbus/FactoryIO/Delta/Omron) vẫn chỉ đọc/ghi bool. SimulationDriver đã hỗ trợ đủ 3 kiểu. Task 09.0 xử lý 4 driver còn lại.",
+    "Ràng buộc mô hình input double-buffer: driver PHẢI ghi đủ mọi tag nó quản lý mỗi chu kỳ, vì buffer ghi sau khi hoán đổi chứa dữ liệu của 2 chu kỳ trước.",
+    "B-4/B-5 chưa sửa: Program.Main chưa gọi SetProgram/Start; chưa có bảng định tuyến tag→device. phase-02 xử lý.",
+    "ScanEngine: Thread.Sleep((int)) cắt cụt thập phân; JitterMs tính sai công thức. phase-02 xử lý.",
+    "Chưa quyết: nhiều tab editor thì mỗi tab một RoslynWorkspace hay dùng chung qua CreatingDocument."
+  ],
+  "updated_at": "2026-07-27T01:10:00+07:00"
+}

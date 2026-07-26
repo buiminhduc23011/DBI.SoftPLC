@@ -15,6 +15,7 @@
     <Project Path="src/DBI.Controller.Runtime/DBI.Controller.Runtime.csproj" />
     <Project Path="src/DBI.Controller.SDK/DBI.Controller.SDK.csproj" />
     <Project Path="src/DBI.Controller.Studio/DBI.Controller.Studio.csproj" />
+    <Project Path="src/DBI.Controller.Studio.Core/DBI.Controller.Studio.Core.csproj" />
     <Project Path="src/DBI.Controller.Testing/DBI.Controller.Testing.csproj" />
   </Folder>
   <Folder Name="/tests/">

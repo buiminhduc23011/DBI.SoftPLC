@@ -1,0 +1,35 @@
+[2026-07-26 23:06] START /awf-brainstorm — hoàn thiện DBI.Studio (cây project, gán tag kiểu TIA, UI/UX)
+[2026-07-26 23:10] RESEARCH: TIA Portal V20/V21 — project tree, inspector window, task cards, OB/FC/FB/DB
+[2026-07-26 23:12] FOUND B-1: IOContainer là DynamicObject, TryGetMember luôn gọi GetBool
+[2026-07-26 23:14] DONE docs/BRIEF-STUDIO.md
+[2026-07-26 23:16] START /awf-plan
+[2026-07-26 23:20] FOUND B-2..B-5 khi đọc Runtime (SetRawInput thiếu ở interface, int/float không double-buffer, Main không Start, không có tag routing)
+[2026-07-26 23:40] DECISION: ADR-001 tách tiến trình + IPC ngay (user chọn, nặng hơn khuyến nghị hybrid)
+[2026-07-26 23:42] DECISION: plan phủ toàn bộ #0-#17, 14 phase, ranh giới MVP ở phase-07
+[2026-07-26 23:45] DONE plan.md + 14 phase file + 3 ADR + docs/specs/studio_spec.md
+[2026-07-26 23:50] START /awf-design
+[2026-07-26 23:55] DECISION: ADR-004 cold restart, để đường Hot Reload
+[2026-07-26 23:56] DECISION: tag truyền qua IPC bằng tên chuỗi (user chọn), ghi rõ ngưỡng ~500 tag
+[2026-07-26 23:57] DECISION: ADR-005 autostart sau mất điện (user chọn) — thêm 2 chốt chặn an toàn
+[2026-07-26 23:58] DONE docs/DESIGN-STUDIO.md + ADR-004 + ADR-005
+[2026-07-27 00:00] START spike phase-00
+[2026-07-27 00:05] SPIKE RoslynPad: PASS 10/10. Xung đột version có thật (9× NU1608), giải bằng ghim 5.3.0
+[2026-07-27 00:08] SPIKE FOUND: RoslynCodeEditor.InitializeAsync tạo project CÔ LẬP 1 file → IntelliSense sai âm thầm
+[2026-07-27 00:10] SPIKE FOUND: SetCurrentSolution không phát event → completion cache cũ. Phải dựng lại project.
+[2026-07-27 00:12] SPIKE AvalonDock: PASS 7/7. Theme override về flat industrial OK cả Light lẫn Dark
+[2026-07-27 00:14] DONE reports/spike-roslynpad.md + reports/spike-avalondock.md + 4 ảnh
+[2026-07-27 00:18] AUDIT plan vs code thật: build baseline 0 warning/0 error ✅
+[2026-07-27 00:19] AUDIT FOUND: mô tả B-2 trong plan SAI — driver ép kiểu và đang chạy đúng, vấn đề là im lặng no-op
+[2026-07-27 00:19] AUDIT FOUND B-6: cả 5 driver chỉ hỗ trợ bool, tag Int/Real sẽ đọc 0 âm thầm
+[2026-07-27 00:20] DONE vá plan: sửa B-2, thêm B-6/Task 09.0, điều kiện tiên quyết DBI.Drivers, CLAUDE.md + session state
+[2026-07-27 00:20] WAITING: bắt đầu code phase-00?
+[2026-07-27 00:40] START /awf-code phase-00
+[2026-07-27 00:45] DONE B-2: IMemoryImage thêm SetRawInput x3, GetRawOutput* x3, GetRawOutputs, SnapshotAll
+[2026-07-27 00:50] DONE B-3: MemorySnapshot double-buffer đủ bool/int/float
+[2026-07-27 00:52] DECISION: CHỈ input hoán đổi tham chiếu. Output giữ publish-copy — hoán đổi sẽ phá latch (IO["ConveyorRun"]=true mất sau 1 chu kỳ). An toàn máy thắng vi tối ưu.
+[2026-07-27 00:55] DONE B-1: IOContainer bỏ DynamicObject -> partial class; ControllerProgram.IO trả IOContainer
+[2026-07-27 00:58] DONE 5 driver bỏ ép kiểu MemorySnapshot; SimulationDriver hỗ trợ đủ bool/int/float
+[2026-07-27 01:00] DONE Task 00.8a: ghim Roslyn 5.3.0 qua $(DbiRoslynVersion) ở Directory.Build.props — restore 0 NU1608
+[2026-07-27 01:05] DONE test: MemorySnapshotTests + DriverMemoryImageTests (có ForcingMemoryImage mô phỏng Force layer phase-11)
+[2026-07-27 01:08] DONE phase-00: build 0 warning/0 error, test 25/25 pass, toàn bộ DoD đạt
+[2026-07-27 01:10] START phase-01 Project Model & Persistence

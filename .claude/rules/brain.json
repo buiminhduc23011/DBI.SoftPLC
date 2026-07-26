@@ -1,0 +1,35 @@
+{
+  "project": {
+    "name": "DBI.SoftPLC / DBI.Controller",
+    "description": "Soft PLC Runtime bằng C#/.NET — thay Ladder/ST bằng C# thuần, chu kỳ scan tất định 20ms. Kèm DBI.Studio: IDE kiểu TIA Portal chuyên để code C#.",
+    "created_at": "2026-07-23"
+  },
+  "tech_stack": {
+    "runtime": { "tfm": "net8.0", "type": "console exe", "key": ["ScanEngine 20ms", "MemorySnapshot double-buffer", "AssemblyLoadContext collectible", "SafetyCatch"] },
+    "studio": { "tfm": "net10.0-windows", "ui": "WPF + Dirkster.AvalonDock 4.74.1", "editor": "AvalonEdit 6.3.1 + RoslynPad.Editor.Windows 5.0.0", "mvvm": "CommunityToolkit.Mvvm", "roslyn": "Microsoft.CodeAnalysis.CSharp 5.3.0 (GHIM - RoslynPad phụ thuộc đúng version này)" },
+    "ipc": { "transport": "NamedPipe", "framing": "4-byte BE length + UTF-8 JSON", "protocol_version": 1 },
+    "drivers": { "rule": "chỉ bọc core client từ repo anh em DBI.Drivers", "list": ["Simulation", "Modbus", "Delta.PLC", "Omron", "FactoryIO"] }
+  },
+  "external_deps": [
+    { "name": "DBI.Drivers", "type": "repo anh em", "path": "../DBI.Drivers", "required": true, "note": "4 driver ProjectReference ra đây. Thiếu là restore fail." }
+  ],
+  "decisions": [
+    { "id": "ADR-001", "title": "Runtime tiến trình riêng + IPC", "why": "GC/render của WPF làm trượt chu kỳ 20ms; Studio crash không được dừng máy; mở đường deploy remote" },
+    { "id": "ADR-002", "title": "Tag Table sinh IO.g.cs", "why": "DynamicObject giết IntelliSense và để lọt lỗi gõ sai tag" },
+    { "id": "ADR-003", "title": "AvalonDock 4 vùng", "why": "Xem code + tag cùng lúc, đúng mental model TIA Portal" },
+    { "id": "ADR-004", "title": "Cold restart + IProgramSwapper", "why": "Hot Reload cần migrate state FB và dễ leak AssemblyLoadContext — để sau" },
+    { "id": "ADR-005", "title": "Autostart sau mất điện", "why": "Dây chuyền liên tục. CÓ HỆ QUẢ AN TOÀN — bắt buộc E-stop cứng + contactor bên ngoài phần mềm" }
+  ],
+  "gotchas": [
+    "RoslynHost PHẢI tạo sau khi WPF Application tồn tại, không thì ArgumentNullException (context) — VS Threading cần SynchronizationContext",
+    "RoslynCodeEditor.InitializeAsync tạo project cô lập 1 file → IntelliSense sai âm thầm (báo lỗi chỗ đúng, bỏ qua chỗ sai). Phải bổ sung file vào workspace của editor.",
+    "RoslynHost.AddRelatedDocument là API cho scripting, dùng cho project nhiều file sẽ ném InvalidOperationException",
+    "Workspace.SetCurrentSolution KHÔNG phát change event → cache completion cũ. Tag Table đổi thì phải dựng lại project, không patch document.",
+    "AvalonDock theme chỉ hoạt động với ResourceDictionary + DynamicResource. String binding trên ViewModel không theme được.",
+    "XmlLayoutSerializer.Deserialize cần LayoutSerializationCallback để gắn lại content, không thì panel rỗng",
+    "5 driver ép kiểu IMemoryImage → MemorySnapshot rồi IM LẶNG return khi hỏng. Đừng làm Force layer dạng decorator.",
+    "5 driver chỉ hỗ trợ bool. Tag Int/Real hiện sẽ đọc về 0 mà không báo lỗi.",
+    "Compile assembly người dùng phải target net8.0 (Runtime là net8.0). Studio net10 dễ nhặt nhầm BCL net10 vào — dùng reference assemblies, không dùng typeof(object).Assembly.Location",
+    "Test ConveyorLogicTests dùng Thread.Sleep(1100) — chậm và phụ thuộc thời gian thực"
+  ]
+}
