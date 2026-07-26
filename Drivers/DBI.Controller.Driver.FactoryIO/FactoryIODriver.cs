@@ -52,7 +52,7 @@ public class FactoryIODriver : IDriver
 
     public Task ReadInputsAsync(IMemoryImage memoryImage, CancellationToken cancellationToken = default)
     {
-        if (State != ConnectionState.Connected || _modbusMaster == null || memoryImage is not MemorySnapshot snapshot)
+        if (State != ConnectionState.Connected || _modbusMaster == null)
             return Task.CompletedTask;
 
         foreach (var map in TagMappings.Where(t => !t.IsOutput))
@@ -60,7 +60,7 @@ public class FactoryIODriver : IDriver
             try
             {
                 bool[] inputs = _modbusMaster.ReadDiscreteInputs(1, map.ModbusAddress, 1);
-                if (inputs.Length > 0) snapshot.SetRawInputBool(map.TagName, inputs[0]);
+                if (inputs.Length > 0) memoryImage.SetRawInput(map.TagName, inputs[0]);
             }
             catch
             {
@@ -73,14 +73,14 @@ public class FactoryIODriver : IDriver
 
     public Task WriteOutputsAsync(IMemoryImage memoryImage, CancellationToken cancellationToken = default)
     {
-        if (State != ConnectionState.Connected || _modbusMaster == null || memoryImage is not MemorySnapshot snapshot)
+        if (State != ConnectionState.Connected || _modbusMaster == null)
             return Task.CompletedTask;
 
         foreach (var map in TagMappings.Where(t => t.IsOutput))
         {
             try
             {
-                bool val = snapshot.GetRawOutputBool(map.TagName);
+                bool val = memoryImage.GetRawOutputBool(map.TagName);
                 _modbusMaster.WriteSingleCoil(1, map.ModbusAddress, val);
             }
             catch

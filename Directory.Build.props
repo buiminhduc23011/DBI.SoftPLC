@@ -8,4 +8,16 @@
     <Company>DBI SoftPLC</Company>
     <Product>DBI.Controller</Product>
   </PropertyGroup>
+
+  <!--
+    Roslyn ghim ở MỘT version duy nhất cho toàn solution.
+    RoslynPad.Roslyn 5.0.0 phụ thuộc đúng 5.3.0; ghim 5.6.0 khiến NuGet nâng một phần
+    (Microsoft.CodeAnalysis 5.6.0) và giữ nguyên phần khác (Microsoft.CodeAnalysis.Features 5.3.0)
+    → 9 cảnh báo NU1608 và nạp assembly lệch version lúc chạy.
+    Cùng version cũng bảo đảm RoslynCompilerService (phase-07) và StudioWorkspace (phase-08)
+    báo lỗi giống nhau.
+  -->
+  <PropertyGroup>
+    <DbiRoslynVersion>5.3.0</DbiRoslynVersion>
+  </PropertyGroup>
 </Project>

@@ -11,30 +11,17 @@ public abstract class ControllerProgram
     private IOContainer? _io;
 
     /// <summary>
-    /// Đối tượng IO trừu tượng cho phép truy cập IO.StartButton, IO.Conveyor...
+    /// Cổng truy cập I/O — mạnh kiểu. Dùng <c>IO["StartButton"]</c> cho tới khi phase-06 sinh
+    /// <c>IO.g.cs</c> từ Tag Table, sau đó dùng được <c>IO.StartButton</c>.
     /// </summary>
-    public dynamic IO
-    {
-        get
-        {
-            if (_io == null)
-                throw new InvalidOperationException("Chương trình chưa được khởi tạo với Memory Image từ Runtime.");
-            return _io;
-        }
-    }
+    public IOContainer IO => _io ?? throw new InvalidOperationException(
+        "Chương trình chưa được khởi tạo với Memory Image từ Runtime.");
 
     /// <summary>
-    /// Đối tượng IOContainer mạnh kiểu cho phép dùng indexer IOContainer["StartButton"].
+    /// Alias tương thích ngược của <see cref="IO"/>.
     /// </summary>
-    public IOContainer IOStore
-    {
-        get
-        {
-            if (_io == null)
-                throw new InvalidOperationException("Chương trình chưa được khởi tạo với Memory Image từ Runtime.");
-            return _io;
-        }
-    }
+    [Obsolete("Dùng IO.")]
+    public IOContainer IOStore => IO;
 
     /// <summary>
     /// Khởi tạo Memory Image từ Runtime cho chương trình.

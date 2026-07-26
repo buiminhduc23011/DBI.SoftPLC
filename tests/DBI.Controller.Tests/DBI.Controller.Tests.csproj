@@ -23,7 +23,13 @@
     <ProjectReference Include="..\..\src\DBI.Controller.SDK\DBI.Controller.SDK.csproj" />
     <ProjectReference Include="..\..\src\DBI.Controller.Runtime\DBI.Controller.Runtime.csproj" />
     <ProjectReference Include="..\..\src\DBI.Controller.Testing\DBI.Controller.Testing.csproj" />
+    <ProjectReference Include="..\..\src\DBI.Controller.Studio.Core\DBI.Controller.Studio.Core.csproj" />
     <ProjectReference Include="..\..\Drivers\DBI.Controller.Driver.Simulation\DBI.Controller.Driver.Simulation.csproj" />
+    <!-- 4 driver phần cứng: cần cho test chốt chặn B-2 (không được ép kiểu xuống MemorySnapshot). -->
+    <ProjectReference Include="..\..\Drivers\DBI.Controller.Driver.Modbus\DBI.Controller.Driver.Modbus.csproj" />
+    <ProjectReference Include="..\..\Drivers\DBI.Controller.Driver.FactoryIO\DBI.Controller.Driver.FactoryIO.csproj" />
+    <ProjectReference Include="..\..\Drivers\DBI.Controller.Driver.Delta\DBI.Controller.Driver.Delta.csproj" />
+    <ProjectReference Include="..\..\Drivers\DBI.Controller.Driver.Omron\DBI.Controller.Driver.Omron.csproj" />
     <ProjectReference Include="..\..\Samples\Sample.Conveyor\Sample.Conveyor.csproj" />
   </ItemGroup>
 

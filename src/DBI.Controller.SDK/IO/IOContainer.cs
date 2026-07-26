@@ -1,12 +1,20 @@
-using System.Dynamic;
 using DBI.Controller.Core.Interfaces;
 
 namespace DBI.Controller.SDK.IO;
 
 /// <summary>
-/// Container cho phép truy cập linh hoạt thuộc tính IO dạng Dynamic Object (IO.StartButton) hoặc Indexer (IO["StartButton"]).
+/// Cổng truy cập I/O của chương trình điều khiển.
 /// </summary>
-public class IOContainer : DynamicObject
+/// <remarks>
+/// <para><c>partial</c> là chủ ý: phase-06 sinh <c>Generated/IO.g.cs</c> từ Tag Table, bổ sung các
+/// property mạnh kiểu (<c>IO.StartButton</c>) vào chính class này. Nhờ vậy gõ sai tên tag là lỗi biên
+/// dịch, và IntelliSense gợi ý được đúng danh sách tag đã khai báo.</para>
+///
+/// <para>Trước đây class này kế thừa <c>DynamicObject</c>: <c>TryGetMember</c> luôn gọi <c>GetBool</c>
+/// và luôn trả <c>true</c>, nên tag sai chính tả im lặng trả <c>false</c> và tag <c>Real</c> đọc ra
+/// <c>bool</c>. Đã gỡ bỏ.</para>
+/// </remarks>
+public partial class IOContainer
 {
     private readonly IMemoryImage _memoryImage;
 
@@ -15,6 +23,9 @@ public class IOContainer : DynamicObject
         _memoryImage = memoryImage ?? throw new ArgumentNullException(nameof(memoryImage));
     }
 
+    /// <summary>
+    /// Truy cập tag <c>Bool</c> theo tên. Dùng khi chưa có Tag Table sinh property mạnh kiểu.
+    /// </summary>
     public bool this[string key]
     {
         get => _memoryImage.GetBool(key);
@@ -29,31 +40,4 @@ public class IOContainer : DynamicObject
 
     public float GetFloat(string key) => _memoryImage.GetFloat(key);
     public void SetFloat(string key, float value) => _memoryImage.SetFloat(key, value);
-
-    public override bool TryGetMember(GetMemberBinder binder, out object? result)
-    {
-        result = _memoryImage.GetBool(binder.Name);
-        return true;
-    }
-
-    public override bool TrySetMember(SetMemberBinder binder, object? value)
-    {
-        if (value is bool boolVal)
-        {
-            _memoryImage.SetBool(binder.Name, boolVal);
-            return true;
-        }
-        if (value is int intVal)
-        {
-            _memoryImage.SetInt(binder.Name, intVal);
-            return true;
-        }
-        if (value is float floatVal)
-        {
-            _memoryImage.SetFloat(binder.Name, floatVal);
-            return true;
-        }
-
-        return false;
-    }
 }

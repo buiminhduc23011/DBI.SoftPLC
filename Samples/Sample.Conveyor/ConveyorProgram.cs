@@ -16,22 +16,22 @@ public class ConveyorProgram : ControllerProgram
     public override void Execute()
     {
         // 1. Nhấn nút StartButton -> Khởi động Băng tải
-        if (IO.StartButton)
+        if (IO["StartButton"])
         {
-            IO.ConveyorRun = true;
+            IO["ConveyorRun"] = true;
         }
 
         // 2. Nhấn nút StopButton -> Dừng Băng tải lập tức
-        if (IO.StopButton)
+        if (IO["StopButton"])
         {
-            IO.ConveyorRun = false;
+            IO["ConveyorRun"] = false;
         }
 
         // 3. Sensor phát hiện hàng -> Timer đếm 1000ms rồi ngắt băng tải
-        _stopDelay.In = IO.SensorProduct;
+        _stopDelay.In = IO["SensorProduct"];
         if (_stopDelay.Q)
         {
-            IO.ConveyorRun = false;
+            IO["ConveyorRun"] = false;
         }
     }
 

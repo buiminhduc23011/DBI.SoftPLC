@@ -39,17 +39,17 @@ public class ConveyorLogic : ControllerProgram
     public override void Execute()
     {
         // 1. Start Conveyor
-        if (IO.StartButton)
-            IO.ConveyorRun = true;
+        if (IO[""StartButton""])
+            IO[""ConveyorRun""] = true;
 
         // 2. Stop Conveyor
-        if (IO.StopButton)
-            IO.ConveyorRun = false;
+        if (IO[""StopButton""])
+            IO[""ConveyorRun""] = false;
 
         // 3. Product Sensor -> 1000ms delay then stop
-        _delayStop.In = IO.SensorProduct;
+        _delayStop.In = IO[""SensorProduct""];
         if (_delayStop.Q)
-            IO.ConveyorRun = false;
+            IO[""ConveyorRun""] = false;
     }
 }";
     private string _compilerOutput = "Engine Ready. Roslyn C# Compiler loaded.";

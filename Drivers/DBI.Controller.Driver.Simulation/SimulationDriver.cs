@@ -4,10 +4,19 @@ using DBI.Controller.Core.Models;
 
 namespace DBI.Controller.Driver.Simulation;
 
+/// <summary>
+/// Driver giả lập dùng cho test và chạy khô không cần phần cứng.
+/// Hỗ trợ cả ba kiểu tag <c>bool</c> / <c>int</c> / <c>float</c>.
+/// </summary>
 public class SimulationDriver : IDriver
 {
-    private readonly ConcurrentDictionary<string, bool> _simulatedInputs = new(StringComparer.OrdinalIgnoreCase);
-    private readonly ConcurrentDictionary<string, bool> _simulatedOutputs = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, bool> _inputsBool = New<bool>();
+    private readonly ConcurrentDictionary<string, int> _inputsInt = New<int>();
+    private readonly ConcurrentDictionary<string, float> _inputsFloat = New<float>();
+
+    private readonly ConcurrentDictionary<string, object> _outputs = New<object>();
+
+    private static ConcurrentDictionary<string, T> New<T>() => new(StringComparer.OrdinalIgnoreCase);
 
     public string DriverId => "SIMULATION_DRIVER";
     public ConnectionState State { get; private set; } = ConnectionState.Disconnected;
@@ -20,25 +29,18 @@ public class SimulationDriver : IDriver
 
     public Task ReadInputsAsync(IMemoryImage memoryImage, CancellationToken cancellationToken = default)
     {
-        if (memoryImage is MemorySnapshot snapshot)
-        {
-            foreach (var kvp in _simulatedInputs)
-            {
-                snapshot.SetRawInputBool(kvp.Key, kvp.Value);
-            }
-        }
+        foreach (var kvp in _inputsBool) memoryImage.SetRawInput(kvp.Key, kvp.Value);
+        foreach (var kvp in _inputsInt) memoryImage.SetRawInput(kvp.Key, kvp.Value);
+        foreach (var kvp in _inputsFloat) memoryImage.SetRawInput(kvp.Key, kvp.Value);
+
         return Task.CompletedTask;
     }
 
     public Task WriteOutputsAsync(IMemoryImage memoryImage, CancellationToken cancellationToken = default)
     {
-        if (memoryImage is MemorySnapshot snapshot)
-        {
-            foreach (var kvp in snapshot.GetAllOutputs())
-            {
-                _simulatedOutputs[kvp.Key] = kvp.Value;
-            }
-        }
+        foreach (var kvp in memoryImage.GetRawOutputs())
+            _outputs[kvp.Key] = kvp.Value;
+
         return Task.CompletedTask;
     }
 
@@ -48,19 +50,15 @@ public class SimulationDriver : IDriver
         return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// Cho phép Test/Debug giả lập giá trị Input tác động lên hệ thống.
-    /// </summary>
-    public void SetInputBool(string key, bool value)
-    {
-        _simulatedInputs[key] = value;
-    }
+    // ── Cho Test/Debug giả lập Input ─────────────────────────────────────────────
 
-    /// <summary>
-    /// Cho phép Test/Debug kiểm tra ngõ ra Output đã được ghi từ hệ thống.
-    /// </summary>
-    public bool GetOutputBool(string key)
-    {
-        return _simulatedOutputs.TryGetValue(key, out var val) && val;
-    }
+    public void SetInputBool(string key, bool value) => _inputsBool[key] = value;
+    public void SetInputInt(string key, int value) => _inputsInt[key] = value;
+    public void SetInputFloat(string key, float value) => _inputsFloat[key] = value;
+
+    // ── Cho Test/Debug kiểm tra Output đã ghi xuống ──────────────────────────────
+
+    public bool GetOutputBool(string key) => _outputs.TryGetValue(key, out var val) && val is bool b && b;
+    public int GetOutputInt(string key) => _outputs.TryGetValue(key, out var val) && val is int i ? i : 0;
+    public float GetOutputFloat(string key) => _outputs.TryGetValue(key, out var val) && val is float f ? f : 0f;
 }

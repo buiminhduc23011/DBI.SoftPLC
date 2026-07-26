@@ -55,7 +55,7 @@ public class DeltaPlcDriverAdapter : IDriver
 
     public Task ReadInputsAsync(IMemoryImage memoryImage, CancellationToken cancellationToken = default)
     {
-        if (State != ConnectionState.Connected || _client == null || memoryImage is not MemorySnapshot snapshot)
+        if (State != ConnectionState.Connected || _client == null)
             return Task.CompletedTask;
 
         foreach (var map in InputMappings)
@@ -65,17 +65,17 @@ public class DeltaPlcDriverAdapter : IDriver
                 if (map.RegisterType.Equals("X", StringComparison.OrdinalIgnoreCase))
                 {
                     bool[] vals = _client.ReadX(map.Address, 1);
-                    if (vals.Length > 0) snapshot.SetRawInputBool(map.TagName, vals[0]);
+                    if (vals.Length > 0) memoryImage.SetRawInput(map.TagName, vals[0]);
                 }
                 else if (map.RegisterType.Equals("M", StringComparison.OrdinalIgnoreCase))
                 {
                     bool[] vals = _client.ReadM(map.Address, 1);
-                    if (vals.Length > 0) snapshot.SetRawInputBool(map.TagName, vals[0]);
+                    if (vals.Length > 0) memoryImage.SetRawInput(map.TagName, vals[0]);
                 }
                 else if (map.RegisterType.Equals("Y", StringComparison.OrdinalIgnoreCase))
                 {
                     bool[] vals = _client.ReadY(map.Address, 1);
-                    if (vals.Length > 0) snapshot.SetRawInputBool(map.TagName, vals[0]);
+                    if (vals.Length > 0) memoryImage.SetRawInput(map.TagName, vals[0]);
                 }
             }
             catch
@@ -89,7 +89,7 @@ public class DeltaPlcDriverAdapter : IDriver
 
     public Task WriteOutputsAsync(IMemoryImage memoryImage, CancellationToken cancellationToken = default)
     {
-        if (State != ConnectionState.Connected || _client == null || memoryImage is not MemorySnapshot snapshot)
+        if (State != ConnectionState.Connected || _client == null)
             return Task.CompletedTask;
 
         foreach (var map in OutputMappings)
@@ -98,12 +98,12 @@ public class DeltaPlcDriverAdapter : IDriver
             {
                 if (map.RegisterType.Equals("Y", StringComparison.OrdinalIgnoreCase))
                 {
-                    bool val = snapshot.GetRawOutputBool(map.TagName);
+                    bool val = memoryImage.GetRawOutputBool(map.TagName);
                     _client.WriteY(map.Address, new[] { val });
                 }
                 else if (map.RegisterType.Equals("M", StringComparison.OrdinalIgnoreCase))
                 {
-                    bool val = snapshot.GetRawOutputBool(map.TagName);
+                    bool val = memoryImage.GetRawOutputBool(map.TagName);
                     _client.WriteM(map.Address, new[] { val });
                 }
             }

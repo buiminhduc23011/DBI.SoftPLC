@@ -62,7 +62,7 @@ public class ModbusDriverAdapter : IDriver
 
     public Task ReadInputsAsync(IMemoryImage memoryImage, CancellationToken cancellationToken = default)
     {
-        if (State != ConnectionState.Connected || _modbusMaster == null || memoryImage is not MemorySnapshot snapshot)
+        if (State != ConnectionState.Connected || _modbusMaster == null)
             return Task.CompletedTask;
 
         foreach (var map in InputMappings)
@@ -72,12 +72,12 @@ public class ModbusDriverAdapter : IDriver
                 if (map.RegisterType == ModbusRegisterType.DiscreteInput)
                 {
                     bool[] inputs = _modbusMaster.ReadDiscreteInputs(map.SlaveId, map.Address, 1);
-                    if (inputs.Length > 0) snapshot.SetRawInputBool(map.TagName, inputs[0]);
+                    if (inputs.Length > 0) memoryImage.SetRawInput(map.TagName, inputs[0]);
                 }
                 else if (map.RegisterType == ModbusRegisterType.Coil)
                 {
                     bool[] coils = _modbusMaster.ReadCoils(map.SlaveId, map.Address, 1);
-                    if (coils.Length > 0) snapshot.SetRawInputBool(map.TagName, coils[0]);
+                    if (coils.Length > 0) memoryImage.SetRawInput(map.TagName, coils[0]);
                 }
             }
             catch
@@ -91,7 +91,7 @@ public class ModbusDriverAdapter : IDriver
 
     public Task WriteOutputsAsync(IMemoryImage memoryImage, CancellationToken cancellationToken = default)
     {
-        if (State != ConnectionState.Connected || _modbusMaster == null || memoryImage is not MemorySnapshot snapshot)
+        if (State != ConnectionState.Connected || _modbusMaster == null)
             return Task.CompletedTask;
 
         foreach (var map in OutputMappings)
@@ -100,7 +100,7 @@ public class ModbusDriverAdapter : IDriver
             {
                 if (map.RegisterType == ModbusRegisterType.Coil)
                 {
-                    bool val = snapshot.GetRawOutputBool(map.TagName);
+                    bool val = memoryImage.GetRawOutputBool(map.TagName);
                     _modbusMaster.WriteSingleCoil(map.SlaveId, map.Address, val);
                 }
             }

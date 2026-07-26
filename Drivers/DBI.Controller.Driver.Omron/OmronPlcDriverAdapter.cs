@@ -53,7 +53,7 @@ public class OmronPlcDriverAdapter : IDriver
 
     public Task ReadInputsAsync(IMemoryImage memoryImage, CancellationToken cancellationToken = default)
     {
-        if (State != ConnectionState.Connected || _client == null || memoryImage is not MemorySnapshot snapshot)
+        if (State != ConnectionState.Connected || _client == null)
             return Task.CompletedTask;
 
         foreach (var map in InputMappings)
@@ -63,17 +63,17 @@ public class OmronPlcDriverAdapter : IDriver
                 if (map.Area.Equals("CIO", StringComparison.OrdinalIgnoreCase))
                 {
                     bool[] vals = _client.ReadCIO(map.Address, 1);
-                    if (vals.Length > 0) snapshot.SetRawInputBool(map.TagName, vals[0]);
+                    if (vals.Length > 0) memoryImage.SetRawInput(map.TagName, vals[0]);
                 }
                 else if (map.Area.Equals("WR", StringComparison.OrdinalIgnoreCase))
                 {
                     bool[] vals = _client.ReadWR(map.Address, 1);
-                    if (vals.Length > 0) snapshot.SetRawInputBool(map.TagName, vals[0]);
+                    if (vals.Length > 0) memoryImage.SetRawInput(map.TagName, vals[0]);
                 }
                 else if (map.Area.Equals("HR", StringComparison.OrdinalIgnoreCase))
                 {
                     bool[] vals = _client.ReadHR(map.Address, 1);
-                    if (vals.Length > 0) snapshot.SetRawInputBool(map.TagName, vals[0]);
+                    if (vals.Length > 0) memoryImage.SetRawInput(map.TagName, vals[0]);
                 }
             }
             catch
@@ -87,14 +87,14 @@ public class OmronPlcDriverAdapter : IDriver
 
     public Task WriteOutputsAsync(IMemoryImage memoryImage, CancellationToken cancellationToken = default)
     {
-        if (State != ConnectionState.Connected || _client == null || memoryImage is not MemorySnapshot snapshot)
+        if (State != ConnectionState.Connected || _client == null)
             return Task.CompletedTask;
 
         foreach (var map in OutputMappings)
         {
             try
             {
-                bool val = snapshot.GetRawOutputBool(map.TagName);
+                bool val = memoryImage.GetRawOutputBool(map.TagName);
                 if (map.Area.Equals("CIO", StringComparison.OrdinalIgnoreCase))
                 {
                     _client.WriteCIO(map.Address, new[] { val });

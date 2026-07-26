@@ -52,13 +52,11 @@ public class TestHost
         }
     }
 
-    public void SetInputBool(string key, bool value)
-    {
-        SimulationDriver.SetInputBool(key, value);
-    }
+    public void SetInputBool(string key, bool value) => SimulationDriver.SetInputBool(key, value);
+    public void SetInputInt(string key, int value) => SimulationDriver.SetInputInt(key, value);
+    public void SetInputFloat(string key, float value) => SimulationDriver.SetInputFloat(key, value);
 
-    public bool GetOutputBool(string key)
-    {
-        return SimulationDriver.GetOutputBool(key);
-    }
+    public bool GetOutputBool(string key) => SimulationDriver.GetOutputBool(key);
+    public int GetOutputInt(string key) => SimulationDriver.GetOutputInt(key);
+    public float GetOutputFloat(string key) => SimulationDriver.GetOutputFloat(key);
 }
