@@ -1,4 +1,4 @@
-using System.Reflection.Metadata;
+﻿using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using DBI.Controller.Core.Interfaces;
 using DBI.Controller.Core.Models;
@@ -59,19 +59,25 @@ internal sealed class ForcingMemoryImage : IMemoryImage
 /// </summary>
 public class DriverMemoryImageTests
 {
+    /// <summary>
+    /// Các test ở đây kiểm tra tầng <see cref="IMemoryImage"/>, không phải định tuyến — driver
+    /// giả lập bật <c>MirrorAllTags</c> nên không cần route.
+    /// </summary>
+    private static readonly IReadOnlyList<TagRoute> NoRoutes = Array.Empty<TagRoute>();
+
     [Fact]
     public async Task Driver_NhanIMemoryImageKhongPhaiMemorySnapshot_VanDocInputDung()
     {
         var snapshot = new MemorySnapshot();
         IMemoryImage decorated = new ForcingMemoryImage(snapshot);
 
-        var driver = new SimulationDriver();
+        var driver = new SimulationDriver { MirrorAllTags = true };
         await driver.ConnectAsync();
         driver.SetInputBool("StartButton", true);
         driver.SetInputInt("PartCount", 42);
         driver.SetInputFloat("Temperature", 36.6f);
 
-        await driver.ReadInputsAsync(decorated);
+        await driver.ReadInputsAsync(decorated, NoRoutes);
         decorated.SwapInputBuffers();
 
         Assert.True(decorated.GetBool("StartButton"));
@@ -85,7 +91,7 @@ public class DriverMemoryImageTests
         var snapshot = new MemorySnapshot();
         IMemoryImage decorated = new ForcingMemoryImage(snapshot);
 
-        var driver = new SimulationDriver();
+        var driver = new SimulationDriver { MirrorAllTags = true };
         await driver.ConnectAsync();
 
         decorated.SetBool("ConveyorRun", true);
@@ -93,7 +99,7 @@ public class DriverMemoryImageTests
         decorated.SetFloat("Setpoint", 42.5f);
         decorated.SwapOutputBuffers();
 
-        await driver.WriteOutputsAsync(decorated);
+        await driver.WriteOutputsAsync(decorated, NoRoutes);
 
         Assert.True(driver.GetOutputBool("ConveyorRun"));
         Assert.Equal(750, driver.GetOutputInt("Speed"));
@@ -106,7 +112,7 @@ public class DriverMemoryImageTests
         var snapshot = new MemorySnapshot();
         var forcing = new ForcingMemoryImage(snapshot);
 
-        var driver = new SimulationDriver();
+        var driver = new SimulationDriver { MirrorAllTags = true };
         await driver.ConnectAsync();
 
         // Chương trình muốn tắt, nhưng kỹ sư force bật để test cơ cấu chấp hành.
@@ -114,7 +120,7 @@ public class DriverMemoryImageTests
         forcing.SwapOutputBuffers();
         forcing.Force("ConveyorRun", true);
 
-        await driver.WriteOutputsAsync(forcing);
+        await driver.WriteOutputsAsync(forcing, NoRoutes);
 
         Assert.True(driver.GetOutputBool("ConveyorRun"));
     }

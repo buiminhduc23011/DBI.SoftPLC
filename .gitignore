@@ -19,3 +19,11 @@ packages/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+## DBI.Studio — layout panel của người dùng, không commit
+.dbistudio/
+
+## AWF session state — commit session.json + brain.json (kiến thức chung),
+## bỏ qua log đã xoay vòng
+.claude/rules/session_log_*.txt
+.claude/rules/handover.md.consumed

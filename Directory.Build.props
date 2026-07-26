@@ -1,6 +1,11 @@
 <Project>
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <!--
+      Mặc định cho toàn solution. Mọi project đều là net10.0 trừ DBI.Controller.Studio
+      (net10.0-windows vì dùng WPF). Trước đây khai net8.0 ở đây nhưng từng project lại đè
+      thành net10.0 — tài liệu nói một đằng, code chạy một nẻo.
+    -->
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>

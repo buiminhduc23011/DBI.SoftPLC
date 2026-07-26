@@ -12,6 +12,7 @@
   <Folder Name="/src/">
     <Project Path="src/DBI.Controller.Core/DBI.Controller.Core.csproj" />
     <Project Path="src/DBI.Controller.Diagnostics/DBI.Controller.Diagnostics.csproj" />
+    <Project Path="src/DBI.Controller.Protocol/DBI.Controller.Protocol.csproj" />
     <Project Path="src/DBI.Controller.Runtime/DBI.Controller.Runtime.csproj" />
     <Project Path="src/DBI.Controller.SDK/DBI.Controller.SDK.csproj" />
     <Project Path="src/DBI.Controller.Studio/DBI.Controller.Studio.csproj" />

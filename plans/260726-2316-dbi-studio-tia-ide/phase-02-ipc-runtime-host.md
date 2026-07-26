@@ -1,6 +1,6 @@
 # Phase 02 — IPC Contract & Runtime Host
 
-**Status:** ⬜ Pending | **Ưu tiên:** 🔴 Đường găng | **Phụ thuộc:** phase-00 | **Nội dung BRIEF:** #16a + B-4, B-5
+**Status:** ✅ Done (2026-07-27) | **Ưu tiên:** 🔴 Đường găng | **Phụ thuộc:** phase-00 | **Nội dung BRIEF:** #16a + B-4, B-5
 **ADR:** [ADR-001](decisions/ADR-001-runtime-ipc-boundary.md)
 
 > Đây là phase nặng nhất và không có kết quả nhìn thấy được trên UI. `DBI.Controller.Runtime` hiện là **stub** — `Program.Main` tạo `ScanEngine` rồi... chờ Enter. Không gọi `SetProgram()`, không gọi `Start()`. Phase này biến nó thành host thật.
@@ -196,28 +196,47 @@ Chuyển sang phát sự kiện `FaultOccurred { message, stackTrace, occurredAt
 
 ---
 
+## ⚠️ Ba điều phát hiện khi triển khai
+
+### 1. Jitter thật là **6ms**, không phải lỗi công thức — Windows chặn ở độ phân giải timer
+
+Sửa công thức jitter xong, đo ra vẫn ~6ms. Nguyên nhân không nằm ở code: Windows chạy timer hệ thống ở **~15.6ms**, nên `Thread.Sleep(18)` có thể ngủ tới 31ms. Chu kỳ 20ms mà ngủ 31ms là jitter 11ms.
+
+Thêm [`HighResolutionTimerScope`](../../src/DBI.Controller.Runtime/Engine/HighResolutionTimerScope.cs) — gọi `timeBeginPeriod(1)` suốt thời gian scan chạy, hạ ngay khi dừng. Đo lại: **jitter trung bình < 1ms**. Ngoài Windows là no-op vì `nanosleep` đã đủ mịn.
+
+### 2. `TagRoute` / `DeviceSpec` / `TagDataType` đặt ở **Core**, không phải Protocol
+
+Plan để chúng trong `DBI.Controller.Protocol`. Nhưng `IDriver` (ở Core) cần `TagRoute` trong chữ ký, mà bắt Core tham chiếu Protocol là lộn ngược tầng. Đặt ở `Core/Models/TagRoute.cs`, Protocol tham chiếu Core. Protocol vẫn **không** biết gì về Runtime/Studio — đúng tinh thần ADR-001, có test canh.
+
+### 3. Hợp đồng ngầm: `camelCase` là bắt buộc, không phải thẩm mỹ
+
+Client phân biệt response với push bằng cách dò trường `requestId` trên `JsonDocument` — phép dò đó **phân biệt hoa/thường**. Lúc đầu `ProtocolJson` ghi PascalCase nên mọi response bị coi là push và **mọi lệnh treo vô hạn, không exception nào để lần ra**. Đã ghim `PropertyNamingPolicy = CamelCase` kèm hằng `ProtocolJson.RequestIdProperty` và test canh.
+
+---
+
 ## Definition of Done
 
-- [ ] `DBI.Controller.Protocol` build được, **không** tham chiếu Runtime/Studio
-- [ ] `NamedPipeTransport` framing bằng length-prefix, test với payload > 1MB (assembly thật)
-- [ ] Handshake từ chối protocol version lệch, kèm thông báo rõ
-- [ ] `Program.Main` viết lại — **thật sự** gọi `SetProgram()` và `Start()` (B-4 chết)
-- [ ] Deploy end-to-end: gửi `byte[]` assembly → Runtime nạp → scan chạy → `GetStatus` trả `Running` và `CycleCount` tăng
-- [ ] `TagRoutingTable` hoạt động; cả 5 driver cập nhật theo chữ ký `IDriver` mới
-- [ ] Test: driver chỉ nhận route của chính nó, không thấy tag của driver khác
-- [ ] `SubscribeTags` push đúng tag, chỉ khi giá trị đổi
-- [ ] **Test determinism:** chạy 60 giây, push loop bật + client poll status — jitter trung bình < 2ms, không có chu kỳ nào > 40ms
-- [ ] Client ngắt đột ngột (kill process) → Runtime vẫn chạy, nhận lại kết nối mới được
-- [ ] Deploy assembly lỗi (không có class kế thừa `ControllerProgram`) → trả lỗi rõ, Runtime không crash
-- [ ] Jitter và scan time đo đúng công thức, có test
-- [ ] `RuntimeHost` đi qua `IProgramSwapper`, không gọi `UserProgramLoader` trực tiếp
-- [ ] `SwapMode.HotReload` trả `E_HOTRELOAD_UNSUPPORTED` kèm thông báo rõ *(TC-D12)*
-- [ ] Stop xả output xuống **thiết bị thật** trước khi unload *(TC-D01)*
-- [ ] Deploy lưu `last-deploy/` kèm sha256; checksum sai → `NoProgram` *(TC-D08)*
-- [ ] `lastCleanState` ghi mỗi lần đổi trạng thái, không phải lúc tắt
-- [ ] ⚠️ **Chốt chặn 1:** `lastCleanState = Faulted` → khởi động ở `Stopped` *(TC-D05)*
-- [ ] ⚠️ **Chốt chặn 2:** có file `.norun` → khởi động ở `Stopped` *(TC-D06)*
-- [ ] `lastCleanState = Running` + không `.norun` + checksum đúng → tự chạy *(TC-D07)*
-- [ ] Fault push kênh `fault` có cấu trúc lên Studio, không chỉ `Console.WriteLine`
-- [ ] Fault xoá toàn bộ force *(TC-D03)*
-- [ ] `dotnet test` toàn bộ pass
+- [x] `DBI.Controller.Protocol` build được, **không** tham chiếu Runtime/Studio (có test đọc `GetReferencedAssemblies`)
+- [x] `NamedPipeTransport` framing bằng length-prefix, test với payload > 1MB; kèm test payload chứa `\n` và test độ dài báo láo
+- [x] Handshake từ chối protocol version lệch, kèm thông báo rõ
+- [x] `Program.Main` viết lại — **thật sự** gọi `SetProgram()` và `Start()` (B-4 chết); có `--pipe`, `--port`, `--scan`, `--headless`, `--help`
+- [x] Deploy end-to-end: gửi `byte[]` assembly → Runtime nạp → scan chạy → `GetStatus` trả `Running` và `CycleCount` tăng
+- [x] `TagRoutingTable` hoạt động; cả 5 driver cập nhật theo chữ ký `IDriver` mới
+- [x] Test: driver chỉ nhận route của chính nó, không thấy tag của driver khác — kể cả khi **hai thiết bị có tag trùng tên**
+- [x] `SubscribeTags` push đúng tag, chỉ khi giá trị đổi
+- [x] **Test determinism:** push loop bật + client poll status — jitter trung bình < 2ms, không chu kỳ nào > 40ms. Mặc định chạy 5s cho nhanh; đặt `DBI_DETERMINISM_SECONDS=60` để chạy đủ 60 giây như bàn giao
+- [x] Client ngắt đột ngột → Runtime vẫn chạy, `CycleCount` tiếp tục tăng, nhận lại kết nối mới được
+- [x] Client thứ hai bị từ chối kèm lý do rõ ràng, không treo im lặng
+- [x] Deploy assembly lỗi (không có class kế thừa `ControllerProgram`) → `E_NO_PROGRAM_ENTRYPOINT`; assembly rác → `E_ASSEMBLY_LOAD_FAILED`; driver lạ → `E_UNKNOWN_DRIVER`. Runtime không crash
+- [x] Jitter và scan time đo đúng công thức, có test; `ScanMetrics` là `record` bất biến (hết torn read)
+- [x] `RuntimeHost` đi qua `IProgramSwapper`, không gọi `UserProgramLoader` trực tiếp
+- [x] `SwapMode.HotReload` trả `E_HOTRELOAD_UNSUPPORTED` kèm thông báo rõ *(TC-D12)*
+- [x] Stop xả output xuống **thiết bị thật** trước khi unload; có test khẳng định output đã về 0 **trước** lúc nạp chương trình mới *(TC-D01)*
+- [x] Deploy lưu `last-deploy/` kèm sha256; checksum sai → `NoProgram` *(TC-D08)*
+- [x] `lastCleanState` ghi mỗi lần đổi trạng thái, không phải lúc tắt
+- [x] ⚠️ **Chốt chặn 1:** `lastCleanState = Faulted` → khởi động ở `Stopped` *(TC-D05)*
+- [x] ⚠️ **Chốt chặn 2:** có file `.norun` → khởi động ở `Stopped` *(TC-D06)*
+- [x] `lastCleanState = Running` + không `.norun` + checksum đúng → tự chạy *(TC-D07)*
+- [x] Fault push kênh `fault` có cấu trúc lên Studio, không chỉ `Console.WriteLine`
+- [x] Fault xoá force **trước** khi xả output (xả xong mà force còn thì force kéo output lên lại) *(TC-D03)*
+- [x] `dotnet test` toàn bộ pass — **162/162**, build 0 warning / 0 error

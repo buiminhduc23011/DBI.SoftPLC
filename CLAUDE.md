@@ -37,13 +37,17 @@ Thiếu `DBI.Drivers` → restore fail. Đó là lỗi môi trường, không ph
 
 ## Cấu trúc
 
-| Project | TFM | Vai trò |
-|---|---|---|
-| `DBI.Controller.Core` | net8.0 | `IMemoryImage`, `IDriver`, `MemorySnapshot` |
-| `DBI.Controller.SDK` | net8.0 | `ControllerProgram`, `IOContainer`, Primitives (Ton/Tof/Tp/CTU/CTD/Edge) |
-| `DBI.Controller.Runtime` | net8.0 | `ScanEngine`, `DriverManager`, `SafetyCatch`, `UserProgramLoader` |
-| `DBI.Controller.Studio` | **net10.0-windows** | WPF IDE kiểu TIA Portal |
-| `Drivers/*` | net8.0 | Adapter bọc `DBI.Drivers` |
+Mọi project là **net10.0**, riêng `DBI.Controller.Studio` là `net10.0-windows` (WPF).
+
+| Project | Vai trò |
+|---|---|
+| `DBI.Controller.Core` | `IMemoryImage`, `IDriver`, `MemorySnapshot`, `TagRoute`, `DeviceSpec` |
+| `DBI.Controller.SDK` | `ControllerProgram`, `IOContainer`, Primitives (Ton/Tof/Tp/CTU/CTD/Edge) |
+| `DBI.Controller.Protocol` | Contract IPC Studio ↔ Runtime. **Không** tham chiếu Runtime/Studio |
+| `DBI.Controller.Runtime` | `RuntimeHost`, `IpcServer`, `ScanEngine`, `DriverManager`, `SafetyCatch` |
+| `DBI.Controller.Studio.Core` | Mô hình project, `ProjectService`, validation — **không** phụ thuộc WPF |
+| `DBI.Controller.Studio` | WPF IDE kiểu TIA Portal |
+| `Drivers/*` | Adapter bọc `DBI.Drivers` |
 
 ---
 
@@ -59,14 +63,20 @@ Thiếu `DBI.Drivers` → restore fail. Đó là lỗi môi trường, không ph
 
 ## ⚠️ Bẫy đã biết trong code hiện tại
 
-| # | Bẫy | Ghi chú |
+| # | Bẫy | Trạng thái |
 |---|---|---|
-| B-1 | `IOContainer : DynamicObject`, `TryGetMember` **luôn** gọi `GetBool` | Gõ sai tên tag không bị bắt; đọc tag `Real` trả về `bool`. Phase-00 gỡ. |
-| B-2 | 5 driver ép kiểu `is not MemorySnapshot` rồi **im lặng return** khi hỏng | Đang chạy đúng, nhưng decorator `IMemoryImage` nào cũng làm driver chết lặng. Quả mìn cho phase-11. |
-| B-3 | `_intValues`/`_floatValues` **không** double-buffer | Tag Int/Real bỏ qua cơ chế snapshot → race. |
-| B-4 | `Program.Main` **không bao giờ** gọi `SetProgram()`/`Start()` | Runtime host là stub, chưa chạy scan lần nào. |
-| B-5 | Không có bảng định tuyến tag→device | `DriverManager` đưa cả memory image cho mọi driver. |
-| B-6 | 5 driver **chỉ hỗ trợ `bool`** | Tag `Int`/`Real` sẽ luôn đọc 0 trong im lặng. |
+| B-1 | `IOContainer : DynamicObject`, `TryGetMember` **luôn** gọi `GetBool` | ✅ phase-00 gỡ. `IOContainer` là `partial class`, phase-06 sinh property mạnh kiểu. |
+| B-2 | 5 driver ép kiểu `is not MemorySnapshot` rồi **im lặng return** khi hỏng | ✅ phase-00 gỡ. API thô lên `IMemoryImage`; test quét metadata canh không tái phát. |
+| B-3 | `_intValues`/`_floatValues` **không** double-buffer | ✅ phase-00 gỡ. |
+| B-4 | `Program.Main` **không bao giờ** gọi `SetProgram()`/`Start()` | ✅ phase-02 gỡ. `RuntimeHost` + `IpcServer`. |
+| B-5 | Không có bảng định tuyến tag→device | ✅ phase-02 gỡ. `TagRoutingTable`, mỗi driver chỉ nhận route của mình. |
+| B-6 | 4 driver phần cứng **chỉ hỗ trợ `bool`** | 🟡 Còn lại. Nhưng **hết im lặng**: gặp tag Int/Real thì ghi `LastError` rõ ràng. Task 09.0 xử lý. `SimulationDriver` đã đủ 3 kiểu. |
+
+### Ba điều dễ vấp, đã có test canh
+
+1. **Output không được hoán đổi tham chiếu.** Chỉ input double-buffer bằng `Interlocked.Exchange`. Output là trạng thái *giữ* (latch) — hoán đổi sẽ làm băng tải tự tắt sau một chu kỳ.
+2. **`ProtocolJson` phải là camelCase.** Client phân biệt response với push bằng cách dò `requestId` trên `JsonDocument`, phép dò đó phân biệt hoa/thường. Đổi chính sách đặt tên là **mọi lệnh treo vô hạn, không exception**.
+3. **`HighResolutionTimerScope` phải bọc vòng scan.** Không có nó, `Thread.Sleep` bị chặn ở độ phân giải timer ~15.6ms của Windows và jitter lên ~6ms.
 
 ---
 

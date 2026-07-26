@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Contract dùng chung giữa Studio và Runtime (ADR-001).
+    KHÔNG được tham chiếu DBI.Controller.Runtime hay DBI.Controller.Studio — nếu lỡ tham chiếu
+    thì ranh giới tiến trình chỉ còn là hình thức. Chỉ phụ thuộc Core để dùng chung TagRoute /
+    DeviceSpec / TagDataType với IDriver.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\DBI.Controller.Core\DBI.Controller.Core.csproj" />
+  </ItemGroup>
+
+</Project>

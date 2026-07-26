@@ -1,18 +1,28 @@
 using System.Diagnostics;
 using DBI.Controller.Core.Interfaces;
-using DBI.Controller.Core.Models;
 using DBI.Controller.Runtime.Drivers;
 using DBI.Controller.Runtime.Safety;
 using DBI.Controller.SDK;
 
 namespace DBI.Controller.Runtime.Engine;
 
-public class ScanMetrics
+/// <summary>
+/// Ảnh chụp bất biến của chỉ số scan.
+/// </summary>
+/// <remarks>
+/// Bất biến là chủ ý: <c>GetStatus</c> đọc từ thread IPC trong khi scan thread đang ghi. Nếu đây là
+/// class mutable thì người đọc có thể thấy <c>CycleCount</c> của chu kỳ này ghép với
+/// <c>LastScanMs</c> của chu kỳ khác (torn read).
+/// </remarks>
+public record ScanMetrics(
+    long CycleCount,
+    double LastScanMs,
+    double MaxScanMs,
+    double JitterMs,
+    double MaxJitterMs,
+    double AverageJitterMs)
 {
-    public long CycleCount { get; set; }
-    public double LastScanTimeMs { get; set; }
-    public double MaxScanTimeMs { get; set; }
-    public double JitterMs { get; set; }
+    public static readonly ScanMetrics Empty = new(0, 0, 0, 0, 0, 0);
 }
 
 public class ScanEngine
@@ -20,12 +30,18 @@ public class ScanEngine
     private readonly IMemoryImage _memoryImage;
     private readonly DriverManager _driverManager;
     private readonly SafetyCatchManager _safetyCatchManager;
+
     private ControllerProgram? _program;
-    private bool _isRunning;
+    private volatile bool _isRunning;
     private Thread? _engineThread;
 
+    private ScanMetrics _metrics = ScanMetrics.Empty;
+
     public int ScanIntervalMs { get; set; } = 20;
-    public ScanMetrics Metrics { get; } = new();
+
+    /// <summary>Đọc được an toàn từ thread khác — luôn là một ảnh chụp nhất quán.</summary>
+    public ScanMetrics Metrics => Volatile.Read(ref _metrics);
+
     public bool IsRunning => _isRunning;
 
     public ScanEngine(IMemoryImage memoryImage, DriverManager driverManager, SafetyCatchManager safetyCatchManager)
@@ -35,10 +51,9 @@ public class ScanEngine
         _safetyCatchManager = safetyCatchManager ?? throw new ArgumentNullException(nameof(safetyCatchManager));
     }
 
-    public void SetProgram(ControllerProgram program)
-    {
-        _program = program;
-    }
+    public void SetProgram(ControllerProgram? program) => _program = program;
+
+    public void ResetMetrics() => Volatile.Write(ref _metrics, ScanMetrics.Empty);
 
     public void Start()
     {
@@ -58,56 +73,119 @@ public class ScanEngine
     public void Stop()
     {
         _isRunning = false;
-        _engineThread?.Join(1000);
+        _engineThread?.Join(TimeSpan.FromSeconds(2));
+        _engineThread = null;
     }
 
     private void RunLoop()
     {
-        var stopwatch = new Stopwatch();
+        // Không có dòng này thì Thread.Sleep bị chặn ở độ phân giải timer mặc định ~15.6ms của
+        // Windows và jitter trung bình lên tới ~6ms — quá lớn cho chu kỳ 20ms.
+        using var timerScope = new HighResolutionTimerScope();
+
+        var clock = Stopwatch.StartNew();
+
+        double intervalMs = ScanIntervalMs;
+        double nextDeadlineMs = clock.Elapsed.TotalMilliseconds;
+        double previousCycleStartMs = double.NaN;
+
+        var metrics = ScanMetrics.Empty;
+        double jitterSum = 0;
+        long jitterSamples = 0;
 
         while (_isRunning && !_safetyCatchManager.IsFaulted)
         {
-            stopwatch.Restart();
+            double cycleStartMs = clock.Elapsed.TotalMilliseconds;
 
             try
             {
-                // 1. Sync Read Inputs from Drivers into Memory InputBuffer
+                // 1. Driver đọc phần cứng vào InputBuffer
                 _driverManager.ReadInputsAsync(_memoryImage).GetAwaiter().GetResult();
 
-                // 2. Swap Input Buffers (InputBuffer -> InputSnapshot)
+                // 2. Chốt Input: InputBuffer -> InputSnapshot
                 _memoryImage.SwapInputBuffers();
 
-                // 3. Execute User Logic (ControllerProgram.Execute())
+                // 3. Chạy logic người dùng
                 _program?.Execute();
 
-                // 4. Swap Output Buffers (OutputSnapshot -> OutputBuffer)
+                // 4. Chốt Output: OutputState -> OutputBuffer
                 _memoryImage.SwapOutputBuffers();
 
-                // 5. Sync Write Outputs from Memory Snapshot to Drivers
+                // 5. Driver ghi OutputBuffer xuống phần cứng
                 _driverManager.WriteOutputsAsync(_memoryImage).GetAwaiter().GetResult();
-
-                Metrics.CycleCount++;
             }
             catch (Exception ex)
             {
-                _safetyCatchManager.HandleUnhandledExceptionAsync(ex, _memoryImage, _driverManager).GetAwaiter().GetResult();
+                _safetyCatchManager
+                    .HandleUnhandledExceptionAsync(ex, _memoryImage, _driverManager)
+                    .GetAwaiter().GetResult();
+
                 _isRunning = false;
                 break;
             }
 
-            stopwatch.Stop();
-            double elapsedMs = stopwatch.Elapsed.TotalMilliseconds;
+            double elapsedMs = clock.Elapsed.TotalMilliseconds - cycleStartMs;
 
-            Metrics.LastScanTimeMs = elapsedMs;
-            Metrics.MaxScanTimeMs = Math.Max(Metrics.MaxScanTimeMs, elapsedMs);
-            Metrics.JitterMs = Math.Abs(elapsedMs - ScanIntervalMs);
-
-            // Precision timing wait for remaining frame duration
-            int sleepTimeMs = ScanIntervalMs - (int)elapsedMs;
-            if (sleepTimeMs > 0)
+            // Jitter = độ lệch của CHU KỲ THỰC TẾ (đầu scan này so với đầu scan trước) với chu kỳ
+            // đặt trước. Công thức cũ |thời gian thực thi - chu kỳ| đo thời gian thực thi, không
+            // phải jitter: logic chạy nhanh 1ms trong chu kỳ 20ms đều tăm tắp vẫn bị báo jitter 19ms.
+            double jitterMs = 0;
+            if (!double.IsNaN(previousCycleStartMs))
             {
-                Thread.Sleep(sleepTimeMs);
+                jitterMs = Math.Abs(cycleStartMs - previousCycleStartMs - intervalMs);
+                jitterSum += jitterMs;
+                jitterSamples++;
             }
+
+            previousCycleStartMs = cycleStartMs;
+
+            metrics = new ScanMetrics(
+                CycleCount: metrics.CycleCount + 1,
+                LastScanMs: elapsedMs,
+                MaxScanMs: Math.Max(metrics.MaxScanMs, elapsedMs),
+                JitterMs: jitterMs,
+                MaxJitterMs: Math.Max(metrics.MaxJitterMs, jitterMs),
+                AverageJitterMs: jitterSamples == 0 ? 0 : jitterSum / jitterSamples);
+
+            Volatile.Write(ref _metrics, metrics);
+
+            nextDeadlineMs += intervalMs;
+
+            // Chu kỳ quá tải: bỏ qua các deadline đã lỡ thay vì đuổi theo bằng một chuỗi chu kỳ
+            // không nghỉ — đuổi theo chỉ làm hệ thống nghẹt thêm.
+            double nowMs = clock.Elapsed.TotalMilliseconds;
+            if (nextDeadlineMs < nowMs)
+                nextDeadlineMs = nowMs;
+
+            WaitUntil(clock, nextDeadlineMs);
+        }
+    }
+
+    /// <summary>
+    /// Chờ tới mốc thời gian tuyệt đối.
+    /// </summary>
+    /// <remarks>
+    /// <c>Thread.Sleep((int)(interval - elapsed))</c> cũ cắt cụt phần thập phân: chu kỳ 20ms mà logic
+    /// chạy 0.7ms thì ngủ 19ms thay vì 19.3ms — lệch tích luỹ dần. Ở đây ngủ phần thô rồi
+    /// <see cref="SpinWait"/> nốt phần dư dưới 1ms.
+    /// </remarks>
+    private static void WaitUntil(Stopwatch clock, double deadlineMs)
+    {
+        // Với timer 1ms (HighResolutionTimerScope), Thread.Sleep sai số dưới 1ms — chừa 2ms để
+        // spin nốt là đủ, không phải đốt CPU cả chu kỳ.
+        const double SpinThresholdMs = 2.0;
+
+        double remaining = deadlineMs - clock.Elapsed.TotalMilliseconds;
+        if (remaining <= 0) return;
+
+        if (remaining > SpinThresholdMs)
+            Thread.Sleep((int)(remaining - SpinThresholdMs));
+
+        var spinner = new SpinWait();
+        while (clock.Elapsed.TotalMilliseconds < deadlineMs)
+        {
+            if (spinner.NextSpinWillYield) spinner.Reset();
+            spinner.SpinOnce();
         }
     }
 }

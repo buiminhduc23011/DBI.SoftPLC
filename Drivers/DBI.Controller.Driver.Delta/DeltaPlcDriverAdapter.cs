@@ -4,18 +4,17 @@ using DBI.Drivers.Delta.PLC;
 
 namespace DBI.Controller.Driver.Delta;
 
-public class DeltaTagConfig
-{
-    public string TagName { get; set; } = string.Empty;
-    public string RegisterType { get; set; } = "X"; // X, Y, M, D, S, C, T
-    public int Address { get; set; }
-}
-
 /// <summary>
-/// Driver Adapter bọc DeltaClient từ DBI.Drivers.Delta.PLC.
+/// Driver Adapter bọc <c>DeltaClient</c> từ <c>DBI.Drivers.Delta.PLC</c>.
 /// </summary>
+/// <remarks>
+/// Cú pháp địa chỉ theo đúng ký hiệu Delta: <c>X0</c>, <c>Y5</c>, <c>M100</c>.
+/// Ghi được vào <c>Y</c> và <c>M</c>; <c>X</c> là ngõ vào vật lý nên chỉ đọc.
+/// </remarks>
 public class DeltaPlcDriverAdapter : IDriver
 {
+    public const string DriverTypeId = "DBI.Controller.Driver.Delta";
+
     private DeltaClient? _client;
 
     public string DriverId { get; }
@@ -23,17 +22,25 @@ public class DeltaPlcDriverAdapter : IDriver
     public int Port { get; set; }
     public byte SlaveId { get; set; }
     public ConnectionState State { get; private set; } = ConnectionState.Disconnected;
+    public string? LastError { get; private set; }
 
-    public List<DeltaTagConfig> InputMappings { get; } = new();
-    public List<DeltaTagConfig> OutputMappings { get; } = new();
-
-    public DeltaPlcDriverAdapter(string driverId = "DELTA_PLC_DRIVER", string ipAddress = "192.168.1.5", int port = 502, byte slaveId = 1)
+    public DeltaPlcDriverAdapter(
+        string driverId = "DELTA_PLC_DRIVER",
+        string ipAddress = "192.168.1.5",
+        int port = 502,
+        byte slaveId = 1)
     {
         DriverId = driverId;
         IpAddress = ipAddress;
         Port = port;
         SlaveId = slaveId;
     }
+
+    public static DeltaPlcDriverAdapter FromSpec(DeviceSpec spec) => new(
+        spec.Name,
+        spec.Get("ip", "192.168.1.5"),
+        spec.GetInt("port", 502),
+        (byte)spec.GetInt("slaveId", 1));
 
     public Task ConnectAsync(CancellationToken cancellationToken = default)
     {
@@ -43,73 +50,88 @@ public class DeltaPlcDriverAdapter : IDriver
             _client = new DeltaClient(IpAddress, Port, DeltaConnectionType.TcpDVP, SlaveId);
             _client.Connect();
             State = ConnectionState.Connected;
+            LastError = null;
         }
-        catch
+        catch (Exception ex)
         {
             State = ConnectionState.Faulted;
+            LastError = ex.Message;
             throw;
         }
 
         return Task.CompletedTask;
     }
 
-    public Task ReadInputsAsync(IMemoryImage memoryImage, CancellationToken cancellationToken = default)
+    public Task ReadInputsAsync(
+        IMemoryImage memoryImage,
+        IReadOnlyList<TagRoute> routes,
+        CancellationToken cancellationToken = default)
     {
         if (State != ConnectionState.Connected || _client == null)
             return Task.CompletedTask;
 
-        foreach (var map in InputMappings)
+        foreach (var route in routes)
         {
+            if (route.Direction != TagDirection.Input) continue;
+            if (!EnsureBool(route)) continue;
+            if (!TryParseAddress(route, out char area, out int address)) continue;
+
             try
             {
-                if (map.RegisterType.Equals("X", StringComparison.OrdinalIgnoreCase))
+                bool[] values = area switch
                 {
-                    bool[] vals = _client.ReadX(map.Address, 1);
-                    if (vals.Length > 0) memoryImage.SetRawInput(map.TagName, vals[0]);
-                }
-                else if (map.RegisterType.Equals("M", StringComparison.OrdinalIgnoreCase))
-                {
-                    bool[] vals = _client.ReadM(map.Address, 1);
-                    if (vals.Length > 0) memoryImage.SetRawInput(map.TagName, vals[0]);
-                }
-                else if (map.RegisterType.Equals("Y", StringComparison.OrdinalIgnoreCase))
-                {
-                    bool[] vals = _client.ReadY(map.Address, 1);
-                    if (vals.Length > 0) memoryImage.SetRawInput(map.TagName, vals[0]);
-                }
+                    'X' => _client.ReadX(address, 1),
+                    'Y' => _client.ReadY(address, 1),
+                    'M' => _client.ReadM(address, 1),
+                    _ => Array.Empty<bool>()
+                };
+
+                if (values.Length > 0)
+                    memoryImage.SetRawInput(route.TagName, values[0]);
+                else
+                    LastError = $"Tag '{route.TagName}': vùng nhớ '{area}' chưa hỗ trợ đọc Bool.";
             }
-            catch
+            catch (Exception ex)
             {
                 State = ConnectionState.Faulted;
+                LastError = $"Đọc tag '{route.TagName}' ({route.Address}) lỗi: {ex.Message}";
             }
         }
 
         return Task.CompletedTask;
     }
 
-    public Task WriteOutputsAsync(IMemoryImage memoryImage, CancellationToken cancellationToken = default)
+    public Task WriteOutputsAsync(
+        IMemoryImage memoryImage,
+        IReadOnlyList<TagRoute> routes,
+        CancellationToken cancellationToken = default)
     {
         if (State != ConnectionState.Connected || _client == null)
             return Task.CompletedTask;
 
-        foreach (var map in OutputMappings)
+        foreach (var route in routes)
         {
+            if (route.Direction != TagDirection.Output) continue;
+            if (!EnsureBool(route)) continue;
+            if (!TryParseAddress(route, out char area, out int address)) continue;
+
+            bool value = memoryImage.GetRawOutputBool(route.TagName);
+
             try
             {
-                if (map.RegisterType.Equals("Y", StringComparison.OrdinalIgnoreCase))
+                switch (area)
                 {
-                    bool val = memoryImage.GetRawOutputBool(map.TagName);
-                    _client.WriteY(map.Address, new[] { val });
-                }
-                else if (map.RegisterType.Equals("M", StringComparison.OrdinalIgnoreCase))
-                {
-                    bool val = memoryImage.GetRawOutputBool(map.TagName);
-                    _client.WriteM(map.Address, new[] { val });
+                    case 'Y': _client.WriteY(address, new[] { value }); break;
+                    case 'M': _client.WriteM(address, new[] { value }); break;
+                    default:
+                        LastError = $"Tag '{route.TagName}': vùng '{area}' chỉ đọc, ghi được vào Y hoặc M.";
+                        break;
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 State = ConnectionState.Faulted;
+                LastError = $"Ghi tag '{route.TagName}' ({route.Address}) lỗi: {ex.Message}";
             }
         }
 
@@ -122,5 +144,36 @@ public class DeltaPlcDriverAdapter : IDriver
         _client?.Dispose();
         State = ConnectionState.Disconnected;
         return Task.CompletedTask;
+    }
+
+    /// <summary>B-6: mới hỗ trợ Bool. Báo lỗi rõ thay vì im lặng trả 0 — task 09.0 bổ sung Int/Real.</summary>
+    private bool EnsureBool(TagRoute route)
+    {
+        if (route.DataType == TagDataType.Bool) return true;
+
+        LastError = $"Tag '{route.TagName}' kiểu {route.DataType}: driver Delta hiện chỉ hỗ trợ Bool.";
+        return false;
+    }
+
+    /// <summary>
+    /// Tách ký hiệu Delta: <c>M100</c> → ('M', 100). Công khai để Studio kiểm tra địa chỉ
+    /// ngay lúc kỹ sư gõ vào Tag Table.
+    /// </summary>
+    public bool TryParseAddress(TagRoute route, out char area, out int address)
+    {
+        area = '\0';
+        address = 0;
+
+        string raw = route.Address.Trim();
+
+        if (raw.Length >= 2 && char.IsAsciiLetter(raw[0]) && int.TryParse(raw[1..], out address))
+        {
+            area = char.ToUpperInvariant(raw[0]);
+            return true;
+        }
+
+        LastError = $"Tag '{route.TagName}': địa chỉ '{route.Address}' không đúng ký hiệu Delta " +
+                    "(ví dụ X0, Y5, M100).";
+        return false;
     }
 }

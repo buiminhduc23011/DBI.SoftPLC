@@ -4,34 +4,38 @@ using DBI.Drivers.Omron;
 
 namespace DBI.Controller.Driver.Omron;
 
-public class OmronTagConfig
-{
-    public string TagName { get; set; } = string.Empty;
-    public string Area { get; set; } = "CIO"; // CIO, WR, HR
-    public int Address { get; set; }
-}
-
 /// <summary>
-/// Driver Adapter bọc OmronClient từ DBI.Drivers.Omron (FINS Protocol).
+/// Driver Adapter bọc <c>OmronClient</c> từ <c>DBI.Drivers.Omron</c> (giao thức FINS).
 /// </summary>
+/// <remarks>Cú pháp địa chỉ theo ký hiệu Omron: <c>CIO100</c>, <c>WR5</c>, <c>HR10</c>.</remarks>
 public class OmronPlcDriverAdapter : IDriver
 {
+    public const string DriverTypeId = "DBI.Controller.Driver.Omron";
+
+    private static readonly string[] KnownAreas = { "CIO", "WR", "HR" };
+
     private OmronClient? _client;
 
     public string DriverId { get; }
     public string IpAddress { get; set; }
     public int Port { get; set; }
     public ConnectionState State { get; private set; } = ConnectionState.Disconnected;
+    public string? LastError { get; private set; }
 
-    public List<OmronTagConfig> InputMappings { get; } = new();
-    public List<OmronTagConfig> OutputMappings { get; } = new();
-
-    public OmronPlcDriverAdapter(string driverId = "OMRON_PLC_DRIVER", string ipAddress = "192.168.1.10", int port = 9600)
+    public OmronPlcDriverAdapter(
+        string driverId = "OMRON_PLC_DRIVER",
+        string ipAddress = "192.168.1.10",
+        int port = 9600)
     {
         DriverId = driverId;
         IpAddress = ipAddress;
         Port = port;
     }
+
+    public static OmronPlcDriverAdapter FromSpec(DeviceSpec spec) => new(
+        spec.Name,
+        spec.Get("ip", "192.168.1.10"),
+        spec.GetInt("port", 9600));
 
     public Task ConnectAsync(CancellationToken cancellationToken = default)
     {
@@ -41,76 +45,83 @@ public class OmronPlcDriverAdapter : IDriver
             _client = new OmronClient(IpAddress, Port);
             _client.Connect();
             State = ConnectionState.Connected;
+            LastError = null;
         }
-        catch
+        catch (Exception ex)
         {
             State = ConnectionState.Faulted;
+            LastError = ex.Message;
             throw;
         }
 
         return Task.CompletedTask;
     }
 
-    public Task ReadInputsAsync(IMemoryImage memoryImage, CancellationToken cancellationToken = default)
+    public Task ReadInputsAsync(
+        IMemoryImage memoryImage,
+        IReadOnlyList<TagRoute> routes,
+        CancellationToken cancellationToken = default)
     {
         if (State != ConnectionState.Connected || _client == null)
             return Task.CompletedTask;
 
-        foreach (var map in InputMappings)
+        foreach (var route in routes)
         {
+            if (route.Direction != TagDirection.Input) continue;
+            if (!EnsureBool(route)) continue;
+            if (!TryParseAddress(route, out string area, out int address)) continue;
+
             try
             {
-                if (map.Area.Equals("CIO", StringComparison.OrdinalIgnoreCase))
+                bool[] values = area switch
                 {
-                    bool[] vals = _client.ReadCIO(map.Address, 1);
-                    if (vals.Length > 0) memoryImage.SetRawInput(map.TagName, vals[0]);
-                }
-                else if (map.Area.Equals("WR", StringComparison.OrdinalIgnoreCase))
-                {
-                    bool[] vals = _client.ReadWR(map.Address, 1);
-                    if (vals.Length > 0) memoryImage.SetRawInput(map.TagName, vals[0]);
-                }
-                else if (map.Area.Equals("HR", StringComparison.OrdinalIgnoreCase))
-                {
-                    bool[] vals = _client.ReadHR(map.Address, 1);
-                    if (vals.Length > 0) memoryImage.SetRawInput(map.TagName, vals[0]);
-                }
+                    "CIO" => _client.ReadCIO(address, 1),
+                    "WR" => _client.ReadWR(address, 1),
+                    "HR" => _client.ReadHR(address, 1),
+                    _ => Array.Empty<bool>()
+                };
+
+                if (values.Length > 0) memoryImage.SetRawInput(route.TagName, values[0]);
             }
-            catch
+            catch (Exception ex)
             {
                 State = ConnectionState.Faulted;
+                LastError = $"Đọc tag '{route.TagName}' ({route.Address}) lỗi: {ex.Message}";
             }
         }
 
         return Task.CompletedTask;
     }
 
-    public Task WriteOutputsAsync(IMemoryImage memoryImage, CancellationToken cancellationToken = default)
+    public Task WriteOutputsAsync(
+        IMemoryImage memoryImage,
+        IReadOnlyList<TagRoute> routes,
+        CancellationToken cancellationToken = default)
     {
         if (State != ConnectionState.Connected || _client == null)
             return Task.CompletedTask;
 
-        foreach (var map in OutputMappings)
+        foreach (var route in routes)
         {
+            if (route.Direction != TagDirection.Output) continue;
+            if (!EnsureBool(route)) continue;
+            if (!TryParseAddress(route, out string area, out int address)) continue;
+
+            bool[] value = { memoryImage.GetRawOutputBool(route.TagName) };
+
             try
             {
-                bool val = memoryImage.GetRawOutputBool(map.TagName);
-                if (map.Area.Equals("CIO", StringComparison.OrdinalIgnoreCase))
+                switch (area)
                 {
-                    _client.WriteCIO(map.Address, new[] { val });
-                }
-                else if (map.Area.Equals("WR", StringComparison.OrdinalIgnoreCase))
-                {
-                    _client.WriteWR(map.Address, new[] { val });
-                }
-                else if (map.Area.Equals("HR", StringComparison.OrdinalIgnoreCase))
-                {
-                    _client.WriteHR(map.Address, new[] { val });
+                    case "CIO": _client.WriteCIO(address, value); break;
+                    case "WR": _client.WriteWR(address, value); break;
+                    case "HR": _client.WriteHR(address, value); break;
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 State = ConnectionState.Faulted;
+                LastError = $"Ghi tag '{route.TagName}' ({route.Address}) lỗi: {ex.Message}";
             }
         }
 
@@ -123,5 +134,39 @@ public class OmronPlcDriverAdapter : IDriver
         _client?.Dispose();
         State = ConnectionState.Disconnected;
         return Task.CompletedTask;
+    }
+
+    /// <summary>B-6: mới hỗ trợ Bool. Báo lỗi rõ thay vì im lặng trả 0 — task 09.0 bổ sung Int/Real.</summary>
+    private bool EnsureBool(TagRoute route)
+    {
+        if (route.DataType == TagDataType.Bool) return true;
+
+        LastError = $"Tag '{route.TagName}' kiểu {route.DataType}: driver Omron hiện chỉ hỗ trợ Bool.";
+        return false;
+    }
+
+    /// <summary>
+    /// Tách ký hiệu Omron: <c>CIO100</c> → ("CIO", 100). Công khai để Studio kiểm tra địa chỉ
+    /// ngay lúc kỹ sư gõ vào Tag Table.
+    /// </summary>
+    public bool TryParseAddress(TagRoute route, out string area, out int address)
+    {
+        string raw = route.Address.Trim().ToUpperInvariant();
+
+        foreach (string candidate in KnownAreas)
+        {
+            if (raw.StartsWith(candidate, StringComparison.Ordinal) &&
+                int.TryParse(raw[candidate.Length..], out address))
+            {
+                area = candidate;
+                return true;
+            }
+        }
+
+        area = "";
+        address = 0;
+        LastError = $"Tag '{route.TagName}': địa chỉ '{route.Address}' không đúng ký hiệu Omron " +
+                    "(ví dụ CIO100, WR5, HR10).";
+        return false;
     }
 }

@@ -59,8 +59,10 @@ public class UserProgramLoader
 
         var instance = (ControllerProgram)Activator.CreateInstance(programType)!;
         instance.Initialize(memoryImage);
-        instance.OnStart();
 
+        // KHÔNG gọi OnStart() ở đây. Trình tự đúng là Load → Connect driver → OnStart → Start:
+        // OnStart của người dùng thường đọc trạng thái đầu vào, mà lúc chưa kết nối driver thì
+        // đầu vào toàn 0. RuntimeHost gọi OnStart sau khi driver đã kết nối.
         CurrentProgram = instance;
         return instance;
     }

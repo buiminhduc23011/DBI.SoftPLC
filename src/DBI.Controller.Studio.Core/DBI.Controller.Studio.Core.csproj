@@ -2,11 +2,8 @@
 
   <!--
     Phần lõi của Studio KHÔNG phụ thuộc WPF: mô hình project, đọc/ghi .dbiproj, validation,
-    sinh code. Tách ra net8.0 để test project (net10.0) tham chiếu được — net10.0 không thể
-    tham chiếu net10.0-windows của DBI.Controller.Studio.
+    sinh code. Tách khỏi DBI.Controller.Studio để test project tham chiếu được — net10.0
+    không thể tham chiếu net10.0-windows.
   -->
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-  </PropertyGroup>
 
 </Project>
