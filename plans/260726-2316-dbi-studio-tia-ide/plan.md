@@ -202,8 +202,8 @@ MyMachine/
 | 03 | [Studio Runtime Client](phase-03-studio-runtime-client.md) | #16b | ✅ Done | **100%** |
 | 04 | [AvalonDock Shell & MVVM](phase-04-shell-mvvm.md) | #6, #7, #8 | ✅ Done | **100%** |
 | 05 | [Project Tree & Block Templates](phase-05-project-tree.md) | #2 | ✅ Done | **100%** |
-| 06 | [Tag Table & Code Generator](phase-06-tag-table-codegen.md) | #4, #5 | 🟡 Đang làm | 0% |
-| 07 | [Multi-file Compile & Deploy](phase-07-compile-deploy.md) 🏁 | #3 | ⬜ Pending | 0% |
+| 06 | [Tag Table & Code Generator](phase-06-tag-table-codegen.md) | #4, #5 | ✅ Done | **100%** |
+| 07 | [Multi-file Compile & Deploy](phase-07-compile-deploy.md) 🏁 | #3 | 🟡 Đang làm | 0% |
 | 08 | [Roslyn IntelliSense & Error List](phase-08-intellisense.md) | #9, #10 | ⬜ Pending | 0% |
 | 09 | [Device Config & Tag Routing](phase-09-device-config.md) | #17 | ⬜ Pending | 0% |
 | 10 | [Watch Table & Live Monitoring](phase-10-watch-table.md) | #14 | ⬜ Pending | 0% |

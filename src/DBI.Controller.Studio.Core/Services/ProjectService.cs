@@ -391,6 +391,54 @@ public class ProjectService
         return block;
     }
 
+    public ProjectLoadResult AddTagTable(string name)
+    {
+        if (Current is null)
+            throw new InvalidOperationException("Chưa mở project nào.");
+
+        string candidate = name.Trim();
+        if (string.IsNullOrWhiteSpace(candidate))
+            return ProjectLoadResult.Failed("Tên tag table không được để trống.");
+
+        if (Current.TagTables.Any(t => t.Name.Equals(candidate, StringComparison.OrdinalIgnoreCase)))
+            return ProjectLoadResult.Failed($"Đã có tag table tên '{candidate}'.");
+
+        Current.TagTables.Add(new TagTable { Name = candidate });
+        Current.IsDirty = true;
+        return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
+    }
+
+    public ProjectLoadResult RenameTagTable(TagTable table, string newName)
+    {
+        if (Current is null)
+            throw new InvalidOperationException("Chưa mở project nào.");
+
+        string candidate = newName.Trim();
+        if (string.IsNullOrWhiteSpace(candidate))
+            return ProjectLoadResult.Failed("Tên tag table không được để trống.");
+
+        if (Current.TagTables.Any(t => !ReferenceEquals(t, table) &&
+                                       t.Name.Equals(candidate, StringComparison.OrdinalIgnoreCase)))
+            return ProjectLoadResult.Failed($"Đã có tag table tên '{candidate}'.");
+
+        table.Name = candidate;
+        Current.IsDirty = true;
+        return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
+    }
+
+    public ProjectLoadResult DeleteTagTable(TagTable table)
+    {
+        if (Current is null)
+            throw new InvalidOperationException("Chưa mở project nào.");
+
+        if (string.Equals(table.Name, "Default Tag Table", StringComparison.OrdinalIgnoreCase))
+            return ProjectLoadResult.Failed("Không xoá được Default Tag Table.");
+
+        Current.TagTables.Remove(table);
+        Current.IsDirty = true;
+        return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
+    }
+
     private static void CopyDirectory(string source, string destination)
     {
         if (!Directory.Exists(source)) return;

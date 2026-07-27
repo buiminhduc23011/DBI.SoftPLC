@@ -21,6 +21,7 @@ public partial class ShellViewModel : ObservableObject
     private readonly ProjectService _projects;
     private readonly IUserPrompt _prompt;
     private readonly IThemeSwitcher _theme;
+    private readonly IoCodeGenerator _generator;
     private readonly SynchronizationContext? _uiContext;
 
     private ILayoutPersistence? _layout;
@@ -30,11 +31,13 @@ public partial class ShellViewModel : ObservableObject
         ProjectService projects,
         IRuntimeClient runtime,
         IUserPrompt prompt,
+        IoCodeGenerator generator,
         IThemeSwitcher theme,
         ILayoutPersistence? layout = null)
     {
         _projects = projects ?? throw new ArgumentNullException(nameof(projects));
         _prompt = prompt ?? throw new ArgumentNullException(nameof(prompt));
+        _generator = generator ?? throw new ArgumentNullException(nameof(generator));
         _theme = theme ?? throw new ArgumentNullException(nameof(theme));
         _layout = layout;
         _uiContext = SynchronizationContext.Current;
@@ -114,6 +117,7 @@ public partial class ShellViewModel : ObservableObject
         }
 
         Editors.CloseAll();
+        EnsureGeneratedCode(result.Project!);
         ProjectTree.Load(result.Project);
         ConfigureProjectTree();
         StatusBar.ProjectName = result.Project!.Name;
@@ -132,6 +136,7 @@ public partial class ShellViewModel : ObservableObject
         if (Project is null) return;
 
         await Editors.SaveDirtyAsync();
+        EnsureGeneratedCode(Project);
         _projects.Save();
         SaveLayout();
 
@@ -166,6 +171,22 @@ public partial class ShellViewModel : ObservableObject
         if (node.Payload is CodeBlock block && Project is not null)
         {
             Editors.OpenBlock(block, Project.ProjectDirectory);
+            return;
+        }
+
+        if (node.Payload is TagTable table && Project is not null)
+        {
+            var document = Editors.OpenTagTable(Project, table, _generator);
+            document.ValidationIssuesChanged -= OnTagTableValidationIssuesChanged;
+            document.ValidationIssuesChanged += OnTagTableValidationIssuesChanged;
+            document.GeneratedCodeChanged -= OnGeneratedCodeChanged;
+            document.GeneratedCodeChanged += OnGeneratedCodeChanged;
+            return;
+        }
+
+        if (node.Kind == ProjectNodeKind.GeneratedFile && Project is not null)
+        {
+            Editors.OpenGeneratedCode(_generator.GetGeneratedFilePath(Project));
             return;
         }
 
@@ -319,6 +340,71 @@ public partial class ShellViewModel : ObservableObject
         Inspector.LogInformation($"Đã đặt '{block.Name}' làm khối Main.");
     }
 
+    [RelayCommand]
+    private void AddTagTable(ProjectNode? _)
+    {
+        if (Project is null) return;
+
+        string? name = _prompt.AskText("Thêm tag table", "Tên bảng tag:", "New Tag Table");
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        var result = _projects.AddTagTable(name);
+        if (!result.Success)
+        {
+            ReportProjectIssues("Không tạo được tag table", result.Issues);
+            return;
+        }
+
+        ProjectTree.Load(Project);
+        ConfigureProjectTree();
+        SelectAndOpenTagTable(name.Trim());
+        Inspector.LogInformation($"Đã tạo tag table '{name.Trim()}'.");
+    }
+
+    [RelayCommand]
+    private void RenameTagTable(ProjectNode? node)
+    {
+        if (Project is null || node?.Payload is not TagTable table) return;
+
+        string? name = _prompt.AskText("Đổi tên tag table", "Tên mới:", table.Name);
+        if (string.IsNullOrWhiteSpace(name) || string.Equals(name, table.Name, StringComparison.Ordinal)) return;
+
+        var result = _projects.RenameTagTable(table, name);
+        if (!result.Success)
+        {
+            ReportProjectIssues("Không đổi tên được tag table", result.Issues);
+            return;
+        }
+
+        ProjectTree.Load(Project);
+        ConfigureProjectTree();
+        SelectAndOpenTagTable(table.Name);
+    }
+
+    [RelayCommand]
+    private void DeleteTagTable(ProjectNode? node)
+    {
+        if (Project is null || node?.Payload is not TagTable table) return;
+
+        if (!_prompt.Confirm($"Xoá tag table '{table.Name}'?", "Xoá tag table"))
+            return;
+
+        if (Editors.Find(TagTableViewModel.ContentIdFor(table)) is { } opened)
+            Editors.Close(opened);
+
+        var result = _projects.DeleteTagTable(table);
+        if (!result.Success)
+        {
+            ReportProjectIssues("Không xoá được tag table", result.Issues);
+            return;
+        }
+
+        ProjectTree.Load(Project);
+        ConfigureProjectTree();
+        EnsureGeneratedCode(Project);
+        Inspector.LogInformation($"Đã xoá tag table '{table.Name}'.");
+    }
+
     private void OnProjectTreeSelectionChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(ProjectTreeViewModel.SelectedNode)) return;
@@ -330,10 +416,13 @@ public partial class ShellViewModel : ObservableObject
     private void ConfigureProjectTree() =>
         ProjectTree.ConfigureMenus(
             AddBlockCommand,
+            AddTagTableCommand,
             OpenNodeFromMenuCommand,
             RenameBlockCommand,
             DeleteBlockCommand,
-            SetMainBlockCommand);
+            SetMainBlockCommand,
+            RenameTagTableCommand,
+            DeleteTagTableCommand);
 
     private void ReportProjectIssues(string title, IReadOnlyList<ValidationIssue> issues)
     {
@@ -349,6 +438,20 @@ public partial class ShellViewModel : ObservableObject
         var node = root.Children
             .FirstOrDefault(c => c.Title == "Program Blocks")?
             .Children.FirstOrDefault(c => c.Title.Equals(blockName, StringComparison.OrdinalIgnoreCase));
+
+        if (node is null) return;
+
+        ProjectTree.SelectedNode = node;
+        OpenNode(node);
+    }
+
+    private void SelectAndOpenTagTable(string tableName)
+    {
+        if (ProjectTree.Roots.FirstOrDefault() is not { } root) return;
+
+        var node = root.Children
+            .FirstOrDefault(c => c.Title == "PLC Tags")?
+            .Children.FirstOrDefault(c => c.Title.Equals(tableName, StringComparison.OrdinalIgnoreCase));
 
         if (node is null) return;
 
@@ -429,5 +532,29 @@ public partial class ShellViewModel : ObservableObject
         }
 
         _uiContext.Post(_ => action(), null);
+    }
+
+    private void EnsureGeneratedCode(DbiProject project)
+    {
+        if (_generator.NeedsRegeneration(project))
+            OnGeneratedCodeChanged(this, _generator.WriteIfChanged(project));
+    }
+
+    private void OnTagTableValidationIssuesChanged(object? sender, IReadOnlyList<ValidationIssue> issues)
+    {
+        Inspector.ClearInformationCommand.Execute(null);
+        Inspector.LogInformation(issues);
+    }
+
+    private void OnGeneratedCodeChanged(object? sender, CodeGenerationResult result)
+    {
+        if (Editors.Find(GeneratedCodeViewModel.GeneratedContentId) is GeneratedCodeViewModel generated)
+            _ = generated.ReloadAsync();
+
+        ProjectTree.Load(Project);
+        ConfigureProjectTree();
+
+        if (result.Changed)
+            Inspector.LogInformation("Đã sinh lại Generated/IO.g.cs.");
     }
 }

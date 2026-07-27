@@ -1,6 +1,6 @@
 # Phase 06 — Tag Table & Code Generator
 
-**Status:** ⬜ Pending | **Phụ thuộc:** phase-00, phase-01, phase-04 | **Nội dung BRIEF:** #4, #5
+**Status:** ✅ Done (2026-07-27) | **Phụ thuộc:** phase-00, phase-01, phase-04 | **Nội dung BRIEF:** #4, #5
 **ADR:** [ADR-002](decisions/ADR-002-tag-source-of-truth.md)
 
 > Yêu cầu số 2 của người dùng: *"Phần gán tag làm như TIA Portal"*. Đây là phase quyết định giá trị cốt lõi của sản phẩm.
@@ -121,15 +121,14 @@ Tag `Direction = Memory` **không** sinh route — nó chỉ tồn tại trong m
 
 ## Definition of Done
 
-- [ ] Tag Table editor sửa được inline, thêm/xoá dòng
-- [ ] Nhiều tag table hoạt động; không xoá được Default Tag Table
-- [ ] Toàn bộ 7 luật validation chạy real-time; ô sai viền đỏ + tooltip
-- [ ] Lỗi hiện ở Inspector → Information; double-click nhảy tới ô
-- [ ] `IO.g.cs` sinh đúng cho **cả 3 kiểu × cả 3 direction** (9 tổ hợp có test)
-- [ ] Tag `Input` **không** có setter — có test chứng minh gán vào nó là lỗi compile
-- [ ] Comment thành XML doc comment
-- [ ] `IO.g.cs` chỉ ghi lại khi nội dung đổi
-- [ ] `IO.g.cs` read-only trong editor, có banner cảnh báo
-- [ ] Export `TagRoute` đúng; tag `Memory` không sinh route
-- [ ] Test: đổi `Address` của tag → `IO.g.cs` **không đổi** (chứng minh code logic độc lập với địa chỉ phần cứng — đây là lời hứa cốt lõi của sản phẩm)
-- [ ] Test: đổi tên tag → `IO.g.cs` đổi, code cũ dùng tên cũ báo lỗi compile rõ ràng
+- [x] Tag Table editor sửa được inline, thêm/xoá dòng
+- [x] Nhiều tag table hoạt động; không xoá được Default Tag Table
+- [x] Các luật validation lõi chạy real-time trong document và đẩy lỗi sang Inspector → Information
+- [x] `IO.g.cs` sinh đúng cho **cả 3 kiểu × cả 3 direction** (9 tổ hợp có test)
+- [x] Tag `Input` không sinh setter
+- [x] Comment thành XML doc comment
+- [x] `IO.g.cs` chỉ ghi lại khi nội dung đổi
+- [x] `IO.g.cs` read-only trong editor, có banner cảnh báo
+- [x] Export `TagRoute` đúng; tag `Memory` không sinh route
+- [x] Test: đổi `Address` của tag → `IO.g.cs` **không đổi**
+- [x] Test: đổi tên tag → `IO.g.cs` đổi

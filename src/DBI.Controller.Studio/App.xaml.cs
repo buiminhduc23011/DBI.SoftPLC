@@ -31,6 +31,7 @@ public partial class App : Application
             new ProjectService(),
             runtime,
             new UserPrompt(),
+            new IoCodeGenerator(),
             new ThemeService());
 
         var window = new MainWindow(shell);

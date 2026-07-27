@@ -115,6 +115,65 @@
                                    Background="{DynamicResource CardBg}"
                                    Foreground="{DynamicResource TextPrimary}" />
         </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:TagTableViewModel}">
+            <DockPanel Margin="6">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <Button Content="+ Add" Style="{StaticResource FlatButton}"
+                            Command="{Binding AddRowCommand}" />
+                    <Button Content="🗑 Delete" Style="{StaticResource FlatButton}"
+                            Command="{Binding DeleteRowCommand}" />
+                </StackPanel>
+
+                <DataGrid ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                          Style="{StaticResource FlatDataGrid}" AutoGenerateColumns="False"
+                          CanUserAddRows="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Name" Width="180">
+                            <DataGridTextColumn.Binding>
+                                <Binding Path="Name" UpdateSourceTrigger="PropertyChanged"
+                                         ValidatesOnNotifyDataErrors="True" />
+                            </DataGridTextColumn.Binding>
+                        </DataGridTextColumn>
+                        <DataGridComboBoxColumn Header="Type" Width="90"
+                                                SelectedItemBinding="{Binding DataType, UpdateSourceTrigger=PropertyChanged}"
+                                                ItemsSource="{Binding DataContext.DataTypes, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                        <DataGridComboBoxColumn Header="Direction" Width="110"
+                                                SelectedItemBinding="{Binding Direction, UpdateSourceTrigger=PropertyChanged}"
+                                                ItemsSource="{Binding DataContext.Directions, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                        <DataGridComboBoxColumn Header="Device" Width="160"
+                                                SelectedItemBinding="{Binding Device, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
+                                                ItemsSource="{Binding DataContext.AvailableDevices, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                        <DataGridTextColumn Header="Address" Width="140">
+                            <DataGridTextColumn.Binding>
+                                <Binding Path="Address" UpdateSourceTrigger="PropertyChanged"
+                                         ValidatesOnNotifyDataErrors="True" />
+                            </DataGridTextColumn.Binding>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Comment" Width="*">
+                            <DataGridTextColumn.Binding>
+                                <Binding Path="Comment" UpdateSourceTrigger="PropertyChanged" />
+                            </DataGridTextColumn.Binding>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:GeneratedCodeViewModel}">
+            <DockPanel Margin="6">
+                <Border DockPanel.Dock="Top" Background="{DynamicResource WarningColor}" Padding="8" Margin="0,0,0,8">
+                    <TextBlock Text="{Binding BannerMessage}" Foreground="White" TextWrapping="Wrap" />
+                </Border>
+                <avalonedit:TextEditor Text="{Binding Text}" IsReadOnly="True"
+                                       SyntaxHighlighting="C#"
+                                       FontFamily="Consolas"
+                                       FontSize="13"
+                                       ShowLineNumbers="True"
+                                       Background="{DynamicResource CardBg}"
+                                       Foreground="{DynamicResource TextPrimary}" />
+            </DockPanel>
+        </DataTemplate>
     </Window.Resources>
 
     <DockPanel>

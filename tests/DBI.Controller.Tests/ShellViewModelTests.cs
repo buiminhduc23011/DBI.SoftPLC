@@ -75,6 +75,7 @@ public class ShellViewModelTests
             new ProjectService(new RecentProjectsService(temp.SettingsDirectory)),
             runtime,
             prompt,
+            new IoCodeGenerator(),
             new FakeThemeSwitcher(),
             layout);
 
@@ -97,7 +98,7 @@ public class ShellViewModelTests
 
         var root = Assert.Single(shell.ProjectTree.Roots);
         Assert.Equal("MyMachine", root.Title);
-        Assert.Equal(6, root.Children.Count);   // Device Config / Diagnostics / Blocks / Tags / Watch / Devices
+        Assert.Equal(7, root.Children.Count);   // Device Config / Diagnostics / Blocks / Tags / Generated / Watch / Devices
         Assert.Contains(root.Children, c => c.Title == "Program Blocks" && c.Children.Count == 1);
     }
 
@@ -385,7 +386,7 @@ public class ShellViewModelTests
 
         var shell = new ShellViewModel(
             new ProjectService(new RecentProjectsService(temp.SettingsDirectory)),
-            new FakeRuntimeClient(), new ScriptedPrompt(), theme);
+            new FakeRuntimeClient(), new ScriptedPrompt(), new IoCodeGenerator(), theme);
 
         Assert.False(shell.IsDarkMode);
 

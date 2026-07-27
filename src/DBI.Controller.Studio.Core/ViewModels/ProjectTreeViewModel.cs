@@ -11,6 +11,7 @@ public enum ProjectNodeKind
     Folder,
     DeviceConfiguration,
     OnlineDiagnostics,
+    GeneratedFile,
     Block,
     TagTable,
     Device,
@@ -67,6 +68,7 @@ public partial class ProjectNode : ObservableObject
         ProjectNodeKind.Folder => "▸",
         ProjectNodeKind.DeviceConfiguration => "⚙",
         ProjectNodeKind.OnlineDiagnostics => "📊",
+        ProjectNodeKind.GeneratedFile => "📄",
         ProjectNodeKind.Block => "◆",
         ProjectNodeKind.TagTable => "▦",
         ProjectNodeKind.Device => "⬢",
@@ -123,6 +125,9 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
         foreach (var table in project.TagTables)
             tags.Children.Add(CreateNode(ProjectNodeKind.TagTable, table.Name, table, $"TagTable:{table.Name}"));
 
+        var generated = CreateFixedNode(ProjectNodeKind.Folder, "Generated", key: "Generated");
+        generated.Children.Add(CreateNode(ProjectNodeKind.GeneratedFile, "IO.g.cs", payload: null, "Generated:IO.g.cs"));
+
         var watches = CreateFixedNode(ProjectNodeKind.Folder, "Watch & Force Tables", key: "Watches");
         foreach (var watch in project.WatchTables)
             watches.Children.Add(CreateNode(ProjectNodeKind.WatchTable, watch.Name, watch, $"Watch:{watch.Name}"));
@@ -133,6 +138,7 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
 
         root.Children.Add(blocks);
         root.Children.Add(tags);
+        root.Children.Add(generated);
         root.Children.Add(watches);
         root.Children.Add(devices);
 
@@ -141,13 +147,27 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
 
     public void ConfigureMenus(
         ICommand addBlockCommand,
+        ICommand addTagTableCommand,
         ICommand openNodeCommand,
         ICommand renameBlockCommand,
         ICommand deleteBlockCommand,
-        ICommand setMainBlockCommand)
+        ICommand setMainBlockCommand,
+        ICommand renameTagTableCommand,
+        ICommand deleteTagTableCommand)
     {
         foreach (ProjectNode root in Roots)
-            ConfigureMenusRecursive(root, addBlockCommand, openNodeCommand, renameBlockCommand, deleteBlockCommand, setMainBlockCommand);
+        {
+            ConfigureMenusRecursive(
+                root,
+                addBlockCommand,
+                addTagTableCommand,
+                openNodeCommand,
+                renameBlockCommand,
+                deleteBlockCommand,
+                setMainBlockCommand,
+                renameTagTableCommand,
+                deleteTagTableCommand);
+        }
     }
 
     /// <summary>Thuộc tính của node đang chọn, để Inspector hiển thị ở tab Properties.</summary>
@@ -190,16 +210,23 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
     private void ConfigureMenusRecursive(
         ProjectNode node,
         ICommand addBlockCommand,
+        ICommand addTagTableCommand,
         ICommand openNodeCommand,
         ICommand renameBlockCommand,
         ICommand deleteBlockCommand,
-        ICommand setMainBlockCommand)
+        ICommand setMainBlockCommand,
+        ICommand renameTagTableCommand,
+        ICommand deleteTagTableCommand)
     {
         node.ContextMenuItems.Clear();
 
         if (node.Kind == ProjectNodeKind.Folder && node.Title == "Program Blocks")
         {
             node.ContextMenuItems.Add(new MenuActionViewModel("Add new block…", addBlockCommand, node));
+        }
+        else if (node.Kind == ProjectNodeKind.Folder && node.Title == "PLC Tags")
+        {
+            node.ContextMenuItems.Add(new MenuActionViewModel("Add new tag table…", addTagTableCommand, node));
         }
         else if (node.Kind == ProjectNodeKind.Block)
         {
@@ -210,9 +237,31 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
             node.ContextMenuItems.Add(new MenuActionViewModel("Delete", deleteBlockCommand, node));
             node.ContextMenuItems.Add(new MenuActionViewModel("Set as Main", setMainBlockCommand, node, !isMain));
         }
+        else if (node.Kind == ProjectNodeKind.TagTable)
+        {
+            bool isDefault = string.Equals(node.Title, "Default Tag Table", StringComparison.OrdinalIgnoreCase);
+            node.ContextMenuItems.Add(new MenuActionViewModel("Open", openNodeCommand, node));
+            node.ContextMenuItems.Add(new MenuActionViewModel("Rename", renameTagTableCommand, node));
+            node.ContextMenuItems.Add(new MenuActionViewModel("Delete", deleteTagTableCommand, node, !isDefault));
+        }
+        else if (node.Kind == ProjectNodeKind.GeneratedFile)
+        {
+            node.ContextMenuItems.Add(new MenuActionViewModel("Open", openNodeCommand, node));
+        }
 
         foreach (ProjectNode child in node.Children)
-            ConfigureMenusRecursive(child, addBlockCommand, openNodeCommand, renameBlockCommand, deleteBlockCommand, setMainBlockCommand);
+        {
+            ConfigureMenusRecursive(
+                child,
+                addBlockCommand,
+                addTagTableCommand,
+                openNodeCommand,
+                renameBlockCommand,
+                deleteBlockCommand,
+                setMainBlockCommand,
+                renameTagTableCommand,
+                deleteTagTableCommand);
+        }
     }
 
     private ProjectNode CreateFixedNode(ProjectNodeKind kind, string title, string key)

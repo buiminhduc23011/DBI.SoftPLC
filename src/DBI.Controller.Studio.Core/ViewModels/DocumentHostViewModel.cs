@@ -61,6 +61,38 @@ public partial class DocumentHostViewModel : ObservableObject
         return editor;
     }
 
+    public TagTableViewModel OpenTagTable(DbiProject project, TagTable table, IoCodeGenerator generator)
+    {
+        string contentId = TagTableViewModel.ContentIdFor(table);
+
+        if (Documents.FirstOrDefault(d => d.ContentId == contentId) is TagTableViewModel opened)
+        {
+            ActiveDocument = opened;
+            return opened;
+        }
+
+        var editor = new TagTableViewModel(project, table, generator);
+        Documents.Add(editor);
+        ActiveDocument = editor;
+        return editor;
+    }
+
+    public GeneratedCodeViewModel OpenGeneratedCode(string absolutePath)
+    {
+        if (Documents.FirstOrDefault(d => d.ContentId == GeneratedCodeViewModel.GeneratedContentId)
+            is GeneratedCodeViewModel opened)
+        {
+            ActiveDocument = opened;
+            return opened;
+        }
+
+        string text = File.Exists(absolutePath) ? File.ReadAllText(absolutePath) : string.Empty;
+        var editor = new GeneratedCodeViewModel(absolutePath, text);
+        Documents.Add(editor);
+        ActiveDocument = editor;
+        return editor;
+    }
+
     /// <summary>Đóng tab. Hỏi lại nếu còn thay đổi chưa lưu.</summary>
     /// <returns><c>false</c> nếu người dùng huỷ.</returns>
     public bool Close(DocumentViewModelBase? document)
