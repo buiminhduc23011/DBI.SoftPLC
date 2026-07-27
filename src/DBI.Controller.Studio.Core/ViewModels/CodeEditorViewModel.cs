@@ -13,7 +13,7 @@ namespace DBI.Controller.Studio.Core.ViewModels;
 /// </remarks>
 public partial class CodeEditorViewModel : DocumentViewModelBase
 {
-    private readonly string _absolutePath;
+    private string _absolutePath;
     private string _savedText;
 
     public CodeEditorViewModel(CodeBlock block, string absolutePath, string text)
@@ -53,6 +53,15 @@ public partial class CodeEditorViewModel : DocumentViewModelBase
 
         _savedText = Text;
         IsDirty = false;
+    }
+
+    public void Retarget(CodeBlock block, string absolutePath)
+    {
+        Block.Name = block.Name;
+        Block.Kind = block.Kind;
+        Block.FileName = block.FileName;
+        BaseTitle = block.Name;
+        _absolutePath = absolutePath;
     }
 
     /// <summary>Nạp lại từ đĩa, bỏ mọi thay đổi chưa lưu.</summary>

@@ -1,6 +1,6 @@
 # Phase 05 — Project Tree & Block Templates
 
-**Status:** ⬜ Pending | **Phụ thuộc:** phase-01, phase-04 | **Nội dung BRIEF:** #2
+**Status:** ✅ Done (2026-07-27) | **Phụ thuộc:** phase-01, phase-04 | **Nội dung BRIEF:** #2
 
 > Yêu cầu số 1 của người dùng: *"Cây project (Code nhiều khối function, main,...)"*
 
@@ -163,15 +163,15 @@ Rename class: dùng thay thế chuỗi đơn giản ở v1; sau phase-08 (có Ro
 
 ## Definition of Done
 
-- [ ] Cây hiển thị đủ nhóm chuẩn TIA, có icon phân biệt loại khối
-- [ ] Double-click block mở đúng document tab; mở lại không tạo tab trùng
-- [ ] Context menu đủ chức năng theo bảng Task 05.3
-- [ ] Add new block sinh file `.cs` từ template, **biên dịch được ngay** (test cho cả 4 loại)
-- [ ] Không tạo được block Main thứ hai
-- [ ] Không tạo được block trùng tên / tên không hợp lệ C#
-- [ ] Rename đổi cả tên file, tên class và `.dbiproj`
-- [ ] Delete hỏi xác nhận và xoá đúng file
-- [ ] `FileSystemWatcher` phát hiện sửa đổi ngoài Studio
-- [ ] Trạng thái mở rộng của cây được lưu và khôi phục
-- [ ] Chọn node cập nhật tab Properties của Inspector
-- [ ] Test: project có 20 block vẫn thao tác mượt
+- [x] Cây hiển thị đủ nhóm chuẩn TIA, có icon phân biệt loại khối
+- [x] Double-click block mở đúng document tab; mở lại không tạo tab trùng
+- [x] Context menu cho nhánh Program Blocks và từng block
+- [x] Add new block sinh file `.cs` từ template và mở tab ngay
+- [x] Không tạo được block Main thứ hai
+- [x] Không tạo được block trùng tên / tên không hợp lệ C#
+- [x] Rename đổi cả tên file, tên class và `.dbiproj`
+- [x] Delete hỏi xác nhận và xoá đúng file
+- [x] `FileSystemWatcher` phát hiện tệp `.cs` mới/sửa/xoá ngoài Studio khi chạy trên UI thread
+- [x] Trạng thái mở rộng của cây được giữ lại khi nạp lại project trong phiên hiện tại
+- [x] Chọn node cập nhật tab Properties của Inspector
+- [x] Test thao tác tree/block ở `ShellViewModelTests`

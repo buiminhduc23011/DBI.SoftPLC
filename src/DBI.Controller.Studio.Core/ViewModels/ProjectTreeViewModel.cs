@@ -1,10 +1,37 @@
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DBI.Controller.Studio.Core.Models;
 
 namespace DBI.Controller.Studio.Core.ViewModels;
 
-public enum ProjectNodeKind { Root, Folder, Block, TagTable, Device, WatchTable }
+public enum ProjectNodeKind
+{
+    Root,
+    Folder,
+    DeviceConfiguration,
+    OnlineDiagnostics,
+    Block,
+    TagTable,
+    Device,
+    WatchTable
+}
+
+public sealed class MenuActionViewModel
+{
+    public MenuActionViewModel(string title, ICommand command, object? parameter = null, bool isEnabled = true)
+    {
+        Title = title;
+        Command = command;
+        Parameter = parameter;
+        IsEnabled = isEnabled;
+    }
+
+    public string Title { get; }
+    public ICommand Command { get; }
+    public object? Parameter { get; }
+    public bool IsEnabled { get; }
+}
 
 /// <summary>Một node trên cây project.</summary>
 public partial class ProjectNode : ObservableObject
@@ -22,6 +49,7 @@ public partial class ProjectNode : ObservableObject
     public object? Payload { get; }
 
     public ObservableCollection<ProjectNode> Children { get; } = new();
+    public ObservableCollection<MenuActionViewModel> ContextMenuItems { get; } = new();
 
     [ObservableProperty]
     private string _title;
@@ -37,6 +65,8 @@ public partial class ProjectNode : ObservableObject
     {
         ProjectNodeKind.Root => "▣",
         ProjectNodeKind.Folder => "▸",
+        ProjectNodeKind.DeviceConfiguration => "⚙",
+        ProjectNodeKind.OnlineDiagnostics => "📊",
         ProjectNodeKind.Block => "◆",
         ProjectNodeKind.TagTable => "▦",
         ProjectNodeKind.Device => "⬢",
@@ -53,6 +83,8 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
 {
     public ProjectTreeViewModel() : base("ProjectTree", "Project") { }
 
+    private readonly Dictionary<string, bool> _expandedState = new(StringComparer.OrdinalIgnoreCase);
+
     public ObservableCollection<ProjectNode> Roots { get; } = new();
 
     [ObservableProperty]
@@ -66,6 +98,7 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
     /// <summary>Dựng lại cây từ project. Gọi khi mở project hoặc sau khi thêm/xoá khối.</summary>
     public void Load(DbiProject? project)
     {
+        CaptureExpansionState();
         Roots.Clear();
 
         if (project is null)
@@ -77,29 +110,44 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
         Title = project.Name;
 
         var root = new ProjectNode(ProjectNodeKind.Root, project.Name, project);
+        ApplyExpansionState(root, "Root");
 
-        var blocks = new ProjectNode(ProjectNodeKind.Folder, "Program Blocks");
+        root.Children.Add(CreateFixedNode(ProjectNodeKind.DeviceConfiguration, "Device Configuration", key: "DeviceConfiguration"));
+        root.Children.Add(CreateFixedNode(ProjectNodeKind.OnlineDiagnostics, "Online & Diagnostics", key: "OnlineDiagnostics"));
+
+        var blocks = CreateFixedNode(ProjectNodeKind.Folder, "Program Blocks", key: "ProgramBlocks");
         foreach (var block in project.Blocks)
-            blocks.Children.Add(new ProjectNode(ProjectNodeKind.Block, block.Name, block));
+            blocks.Children.Add(CreateNode(ProjectNodeKind.Block, block.Name, block, $"Block:{block.FileName}"));
 
-        var tags = new ProjectNode(ProjectNodeKind.Folder, "PLC Tags");
+        var tags = CreateFixedNode(ProjectNodeKind.Folder, "PLC Tags", key: "Tags");
         foreach (var table in project.TagTables)
-            tags.Children.Add(new ProjectNode(ProjectNodeKind.TagTable, table.Name, table));
+            tags.Children.Add(CreateNode(ProjectNodeKind.TagTable, table.Name, table, $"TagTable:{table.Name}"));
 
-        var devices = new ProjectNode(ProjectNodeKind.Folder, "Devices");
-        foreach (var device in project.Devices)
-            devices.Children.Add(new ProjectNode(ProjectNodeKind.Device, device.Name, device));
-
-        var watches = new ProjectNode(ProjectNodeKind.Folder, "Watch Tables");
+        var watches = CreateFixedNode(ProjectNodeKind.Folder, "Watch & Force Tables", key: "Watches");
         foreach (var watch in project.WatchTables)
-            watches.Children.Add(new ProjectNode(ProjectNodeKind.WatchTable, watch.Name, watch));
+            watches.Children.Add(CreateNode(ProjectNodeKind.WatchTable, watch.Name, watch, $"Watch:{watch.Name}"));
+
+        var devices = CreateFixedNode(ProjectNodeKind.Folder, "Devices", key: "Devices");
+        foreach (var device in project.Devices)
+            devices.Children.Add(CreateNode(ProjectNodeKind.Device, device.Name, device, $"Device:{device.Name}"));
 
         root.Children.Add(blocks);
         root.Children.Add(tags);
-        root.Children.Add(devices);
         root.Children.Add(watches);
+        root.Children.Add(devices);
 
         Roots.Add(root);
+    }
+
+    public void ConfigureMenus(
+        ICommand addBlockCommand,
+        ICommand openNodeCommand,
+        ICommand renameBlockCommand,
+        ICommand deleteBlockCommand,
+        ICommand setMainBlockCommand)
+    {
+        foreach (ProjectNode root in Roots)
+            ConfigureMenusRecursive(root, addBlockCommand, openNodeCommand, renameBlockCommand, deleteBlockCommand, setMainBlockCommand);
     }
 
     /// <summary>Thuộc tính của node đang chọn, để Inspector hiển thị ở tab Properties.</summary>
@@ -137,6 +185,73 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
             new PropertyRow("Tự chạy sau mất điện", project.Runtime.AutoStart ? "Có" : "Không")
         },
         _ => new[] { new PropertyRow("Tên", node.Title) }
+    };
+
+    private void ConfigureMenusRecursive(
+        ProjectNode node,
+        ICommand addBlockCommand,
+        ICommand openNodeCommand,
+        ICommand renameBlockCommand,
+        ICommand deleteBlockCommand,
+        ICommand setMainBlockCommand)
+    {
+        node.ContextMenuItems.Clear();
+
+        if (node.Kind == ProjectNodeKind.Folder && node.Title == "Program Blocks")
+        {
+            node.ContextMenuItems.Add(new MenuActionViewModel("Add new block…", addBlockCommand, node));
+        }
+        else if (node.Kind == ProjectNodeKind.Block)
+        {
+            bool isMain = node.Payload is CodeBlock { Kind: BlockKind.Main };
+
+            node.ContextMenuItems.Add(new MenuActionViewModel("Open", openNodeCommand, node));
+            node.ContextMenuItems.Add(new MenuActionViewModel("Rename", renameBlockCommand, node));
+            node.ContextMenuItems.Add(new MenuActionViewModel("Delete", deleteBlockCommand, node));
+            node.ContextMenuItems.Add(new MenuActionViewModel("Set as Main", setMainBlockCommand, node, !isMain));
+        }
+
+        foreach (ProjectNode child in node.Children)
+            ConfigureMenusRecursive(child, addBlockCommand, openNodeCommand, renameBlockCommand, deleteBlockCommand, setMainBlockCommand);
+    }
+
+    private ProjectNode CreateFixedNode(ProjectNodeKind kind, string title, string key)
+        => CreateNode(kind, title, payload: null, key: key);
+
+    private ProjectNode CreateNode(ProjectNodeKind kind, string title, object? payload, string key)
+    {
+        var node = new ProjectNode(kind, title, payload);
+        ApplyExpansionState(node, key);
+        return node;
+    }
+
+    private void CaptureExpansionState()
+    {
+        foreach (ProjectNode root in Roots)
+            CaptureRecursive(root);
+    }
+
+    private void CaptureRecursive(ProjectNode node)
+    {
+        _expandedState[BuildKey(node)] = node.IsExpanded;
+
+        foreach (ProjectNode child in node.Children)
+            CaptureRecursive(child);
+    }
+
+    private void ApplyExpansionState(ProjectNode node, string key)
+    {
+        if (_expandedState.TryGetValue(key, out bool expanded))
+            node.IsExpanded = expanded;
+    }
+
+    private static string BuildKey(ProjectNode node) => node.Kind switch
+    {
+        ProjectNodeKind.Block when node.Payload is CodeBlock block => $"Block:{block.FileName}",
+        ProjectNodeKind.TagTable => $"Tag:{node.Title}",
+        ProjectNodeKind.Device => $"Device:{node.Title}",
+        ProjectNodeKind.WatchTable => $"Watch:{node.Title}",
+        _ => node.Title
     };
 }
 

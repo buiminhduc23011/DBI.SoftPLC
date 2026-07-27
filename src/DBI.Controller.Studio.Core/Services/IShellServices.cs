@@ -4,6 +4,11 @@ namespace DBI.Controller.Studio.Core.Services;
 /// <param name="Name">Tên project — cũng là tên tệp <c>.dbiproj</c>.</param>
 public record NewProjectRequest(string Directory, string Name);
 
+/// <param name="Name">Tên khối mới.</param>
+/// <param name="Kind">Loại khối.</param>
+/// <param name="Comment">Ghi chú ngắn hiển thị trong cây/Inspector.</param>
+public record NewBlockRequest(string Name, Models.BlockKind Kind, string Comment);
+
 /// <summary>
 /// Hộp thoại và câu hỏi cho người dùng.
 /// </summary>
@@ -21,6 +26,12 @@ public interface IUserPrompt
 
     /// <summary>Chọn nơi lưu bản sao project. <c>null</c> nghĩa là người dùng huỷ.</summary>
     string? AskSaveProjectAs(string suggestedName);
+
+    /// <summary>Nhập thông tin để tạo khối logic mới. <c>null</c> nghĩa là người dùng huỷ.</summary>
+    NewBlockRequest? AskNewBlock(bool canCreateMain);
+
+    /// <summary>Hỏi chuỗi ngắn như tên mới khi đổi tên block. <c>null</c> nghĩa là người dùng huỷ.</summary>
+    string? AskText(string title, string prompt, string initialValue);
 
     bool Confirm(string message, string title);
 

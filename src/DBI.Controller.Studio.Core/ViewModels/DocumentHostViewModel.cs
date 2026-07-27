@@ -95,4 +95,9 @@ public partial class DocumentHostViewModel : ObservableObject
 
     public DocumentViewModelBase? Find(string contentId) =>
         Documents.FirstOrDefault(d => d.ContentId == contentId);
+
+    public CodeEditorViewModel? Find(CodeBlock block) =>
+        Documents.OfType<CodeEditorViewModel>()
+            .FirstOrDefault(d => ReferenceEquals(d.Block, block) ||
+                                 string.Equals(d.Block.FileName, block.FileName, StringComparison.OrdinalIgnoreCase));
 }

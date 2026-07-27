@@ -11,6 +11,8 @@ internal sealed class ScriptedPrompt : IUserPrompt
 {
     public string? ProjectToOpen { get; set; }
     public NewProjectRequest? NewProject { get; set; }
+    public NewBlockRequest? NewBlock { get; set; }
+    public string? TextAnswer { get; set; }
     public bool ConfirmAnswer { get; set; } = true;
 
     public List<string> Errors { get; } = new();
@@ -19,6 +21,8 @@ internal sealed class ScriptedPrompt : IUserPrompt
     public string? AskProjectToOpen() => ProjectToOpen;
     public NewProjectRequest? AskNewProjectLocation() => NewProject;
     public string? AskSaveProjectAs(string suggestedName) => null;
+    public NewBlockRequest? AskNewBlock(bool canCreateMain) => NewBlock;
+    public string? AskText(string title, string prompt, string initialValue) => TextAnswer;
 
     public bool Confirm(string message, string title)
     {
@@ -93,8 +97,109 @@ public class ShellViewModelTests
 
         var root = Assert.Single(shell.ProjectTree.Roots);
         Assert.Equal("MyMachine", root.Title);
-        Assert.Equal(4, root.Children.Count);   // Blocks / Tags / Devices / Watch Tables
+        Assert.Equal(6, root.Children.Count);   // Device Config / Diagnostics / Blocks / Tags / Watch / Devices
         Assert.Contains(root.Children, c => c.Title == "Program Blocks" && c.Children.Count == 1);
+    }
+
+    [Fact]
+    public void ThemKhoiMoi_SinhTepVaMoDungTab()
+    {
+        using var temp = new TempWorkspace();
+        var (shell, prompt, _) = NewShell(temp);
+
+        prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
+        shell.NewProjectCommand.Execute(null);
+
+        prompt.NewBlock = new NewBlockRequest("Conveyor", BlockKind.FunctionBlock, "Logic bang tai");
+        shell.AddBlockCommand.Execute(null);
+
+        Assert.Contains(shell.Project!.Blocks, b => b.Name == "Conveyor" && b.Kind == BlockKind.FunctionBlock);
+        Assert.True(File.Exists(temp.At("Blocks", "Conveyor.cs")));
+        Assert.Contains("class Conveyor", File.ReadAllText(temp.At("Blocks", "Conveyor.cs")));
+        Assert.Contains(shell.Editors.Documents.OfType<CodeEditorViewModel>(), d => d.Block.Name == "Conveyor");
+    }
+
+    [Fact]
+    public void KhongTaoMainThuHai()
+    {
+        using var temp = new TempWorkspace();
+        var (shell, prompt, _) = NewShell(temp);
+
+        prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
+        shell.NewProjectCommand.Execute(null);
+
+        prompt.NewBlock = new NewBlockRequest("Main2", BlockKind.Main, "khong hop le");
+        shell.AddBlockCommand.Execute(null);
+
+        Assert.Single(prompt.Errors);
+        Assert.DoesNotContain(shell.Project!.Blocks, b => b.Name == "Main2");
+    }
+
+    [Fact]
+    public void DoiTenKhoi_DoiCaTepClassVaDbiproj()
+    {
+        using var temp = new TempWorkspace();
+        var (shell, prompt, _) = NewShell(temp);
+
+        prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
+        shell.NewProjectCommand.Execute(null);
+
+        prompt.NewBlock = new NewBlockRequest("Conveyor", BlockKind.FunctionBlock, "");
+        shell.AddBlockCommand.Execute(null);
+
+        var blockNode = shell.ProjectTree.Roots[0].Children
+            .Single(c => c.Title == "Program Blocks").Children.Single(c => c.Title == "Conveyor");
+
+        prompt.TextAnswer = "Line1";
+        shell.RenameBlockCommand.Execute(blockNode);
+
+        Assert.DoesNotContain(shell.Project!.Blocks, b => b.Name == "Conveyor");
+        var renamed = Assert.Single(shell.Project.Blocks, b => b.Name == "Line1");
+        Assert.Equal("Blocks/Line1.cs", renamed.FileName);
+        Assert.True(File.Exists(temp.At("Blocks", "Line1.cs")));
+        Assert.False(File.Exists(temp.At("Blocks", "Conveyor.cs")));
+        Assert.Contains("class Line1", File.ReadAllText(temp.At("Blocks", "Line1.cs")));
+    }
+
+    [Fact]
+    public void XoaKhoi_XoaDungTep()
+    {
+        using var temp = new TempWorkspace();
+        var (shell, prompt, _) = NewShell(temp);
+
+        prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
+        shell.NewProjectCommand.Execute(null);
+
+        prompt.NewBlock = new NewBlockRequest("Conveyor", BlockKind.FunctionBlock, "");
+        shell.AddBlockCommand.Execute(null);
+
+        var blockNode = shell.ProjectTree.Roots[0].Children
+            .Single(c => c.Title == "Program Blocks").Children.Single(c => c.Title == "Conveyor");
+
+        shell.DeleteBlockCommand.Execute(blockNode);
+
+        Assert.DoesNotContain(shell.Project!.Blocks, b => b.Name == "Conveyor");
+        Assert.False(File.Exists(temp.At("Blocks", "Conveyor.cs")));
+    }
+
+    [Fact]
+    public void DatKhoiKhacLamMain_HaMainCuXuongFunctionBlock()
+    {
+        using var temp = new TempWorkspace();
+        var (shell, prompt, _) = NewShell(temp);
+
+        prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
+        shell.NewProjectCommand.Execute(null);
+        prompt.NewBlock = new NewBlockRequest("Conveyor", BlockKind.FunctionBlock, "");
+        shell.AddBlockCommand.Execute(null);
+
+        var blockNode = shell.ProjectTree.Roots[0].Children
+            .Single(c => c.Title == "Program Blocks").Children.Single(c => c.Title == "Conveyor");
+
+        shell.SetMainBlockCommand.Execute(blockNode);
+
+        Assert.Equal(BlockKind.Main, shell.Project!.Blocks.Single(b => b.Name == "Conveyor").Kind);
+        Assert.Equal(BlockKind.FunctionBlock, shell.Project.Blocks.Single(b => b.Name == "Main").Kind);
     }
 
     [Fact]

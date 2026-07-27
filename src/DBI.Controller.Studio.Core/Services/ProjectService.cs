@@ -262,6 +262,135 @@ public class ProjectService
         _recent.Add(Current.ProjectFilePath);
     }
 
+    // ── Block operations ────────────────────────────────────────────────────────
+
+    public ProjectLoadResult AddBlock(NewBlockRequest request)
+    {
+        if (Current is null)
+            throw new InvalidOperationException("Chưa mở project nào.");
+
+        var validation = ValidateNewBlockName(Current, request.Name, request.Kind, currentBlock: null);
+        if (validation is not null)
+            return new ProjectLoadResult(null, new[] { validation });
+
+        string relativePath = $"{BlocksFolder}/{request.Name}.cs";
+        string absolutePath = Path.Combine(Current.ProjectDirectory, relativePath.Replace('/', Path.DirectorySeparatorChar));
+
+        if (File.Exists(absolutePath))
+        {
+            return ProjectLoadResult.Failed(
+                $"Tệp '{relativePath}' đã tồn tại. Hãy chọn tên khác hoặc đổi tên tệp cũ.");
+        }
+
+        var block = new CodeBlock
+        {
+            Name = request.Name.Trim(),
+            Kind = request.Kind,
+            FileName = relativePath,
+            Comment = request.Comment.Trim()
+        };
+
+        Directory.CreateDirectory(Path.GetDirectoryName(absolutePath)!);
+        File.WriteAllText(absolutePath, BlockTemplates.For(block.Kind, block.Name));
+
+        Current.Blocks.Add(block);
+        Current.IsDirty = true;
+
+        return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
+    }
+
+    public ProjectLoadResult RenameBlock(CodeBlock block, string newName)
+    {
+        if (Current is null)
+            throw new InvalidOperationException("Chưa mở project nào.");
+
+        ArgumentNullException.ThrowIfNull(block);
+
+        var validation = ValidateNewBlockName(Current, newName, block.Kind, block);
+        if (validation is not null)
+            return new ProjectLoadResult(null, new[] { validation });
+
+        string oldPath = Path.Combine(Current.ProjectDirectory, block.FileName.Replace('/', Path.DirectorySeparatorChar));
+        string newRelativePath = $"{BlocksFolder}/{newName.Trim()}.cs";
+        string newPath = Path.Combine(Current.ProjectDirectory, newRelativePath.Replace('/', Path.DirectorySeparatorChar));
+
+        if (!string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase) && File.Exists(newPath))
+        {
+            return ProjectLoadResult.Failed(
+                $"Tệp '{newRelativePath}' đã tồn tại. Không thể đổi tên khối thành '{newName}'.");
+        }
+
+        if (File.Exists(oldPath))
+        {
+            string text = File.ReadAllText(oldPath);
+            File.WriteAllText(oldPath, RenameClass(text, block.Name, newName.Trim()));
+
+            if (!string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(newPath)!);
+                File.Move(oldPath, newPath);
+            }
+        }
+
+        block.Name = newName.Trim();
+        block.FileName = newRelativePath;
+        Current.IsDirty = true;
+
+        return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
+    }
+
+    public void DeleteBlock(CodeBlock block)
+    {
+        if (Current is null)
+            throw new InvalidOperationException("Chưa mở project nào.");
+
+        ArgumentNullException.ThrowIfNull(block);
+
+        string absolutePath = Path.Combine(Current.ProjectDirectory, block.FileName.Replace('/', Path.DirectorySeparatorChar));
+        if (File.Exists(absolutePath)) File.Delete(absolutePath);
+
+        Current.Blocks.Remove(block);
+        Current.IsDirty = true;
+    }
+
+    public ProjectLoadResult SetMainBlock(CodeBlock block)
+    {
+        if (Current is null)
+            throw new InvalidOperationException("Chưa mở project nào.");
+
+        ArgumentNullException.ThrowIfNull(block);
+
+        foreach (var candidate in Current.Blocks)
+            candidate.Kind = candidate == block ? BlockKind.Main : candidate.Kind == BlockKind.Main ? BlockKind.FunctionBlock : candidate.Kind;
+
+        Current.IsDirty = true;
+        return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
+    }
+
+    public CodeBlock AttachExistingBlock(string absolutePath)
+    {
+        if (Current is null)
+            throw new InvalidOperationException("Chưa mở project nào.");
+
+        string relativePath = Path.GetRelativePath(Current.ProjectDirectory, absolutePath)
+            .Replace(Path.DirectorySeparatorChar, '/');
+        string name = Path.GetFileNameWithoutExtension(absolutePath);
+
+        var block = new CodeBlock
+        {
+            Name = name,
+            Kind = name.Equals("Main", StringComparison.OrdinalIgnoreCase) &&
+                   Current.Blocks.All(b => b.Kind != BlockKind.Main)
+                ? BlockKind.Main
+                : BlockKind.FunctionBlock,
+            FileName = relativePath
+        };
+
+        Current.Blocks.Add(block);
+        Current.IsDirty = true;
+        return block;
+    }
+
     private static void CopyDirectory(string source, string destination)
     {
         if (!Directory.Exists(source)) return;
@@ -324,5 +453,56 @@ public class ProjectService
     {
         Current = project;
         CurrentChanged?.Invoke(this, project);
+    }
+
+    private static ValidationIssue? ValidateNewBlockName(
+        DbiProject project,
+        string? name,
+        BlockKind kind,
+        CodeBlock? currentBlock)
+    {
+        string candidate = name?.Trim() ?? "";
+
+        if (!ProjectValidator.IsValidCSharpIdentifier(candidate))
+        {
+            return new ValidationIssue(
+                IssueSeverity.Error,
+                $"Tên khối '{candidate}' không hợp lệ. Tên phải là identifier C# hợp lệ.",
+                candidate);
+        }
+
+        if (project.Blocks.Any(b => !ReferenceEquals(b, currentBlock) &&
+                                    b.Name.Equals(candidate, StringComparison.OrdinalIgnoreCase)))
+        {
+            return new ValidationIssue(IssueSeverity.Error, $"Đã có khối tên '{candidate}'.", candidate);
+        }
+
+        if (kind == BlockKind.Main &&
+            project.Blocks.Any(b => !ReferenceEquals(b, currentBlock) && b.Kind == BlockKind.Main))
+        {
+            return new ValidationIssue(
+                IssueSeverity.Error,
+                "Project đã có khối Main. Không tạo thêm khối Main thứ hai.",
+                candidate);
+        }
+
+        return null;
+    }
+
+    private static string RenameClass(string text, string oldName, string newName)
+    {
+        string[] patterns =
+        {
+            $"class {oldName}",
+            $"static class {oldName}"
+        };
+
+        foreach (string pattern in patterns)
+        {
+            if (text.Contains(pattern, StringComparison.Ordinal))
+                text = text.Replace(pattern, pattern.Replace(oldName, newName, StringComparison.Ordinal), StringComparison.Ordinal);
+        }
+
+        return text;
     }
 }
