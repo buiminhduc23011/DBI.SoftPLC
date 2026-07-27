@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DBI.Controller.Protocol;
 using DBI.Controller.Studio.Core.Models;
 using DBI.Controller.Studio.Core.Services;
 using DBI.Controller.Studio.Core.Services.Runtime;
@@ -22,6 +23,8 @@ public partial class ShellViewModel : ObservableObject
     private readonly IUserPrompt _prompt;
     private readonly IThemeSwitcher _theme;
     private readonly IoCodeGenerator _generator;
+    private readonly IProjectCompiler _compiler;
+    private readonly RuntimeProcessLauncher _launcher;
     private readonly SynchronizationContext? _uiContext;
 
     private ILayoutPersistence? _layout;
@@ -32,12 +35,16 @@ public partial class ShellViewModel : ObservableObject
         IRuntimeClient runtime,
         IUserPrompt prompt,
         IoCodeGenerator generator,
+        IProjectCompiler compiler,
+        RuntimeProcessLauncher launcher,
         IThemeSwitcher theme,
         ILayoutPersistence? layout = null)
     {
         _projects = projects ?? throw new ArgumentNullException(nameof(projects));
         _prompt = prompt ?? throw new ArgumentNullException(nameof(prompt));
         _generator = generator ?? throw new ArgumentNullException(nameof(generator));
+        _compiler = compiler ?? throw new ArgumentNullException(nameof(compiler));
+        _launcher = launcher ?? throw new ArgumentNullException(nameof(launcher));
         _theme = theme ?? throw new ArgumentNullException(nameof(theme));
         _layout = layout;
         _uiContext = SynchronizationContext.Current;
@@ -121,6 +128,8 @@ public partial class ShellViewModel : ObservableObject
         ProjectTree.Load(result.Project);
         ConfigureProjectTree();
         StatusBar.ProjectName = result.Project!.Name;
+        StatusBar.AutoStartEnabled = result.Project.Runtime.AutoStart;
+        ResetBuildState();
 
         Inspector.LogInformation(successMessage);
         Inspector.LogInformation(result.Issues);
@@ -160,6 +169,8 @@ public partial class ShellViewModel : ObservableObject
         _projects.Close();
         ProjectTree.Load(null);
         StatusBar.ProjectName = "(chưa mở project)";
+        StatusBar.AutoStartEnabled = true;
+        ResetBuildState();
 
         OnPropertyChanged(nameof(Project));
     }
@@ -556,5 +567,7 @@ public partial class ShellViewModel : ObservableObject
 
         if (result.Changed)
             Inspector.LogInformation("Đã sinh lại Generated/IO.g.cs.");
+
+        ResetBuildState();
     }
 }

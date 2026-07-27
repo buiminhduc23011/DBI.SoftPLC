@@ -1,9 +1,9 @@
+using DBI.Controller.Core.Interfaces;
 using DBI.Controller.Core.Models;
 using DBI.Controller.Protocol;
 using DBI.Controller.Runtime.Drivers;
 using DBI.Controller.Runtime.Engine;
 using DBI.Controller.Runtime.Safety;
-using DBI.Controller.SDK;
 
 namespace DBI.Controller.Runtime.Host;
 
@@ -27,7 +27,7 @@ public class RuntimeHost : IDisposable
     private readonly DeploymentStore _store;
     private readonly DriverFactory _driverFactory;
 
-    private ControllerProgram? _program;
+    private IControllerProgramContract? _program;
     private RuntimeState _state = RuntimeState.NoProgram;
     private bool _disposed;
 
@@ -159,7 +159,7 @@ public class RuntimeHost : IDisposable
             if (_state == RuntimeState.Running) return;
         }
 
-        InvokeLifecycle(p => p.OnStart(), nameof(ControllerProgram.OnStart));
+        InvokeLifecycle(p => p.OnStart(), nameof(IControllerProgramContract.OnStart));
         _engine.Start();
         SetState(RuntimeState.Running);
     }
@@ -182,7 +182,7 @@ public class RuntimeHost : IDisposable
         if (wasRunning)
         {
             _engine.Stop();
-            InvokeLifecycle(p => p.OnStop(), nameof(ControllerProgram.OnStop));
+            InvokeLifecycle(p => p.OnStop(), nameof(IControllerProgramContract.OnStop));
         }
 
         _memory.ClearAllOutputs();
@@ -340,7 +340,7 @@ public class RuntimeHost : IDisposable
         catch (IOException) { /* đĩa đầy hoặc bị khoá: không được làm sập Runtime */ }
     }
 
-    private void InvokeLifecycle(Action<ControllerProgram> action, string name)
+    private void InvokeLifecycle(Action<IControllerProgramContract> action, string name)
     {
         if (_program is null) return;
 

@@ -1,7 +1,6 @@
 using System.Reflection;
 using System.Runtime.Loader;
 using DBI.Controller.Core.Interfaces;
-using DBI.Controller.SDK;
 
 namespace DBI.Controller.Runtime.Loading;
 
@@ -41,28 +40,29 @@ public class UserProgramLoader
 {
     private PluginLoadContext? _loadContext;
 
-    public ControllerProgram? CurrentProgram { get; private set; }
+    public IControllerProgramContract? CurrentProgram { get; private set; }
 
-    public ControllerProgram LoadProgramFromAssembly(string dllPath, IMemoryImage memoryImage)
+    public IControllerProgramContract LoadProgramFromAssembly(string dllPath, IMemoryImage memoryImage)
     {
         if (!File.Exists(dllPath))
-            throw new FileNotFoundException($"Không tìm thấy file User DLL: {dllPath}");
+            throw new FileNotFoundException($"Khong tim thay file User DLL: {dllPath}");
 
         _loadContext = new PluginLoadContext(dllPath);
         Assembly assembly = _loadContext.LoadFromAssemblyPath(dllPath);
 
         Type? programType = assembly.GetTypes()
-            .FirstOrDefault(t => typeof(ControllerProgram).IsAssignableFrom(t) && !t.IsAbstract);
+            .FirstOrDefault(t => typeof(IControllerProgramContract).IsAssignableFrom(t) && !t.IsAbstract);
 
         if (programType == null)
-            throw new InvalidOperationException($"Assembly {dllPath} không chứa class nào kế thừa từ ControllerProgram.");
+        {
+            throw new InvalidOperationException(
+                $"Assembly {dllPath} khong chua class nao trien khai {nameof(IControllerProgramContract)}.");
+        }
 
-        var instance = (ControllerProgram)Activator.CreateInstance(programType)!;
+        var instance = (IControllerProgramContract)Activator.CreateInstance(programType)!;
         instance.Initialize(memoryImage);
 
-        // KHÔNG gọi OnStart() ở đây. Trình tự đúng là Load → Connect driver → OnStart → Start:
-        // OnStart của người dùng thường đọc trạng thái đầu vào, mà lúc chưa kết nối driver thì
-        // đầu vào toàn 0. RuntimeHost gọi OnStart sau khi driver đã kết nối.
+        // KHONG goi OnStart() o day. Trinh tu dung la Load -> Connect driver -> OnStart -> Start.
         CurrentProgram = instance;
         return instance;
     }
@@ -79,6 +79,7 @@ public class UserProgramLoader
             {
                 // Ignored on unload
             }
+
             CurrentProgram = null;
         }
 

@@ -452,6 +452,9 @@ public class RuntimeClientTests
 internal sealed class RecordingLauncher : RuntimeProcessLauncher
 {
     public int StartCount { get; private set; }
+    public bool PipeAvailable { get; set; }
+
+    public override bool IsPipeAvailable(string pipeName) => PipeAvailable || base.IsPipeAvailable(pipeName);
 
     protected override System.Diagnostics.Process? StartProcess(string executable, RuntimeConnectionTarget target)
     {

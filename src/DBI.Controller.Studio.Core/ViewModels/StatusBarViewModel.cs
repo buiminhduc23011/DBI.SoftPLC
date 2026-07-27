@@ -63,6 +63,12 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _isConnected;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AutoStartIndicator))]
+    private bool _autoStartEnabled = true;
+
+    public string AutoStartIndicator => AutoStartEnabled ? "⚡ AUTOSTART" : "MANUAL";
+
     /// <summary>Dòng tóm tắt cho phần bên phải thanh trạng thái.</summary>
     public string MetricsSummary =>
         IsConnected

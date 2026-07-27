@@ -6,7 +6,7 @@ namespace DBI.Controller.SDK;
 /// <summary>
 /// Class cơ sở cho toàn bộ chương trình điều khiển C# của người dùng (tương tự OB1 trong PLC).
 /// </summary>
-public abstract class ControllerProgram
+public abstract class ControllerProgram : IControllerProgramContract
 {
     private IOContainer? _io;
 

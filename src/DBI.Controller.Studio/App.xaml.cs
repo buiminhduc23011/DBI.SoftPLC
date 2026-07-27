@@ -32,6 +32,8 @@ public partial class App : Application
             runtime,
             new UserPrompt(),
             new IoCodeGenerator(),
+            new RoslynCompilerService(),
+            new RuntimeProcessLauncher(),
             new ThemeService());
 
         var window = new MainWindow(shell);

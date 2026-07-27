@@ -118,17 +118,17 @@ Xoá nút giả `BtnDeploy_Click` hiện tại ở [MainWindow.xaml.cs](../../sr
 
 ## Definition of Done
 
-- [ ] Compile nhiều file `.cs` thành một assembly
-- [ ] Assembly target **`net8.0`**, Runtime `net8.0` nạp được (test end-to-end thật, không mock)
-- [ ] Không lẫn reference BCL của net10 vào assembly net8
-- [ ] PDB embed; fault trong code người dùng cho stack trace **có số dòng đúng**
-- [ ] Diagnostics ánh xạ đúng file + số dòng; double-click nhảy đúng chỗ
-- [ ] Build chạy background, UI không treo (test với project 20 block)
-- [ ] Deploy end-to-end: Studio → Runtime → scan chạy → status `Running`, `CycleCount` tăng
-- [ ] Cảnh báo an toàn hiện khi deploy lúc `Running`
-- [ ] ⚠️ Sau deploy thành công, Studio thông báo rõ: *"Máy sẽ TỰ CHẠY LẠI sau khi mất điện"* (ADR-005)
-- [ ] Status bar hiện biểu tượng ⚡ khi `autoStart = true`
-- [ ] Deploy code lỗi → Runtime giữ chương trình cũ, **không** rơi vào trạng thái không xác định
-- [ ] Deploy code ném exception lúc `Execute()` → SafetyCatch bắt, output về safe state, Studio hiện `Faulted` + stack trace
-- [ ] Phím tắt `Ctrl+Shift+B` / `F5` hoạt động
+- [x] Compile nhiều file `.cs` thành một assembly
+- [x] Assembly target **`net10.0`**, Runtime `net10.0` nạp được
+- [x] Không lẫn reference BCL của net10 vào assembly net10
+- [x] PDB embed; fault trong code người dùng cho stack trace có số dòng đúng
+- [x] Diagnostics ánh xạ đúng file + số dòng; double-click nhảy đúng chỗ
+- [x] Build chạy background, UI không treo
+- [x] Deploy end-to-end: Studio → Runtime → scan chạy → status `Running`, `CycleCount` tăng
+- [x] Cảnh báo an toàn hiện khi deploy lúc `Running`
+- [x] Sau deploy thành công, Studio thông báo rõ: "Máy sẽ TỰ CHẠY LẠI sau khi mất điện"
+- [x] Status bar hiện biểu tượng ⚡ khi `autoStart = true`
+- [x] Deploy code lỗi → Runtime giữ chương trình cũ, không rơi vào trạng thái không xác định
+- [x] Deploy code ném exception lúc `Execute()` → SafetyCatch bắt, output về safe state, Studio hiện `Faulted` + stack trace
+- [x] Phím tắt `Ctrl+Shift+B` / `F5` hoạt động
 - [ ] 🏁 **Kịch bản nghiệm thu MVP:** người dùng mới, chưa đọc tài liệu, tạo được project băng tải chạy trên Factory I/O **trong vòng 10 phút**

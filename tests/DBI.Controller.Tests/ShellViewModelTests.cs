@@ -63,23 +63,41 @@ internal sealed class FakeLayoutPersistence : ILayoutPersistence
     public void ResetToDefault() => ResetCount++;
 }
 
+internal sealed class FakeCompiler : IProjectCompiler
+{
+    public CompileResult Result { get; set; } = new(true, new byte[] { 1, 2, 3 }, null, Array.Empty<CompileDiagnostic>());
+    public int CompileCount { get; private set; }
+    public CompileRequest? LastRequest { get; private set; }
+
+    public Task<CompileResult> CompileAsync(CompileRequest request, CancellationToken cancellationToken = default)
+    {
+        CompileCount++;
+        LastRequest = request;
+        return Task.FromResult(Result);
+    }
+}
+
 public class ShellViewModelTests
 {
-    private static (ShellViewModel Shell, ScriptedPrompt Prompt, FakeRuntimeClient Runtime) NewShell(
+    private static (ShellViewModel Shell, ScriptedPrompt Prompt, FakeRuntimeClient Runtime, FakeCompiler Compiler) NewShell(
         TempWorkspace temp, FakeLayoutPersistence? layout = null)
     {
         var prompt = new ScriptedPrompt();
         var runtime = new FakeRuntimeClient();
+        var compiler = new FakeCompiler();
+        var launcher = new RecordingLauncher { PipeAvailable = true };
 
         var shell = new ShellViewModel(
             new ProjectService(new RecentProjectsService(temp.SettingsDirectory)),
             runtime,
             prompt,
             new IoCodeGenerator(),
+            compiler,
+            launcher,
             new FakeThemeSwitcher(),
             layout);
 
-        return (shell, prompt, runtime);
+        return (shell, prompt, runtime, compiler);
     }
 
     // ── Vòng đời project ─────────────────────────────────────────────────────────
@@ -88,7 +106,7 @@ public class ShellViewModelTests
     public void TaoProjectMoi_DungCayVaCapNhatThanhTrangThai()
     {
         using var temp = new TempWorkspace();
-        var (shell, prompt, _) = NewShell(temp);
+        var (shell, prompt, _, _) = NewShell(temp);
 
         prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
         shell.NewProjectCommand.Execute(null);
@@ -106,7 +124,7 @@ public class ShellViewModelTests
     public void ThemKhoiMoi_SinhTepVaMoDungTab()
     {
         using var temp = new TempWorkspace();
-        var (shell, prompt, _) = NewShell(temp);
+        var (shell, prompt, _, _) = NewShell(temp);
 
         prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
         shell.NewProjectCommand.Execute(null);
@@ -124,7 +142,7 @@ public class ShellViewModelTests
     public void KhongTaoMainThuHai()
     {
         using var temp = new TempWorkspace();
-        var (shell, prompt, _) = NewShell(temp);
+        var (shell, prompt, _, _) = NewShell(temp);
 
         prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
         shell.NewProjectCommand.Execute(null);
@@ -140,7 +158,7 @@ public class ShellViewModelTests
     public void DoiTenKhoi_DoiCaTepClassVaDbiproj()
     {
         using var temp = new TempWorkspace();
-        var (shell, prompt, _) = NewShell(temp);
+        var (shell, prompt, _, _) = NewShell(temp);
 
         prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
         shell.NewProjectCommand.Execute(null);
@@ -166,7 +184,7 @@ public class ShellViewModelTests
     public void XoaKhoi_XoaDungTep()
     {
         using var temp = new TempWorkspace();
-        var (shell, prompt, _) = NewShell(temp);
+        var (shell, prompt, _, _) = NewShell(temp);
 
         prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
         shell.NewProjectCommand.Execute(null);
@@ -187,7 +205,7 @@ public class ShellViewModelTests
     public void DatKhoiKhacLamMain_HaMainCuXuongFunctionBlock()
     {
         using var temp = new TempWorkspace();
-        var (shell, prompt, _) = NewShell(temp);
+        var (shell, prompt, _, _) = NewShell(temp);
 
         prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
         shell.NewProjectCommand.Execute(null);
@@ -207,7 +225,7 @@ public class ShellViewModelTests
     public void MoProjectSchemaTuongLai_HienLoiRoRangKhongCrash()
     {
         using var temp = new TempWorkspace();
-        var (shell, prompt, _) = NewShell(temp);
+        var (shell, prompt, _, _) = NewShell(temp);
 
         prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
         shell.NewProjectCommand.Execute(null);
@@ -228,7 +246,7 @@ public class ShellViewModelTests
     public void DongProject_ConThayDoiChuaLuu_HoiLaiTruoc()
     {
         using var temp = new TempWorkspace();
-        var (shell, prompt, _) = NewShell(temp);
+        var (shell, prompt, _, _) = NewShell(temp);
 
         prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
         shell.NewProjectCommand.Execute(null);
@@ -255,7 +273,7 @@ public class ShellViewModelTests
     public void MoNhieuTabVaDongTungCai()
     {
         using var temp = new TempWorkspace();
-        var (shell, prompt, _) = NewShell(temp);
+        var (shell, prompt, _, _) = NewShell(temp);
 
         prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
         shell.NewProjectCommand.Execute(null);
@@ -280,7 +298,7 @@ public class ShellViewModelTests
     public void MoLaiKhoiDaMo_ChuyenSangTabCu_KhongTaoTabTrung()
     {
         using var temp = new TempWorkspace();
-        var (shell, prompt, _) = NewShell(temp);
+        var (shell, prompt, _, _) = NewShell(temp);
 
         prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
         shell.NewProjectCommand.Execute(null);
@@ -297,7 +315,7 @@ public class ShellViewModelTests
     public async Task SuaRoiLuu_XoaDauSaoTrenTieuDeTab()
     {
         using var temp = new TempWorkspace();
-        var (shell, prompt, _) = NewShell(temp);
+        var (shell, prompt, _, _) = NewShell(temp);
 
         prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
         shell.NewProjectCommand.Execute(null);
@@ -320,7 +338,7 @@ public class ShellViewModelTests
     public void MoKhoiThieuTepCs_GhiCanhBaoVaoInspector_KhongCrash()
     {
         using var temp = new TempWorkspace();
-        var (shell, prompt, _) = NewShell(temp);
+        var (shell, prompt, _, _) = NewShell(temp);
 
         prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
         shell.NewProjectCommand.Execute(null);
@@ -337,7 +355,7 @@ public class ShellViewModelTests
     public void ChonNodeTrenCay_InspectorHienThuocTinhTuongUng()
     {
         using var temp = new TempWorkspace();
-        var (shell, prompt, _) = NewShell(temp);
+        var (shell, prompt, _, _) = NewShell(temp);
 
         prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
         shell.NewProjectCommand.Execute(null);
@@ -368,7 +386,7 @@ public class ShellViewModelTests
     public void Fault_TuRuntime_GhiVaoTabDiagnostics()
     {
         using var temp = new TempWorkspace();
-        var (shell, _, runtime) = NewShell(temp);
+        var (shell, _, runtime, _) = NewShell(temp);
 
         runtime.SimulateFault("Chia cho 0 ở khối Conveyor");
 
@@ -386,7 +404,8 @@ public class ShellViewModelTests
 
         var shell = new ShellViewModel(
             new ProjectService(new RecentProjectsService(temp.SettingsDirectory)),
-            new FakeRuntimeClient(), new ScriptedPrompt(), new IoCodeGenerator(), theme);
+            new FakeRuntimeClient(), new ScriptedPrompt(), new IoCodeGenerator(),
+            new FakeCompiler(), new RecordingLauncher { PipeAvailable = true }, theme);
 
         Assert.False(shell.IsDarkMode);
 
@@ -402,7 +421,7 @@ public class ShellViewModelTests
     {
         using var temp = new TempWorkspace();
         var layout = new FakeLayoutPersistence();
-        var (shell, _, _) = NewShell(temp, layout);
+        var (shell, _, _, _) = NewShell(temp, layout);
 
         shell.ResetLayoutCommand.Execute(null);
 
@@ -415,7 +434,7 @@ public class ShellViewModelTests
     {
         using var temp = new TempWorkspace();
         var layout = new FakeLayoutPersistence();
-        var (shell, prompt, _) = NewShell(temp, layout);
+        var (shell, prompt, _, _) = NewShell(temp, layout);
 
         Assert.Null(shell.LayoutFilePath);   // chưa mở project thì chưa có chỗ lưu
 
@@ -434,7 +453,7 @@ public class ShellViewModelTests
     public void ResolveContent_TraDungViewModelChoTungContentId()
     {
         using var temp = new TempWorkspace();
-        var (shell, prompt, _) = NewShell(temp);
+        var (shell, prompt, _, _) = NewShell(temp);
 
         prompt.NewProject = new NewProjectRequest(temp.Root, "MyMachine");
         shell.NewProjectCommand.Execute(null);
@@ -469,7 +488,7 @@ public class ShellViewModelTests
     public async Task DongStudioLucMayDangChay_CoCanhBaoRangKhongDungMay()
     {
         using var temp = new TempWorkspace();
-        var (shell, _, runtime) = NewShell(temp);
+        var (shell, _, runtime, _) = NewShell(temp);
 
         Assert.Null(shell.ClosingWarning);
 

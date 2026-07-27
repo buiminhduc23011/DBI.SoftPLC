@@ -2,7 +2,6 @@ using System.Diagnostics;
 using DBI.Controller.Core.Interfaces;
 using DBI.Controller.Runtime.Drivers;
 using DBI.Controller.Runtime.Safety;
-using DBI.Controller.SDK;
 
 namespace DBI.Controller.Runtime.Engine;
 
@@ -31,7 +30,7 @@ public class ScanEngine
     private readonly DriverManager _driverManager;
     private readonly SafetyCatchManager _safetyCatchManager;
 
-    private ControllerProgram? _program;
+    private IControllerProgramContract? _program;
     private volatile bool _isRunning;
     private Thread? _engineThread;
 
@@ -51,7 +50,7 @@ public class ScanEngine
         _safetyCatchManager = safetyCatchManager ?? throw new ArgumentNullException(nameof(safetyCatchManager));
     }
 
-    public void SetProgram(ControllerProgram? program) => _program = program;
+    public void SetProgram(IControllerProgramContract? program) => _program = program;
 
     public void ResetMetrics() => Volatile.Write(ref _metrics, ScanMetrics.Empty);
 

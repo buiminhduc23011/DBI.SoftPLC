@@ -7,12 +7,17 @@
         xmlns:vm="clr-namespace:DBI.Controller.Studio.Core.ViewModels;assembly=DBI.Controller.Studio.Core"
         xmlns:behaviors="clr-namespace:DBI.Controller.Studio.Behaviors"
         xmlns:converters="clr-namespace:DBI.Controller.Studio.Converters"
-        Title="DBI.Studio — Soft PLC Engineering"
+        Title="DBI.Studio - Soft PLC Engineering"
         Height="850" Width="1360"
         Icon="pack://application:,,,/icon.ico"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource WindowBg}"
         Foreground="{DynamicResource TextPrimary}">
+
+    <Window.InputBindings>
+        <KeyBinding Key="B" Modifiers="Control+Shift" Command="{Binding CompileCommand}" />
+        <KeyBinding Key="F5" Command="{Binding DeployCommand}" />
+    </Window.InputBindings>
 
     <Window.Resources>
         <converters:ResourceKeyToBrushConverter x:Key="BrushFromKey" />
@@ -26,8 +31,6 @@
                            Foreground="{Binding BrushKey, Converter={StaticResource BrushFromKey}}" />
             </StackPanel>
         </DataTemplate>
-
-        <!-- ── Panel neo ───────────────────────────────────────────────────── -->
 
         <DataTemplate DataType="{x:Type vm:ProjectTreeViewModel}">
             <TreeView ItemsSource="{Binding Roots}"
@@ -71,15 +74,15 @@
                 <TabItem Header="Properties">
                     <DataGrid ItemsSource="{Binding Properties}" Style="{StaticResource FlatDataGrid}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Thuộc tính" Binding="{Binding Name}"
+                            <DataGridTextColumn Header="Thuoc tinh" Binding="{Binding Name}"
                                                 Width="180" IsReadOnly="True" />
-                            <DataGridTextColumn Header="Giá trị" Binding="{Binding Value}" Width="*" />
+                            <DataGridTextColumn Header="Gia tri" Binding="{Binding Value}" Width="*" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </TabItem>
                 <TabItem Header="Information">
                     <DockPanel>
-                        <Button DockPanel.Dock="Top" Content="Xoá log" HorizontalAlignment="Left"
+                        <Button DockPanel.Dock="Top" Content="Xoa log" HorizontalAlignment="Left"
                                 Margin="6" Style="{StaticResource FlatButton}"
                                 Command="{Binding ClearInformationCommand}" />
                         <ListBox ItemsSource="{Binding Information}" Background="{DynamicResource CardBg}"
@@ -88,7 +91,7 @@
                 </TabItem>
                 <TabItem Header="Diagnostics">
                     <DockPanel>
-                        <Button DockPanel.Dock="Top" Content="Xoá log" HorizontalAlignment="Left"
+                        <Button DockPanel.Dock="Top" Content="Xoa log" HorizontalAlignment="Left"
                                 Margin="6" Style="{StaticResource FlatButton}"
                                 Command="{Binding ClearDiagnosticsCommand}" />
                         <ListBox ItemsSource="{Binding Diagnostics}" Background="{DynamicResource CardBg}"
@@ -102,8 +105,6 @@
             <TextBlock Text="{Binding Placeholder}" Style="{StaticResource MutedText}"
                        TextWrapping="Wrap" Margin="10" />
         </DataTemplate>
-
-        <!-- ── Tài liệu ────────────────────────────────────────────────────── -->
 
         <DataTemplate DataType="{x:Type vm:CodeEditorViewModel}">
             <avalonedit:TextEditor behaviors:BindableTextEditor.Text="{Binding Text, Mode=TwoWay}"
@@ -121,7 +122,7 @@
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
                     <Button Content="+ Add" Style="{StaticResource FlatButton}"
                             Command="{Binding AddRowCommand}" />
-                    <Button Content="🗑 Delete" Style="{StaticResource FlatButton}"
+                    <Button Content="Delete" Style="{StaticResource FlatButton}"
                             Command="{Binding DeleteRowCommand}" />
                 </StackPanel>
 
@@ -177,50 +178,52 @@
     </Window.Resources>
 
     <DockPanel>
-
-        <!-- ── Menu ────────────────────────────────────────────────────────── -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem Header="Project mới…" Command="{Binding NewProjectCommand}" />
-                <MenuItem Header="Mở project…" Command="{Binding OpenProjectCommand}" />
+                <MenuItem Header="Project moi..." Command="{Binding NewProjectCommand}" />
+                <MenuItem Header="Mo project..." Command="{Binding OpenProjectCommand}" />
                 <Separator />
-                <MenuItem Header="Lưu tất cả" Command="{Binding SaveAllCommand}" />
-                <MenuItem Header="Đóng project" Command="{Binding CloseProjectCommand}" />
+                <MenuItem Header="Luu tat ca" Command="{Binding SaveAllCommand}" />
+                <MenuItem Header="Dong project" Command="{Binding CloseProjectCommand}" />
             </MenuItem>
             <MenuItem Header="_Online">
-                <MenuItem Header="Nạp xuống Runtime" IsEnabled="False" />
-                <MenuItem Header="Chạy" IsEnabled="False" />
-                <MenuItem Header="Dừng" IsEnabled="False" />
+                <MenuItem Header="Bien dich" Command="{Binding CompileCommand}" IsEnabled="{Binding CanCompile}" />
+                <MenuItem Header="Nap xuong Runtime" Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" />
+                <Separator />
+                <MenuItem Header="Chay" Command="{Binding StartRuntimeCommand}" IsEnabled="{Binding CanStart}" />
+                <MenuItem Header="Dung" Command="{Binding StopRuntimeCommand}" IsEnabled="{Binding CanStop}" />
+                <MenuItem Header="Reset" Command="{Binding ResetRuntimeCommand}" IsEnabled="{Binding CanReset}" />
             </MenuItem>
             <MenuItem Header="_View">
                 <MenuItem Header="{Binding ThemeToggleText}" Command="{Binding ToggleThemeCommand}" />
                 <Separator />
-                <MenuItem Header="Đưa bố cục về mặc định" Command="{Binding ResetLayoutCommand}" />
+                <MenuItem Header="Dua bo cuc ve mac dinh" Command="{Binding ResetLayoutCommand}" />
             </MenuItem>
         </Menu>
 
-        <!-- ── Toolbar ─────────────────────────────────────────────────────── -->
         <Border DockPanel.Dock="Top" Background="{DynamicResource HeaderBg}"
                 BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,2" Padding="6,5">
             <StackPanel Orientation="Horizontal">
-                <Button Content="🆕 Mới" Style="{StaticResource FlatButton}"
-                        Command="{Binding NewProjectCommand}" />
-                <Button Content="📂 Mở" Style="{StaticResource FlatButton}"
-                        Command="{Binding OpenProjectCommand}" />
-                <Button Content="💾 Lưu" Style="{StaticResource FlatButton}"
-                        Command="{Binding SaveAllCommand}" />
+                <Button Content="New" Style="{StaticResource FlatButton}" Command="{Binding NewProjectCommand}" />
+                <Button Content="Open" Style="{StaticResource FlatButton}" Command="{Binding OpenProjectCommand}" />
+                <Button Content="Save" Style="{StaticResource FlatButton}" Command="{Binding SaveAllCommand}" />
                 <Rectangle Width="2" Margin="8,2" Fill="{DynamicResource BorderColor}" />
-                <Button Content="🔨 Compile" Style="{StaticResource FlatButton}" IsEnabled="False"
-                        ToolTip="phase-07" />
-                <Button Content="🚀 Deploy" Style="{StaticResource AccentButton}" IsEnabled="False"
-                        ToolTip="phase-07" />
+                <Button Content="Compile" Style="{StaticResource FlatButton}"
+                        Command="{Binding CompileCommand}" IsEnabled="{Binding CanCompile}" ToolTip="Ctrl+Shift+B" />
+                <Button Content="Deploy" Style="{StaticResource AccentButton}"
+                        Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" ToolTip="F5" />
+                <Button Content="Start" Style="{StaticResource FlatButton}"
+                        Command="{Binding StartRuntimeCommand}" IsEnabled="{Binding CanStart}" />
+                <Button Content="Stop" Style="{StaticResource FlatButton}"
+                        Command="{Binding StopRuntimeCommand}" IsEnabled="{Binding CanStop}" />
+                <Button Content="Reset" Style="{StaticResource FlatButton}"
+                        Command="{Binding ResetRuntimeCommand}" IsEnabled="{Binding CanReset}" />
                 <Rectangle Width="2" Margin="8,2" Fill="{DynamicResource BorderColor}" />
                 <Button Content="{Binding ThemeToggleText}" Style="{StaticResource FlatButton}"
                         Command="{Binding ToggleThemeCommand}" />
             </StackPanel>
         </Border>
 
-        <!-- ── Status bar ──────────────────────────────────────────────────── -->
         <Border DockPanel.Dock="Bottom" Background="{DynamicResource HeaderBg}"
                 BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,2,0,0" Padding="8,4">
             <Grid DataContext="{Binding StatusBar}">
@@ -246,21 +249,16 @@
                            TextTrimming="CharacterEllipsis" />
 
                 <TextBlock Grid.Column="3" Style="{StaticResource MutedText}" FontSize="11">
-                    <Run Text="Project:" />
+                    <Run Text="{Binding AutoStartIndicator}" />
+                    <Run Text=" · Project: " />
                     <Run Text="{Binding ProjectName, Mode=OneWay}" />
                 </TextBlock>
             </Grid>
         </Border>
 
-        <!-- ── Bốn vùng dock ───────────────────────────────────────────────── -->
         <avalondock:DockingManager x:Name="Docking"
                                    DocumentsSource="{Binding Editors.Documents}"
                                    ActiveContent="{Binding Editors.ActiveDocument, Mode=TwoWay}">
-            <!--
-                Một style duy nhất cho cả tài liệu lẫn panel neo: cả hai ViewModel đều có
-                DisplayTitle / ContentId / CanClose nên không cần StyleSelector riêng.
-                ContentId là chỗ AvalonDock ghi vào layout.xml và hỏi lại lúc khôi phục.
-            -->
             <avalondock:DockingManager.LayoutItemContainerStyle>
                 <Style TargetType="{x:Type adcontrols:LayoutItem}">
                     <Setter Property="Title" Value="{Binding Model.Title}" />
@@ -268,55 +266,42 @@
                 </Style>
             </avalondock:DockingManager.LayoutItemContainerStyle>
 
-            <!--
-                Bốn vùng khai trực tiếp thay vì dùng AnchorablesSource: vị trí mỗi panel là cố định
-                và khác nhau (trái / dưới / phải), mà AnchorablesSource dồn hết vào pane đầu tiên
-                nó tìm thấy. Content vẫn là ViewModel — DataTemplate ở trên lo phần vẽ, nên vẫn
-                đúng MVVM. Chỉ tài liệu ở giữa mới cần nguồn động.
-            -->
             <avalondock:LayoutRoot>
                 <avalondock:LayoutPanel Orientation="Horizontal">
-
-                    <!-- Trái: cây project -->
                     <avalondock:LayoutAnchorablePaneGroup DockWidth="260">
                         <avalondock:LayoutAnchorablePane>
                             <avalondock:LayoutAnchorable Title="Project"
-                                                        ContentId="ProjectTree"
-                                                        CanClose="False"
-                                                        Content="{Binding ProjectTree}" />
+                                                         ContentId="ProjectTree"
+                                                         CanClose="False"
+                                                         Content="{Binding ProjectTree}" />
                         </avalondock:LayoutAnchorablePane>
                     </avalondock:LayoutAnchorablePaneGroup>
 
                     <avalondock:LayoutPanel Orientation="Vertical">
-                        <!-- Giữa: tài liệu -->
                         <avalondock:LayoutDocumentPaneGroup>
                             <avalondock:LayoutDocumentPane />
                         </avalondock:LayoutDocumentPaneGroup>
 
-                        <!-- Dưới: Inspector -->
                         <avalondock:LayoutAnchorablePaneGroup DockHeight="180">
                             <avalondock:LayoutAnchorablePane>
                                 <avalondock:LayoutAnchorable Title="Inspector"
-                                                            ContentId="Inspector"
-                                                            CanClose="False"
-                                                            Content="{Binding Inspector}" />
+                                                             ContentId="Inspector"
+                                                             CanClose="False"
+                                                             Content="{Binding Inspector}" />
                             </avalondock:LayoutAnchorablePane>
                         </avalondock:LayoutAnchorablePaneGroup>
                     </avalondock:LayoutPanel>
 
-                    <!-- Phải: toolbox -->
                     <avalondock:LayoutAnchorablePaneGroup DockWidth="240">
                         <avalondock:LayoutAnchorablePane>
                             <avalondock:LayoutAnchorable Title="Toolbox"
-                                                        ContentId="TaskCards"
-                                                        CanClose="False"
-                                                        Content="{Binding TaskCards}" />
+                                                         ContentId="TaskCards"
+                                                         CanClose="False"
+                                                         Content="{Binding TaskCards}" />
                         </avalondock:LayoutAnchorablePane>
                     </avalondock:LayoutAnchorablePaneGroup>
-
                 </avalondock:LayoutPanel>
             </avalondock:LayoutRoot>
         </avalondock:DockingManager>
-
     </DockPanel>
 </Window>

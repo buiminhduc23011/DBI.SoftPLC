@@ -1,11 +1,10 @@
 using DBI.Controller.Core.Interfaces;
 using DBI.Controller.Protocol;
 using DBI.Controller.Runtime.Loading;
-using DBI.Controller.SDK;
 
 namespace DBI.Controller.Runtime.Host;
 
-public record SwapResult(bool Ok, ControllerProgram? Program, string? Error = null, string? ErrorCode = null)
+public record SwapResult(bool Ok, IControllerProgramContract? Program, string? Error = null, string? ErrorCode = null)
 {
     public static SwapResult Failure(string error, string errorCode) => new(false, null, error, errorCode);
 }
