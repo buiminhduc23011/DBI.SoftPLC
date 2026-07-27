@@ -1,49 +1,45 @@
+using System.ComponentModel;
 using System.Windows;
-using DBI.Controller.Studio.ViewModels;
+using DBI.Controller.Studio.Core.ViewModels;
+using DBI.Controller.Studio.Services;
 
 namespace DBI.Controller.Studio;
 
 public partial class MainWindow : Window
 {
-    public MainViewModel ViewModel { get; } = new();
+    private readonly ShellViewModel _shell;
 
-    public MainWindow()
+    public MainWindow(ShellViewModel shell)
     {
+        _shell = shell ?? throw new ArgumentNullException(nameof(shell));
+
         InitializeComponent();
-        DataContext = ViewModel;
 
-        // Bind AvalonEdit text editor content to ViewModel.CSharpCode
-        CodeEditor.Text = ViewModel.CSharpCode;
-        CodeEditor.TextChanged += (s, e) =>
+        DataContext = _shell;
+
+        // DockingManager chỉ tồn tại sau InitializeComponent, nên dịch vụ bố cục phải ráp ở đây.
+        // Nó vẫn đi qua interface ILayoutPersistence — ShellViewModel không biết AvalonDock là gì.
+        _shell.AttachLayout(new DockLayoutService(Docking, _shell.ResolveContent));
+    }
+
+    /// <summary>
+    /// Cảnh báo trước khi đóng nếu máy đang chạy — đóng Studio <b>không</b> dừng máy (ADR-001).
+    /// </summary>
+    protected override void OnClosing(CancelEventArgs e)
+    {
+        _shell.SaveLayout();
+
+        if (_shell.ClosingWarning is { } warning &&
+            MessageBox.Show(
+                warning + "\n\nVẫn đóng Studio?",
+                "Runtime đang chạy",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning) != MessageBoxResult.Yes)
         {
-            ViewModel.CSharpCode = CodeEditor.Text;
-        };
-    }
-
-    private void BtnDeploy_Click(object sender, RoutedEventArgs e)
-    {
-        ViewModel.CompileAndDeploy();
-    }
-
-    private void BtnToggleOnline_Click(object sender, RoutedEventArgs e)
-    {
-        ViewModel.ToggleOnline();
-    }
-
-    private void BtnToggleTheme_Click(object sender, RoutedEventArgs e)
-    {
-        ViewModel.ToggleTheme();
-
-        // Update AvalonEdit Colors based on Theme
-        if (ViewModel.IsDarkMode)
-        {
-            CodeEditor.Background = System.Windows.Media.Brushes.Transparent;
-            CodeEditor.Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#F1F1F1")!;
+            e.Cancel = true;
+            return;
         }
-        else
-        {
-            CodeEditor.Background = System.Windows.Media.Brushes.Transparent;
-            CodeEditor.Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#1A1A1A")!;
-        }
+
+        base.OnClosing(e);
     }
 }

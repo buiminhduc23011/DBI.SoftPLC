@@ -200,8 +200,8 @@ MyMachine/
 | 01 | [Project Model & Persistence](phase-01-project-model.md) | #1 | ✅ Done | **100%** |
 | 02 | [IPC Contract & Runtime Host](phase-02-ipc-runtime-host.md) | #16a + B-4, B-5 | ✅ Done | **100%** |
 | 03 | [Studio Runtime Client](phase-03-studio-runtime-client.md) | #16b | ✅ Done | **100%** |
-| 04 | [AvalonDock Shell & MVVM](phase-04-shell-mvvm.md) | #6, #7, #8 | 🟡 Đang làm | 0% |
-| 05 | [Project Tree & Block Templates](phase-05-project-tree.md) | #2 | ⬜ Pending | 0% |
+| 04 | [AvalonDock Shell & MVVM](phase-04-shell-mvvm.md) | #6, #7, #8 | ✅ Done | **100%** |
+| 05 | [Project Tree & Block Templates](phase-05-project-tree.md) | #2 | 🟡 Đang làm | 0% |
 | 06 | [Tag Table & Code Generator](phase-06-tag-table-codegen.md) | #4, #5 | ⬜ Pending | 0% |
 | 07 | [Multi-file Compile & Deploy](phase-07-compile-deploy.md) 🏁 | #3 | ⬜ Pending | 0% |
 | 08 | [Roslyn IntelliSense & Error List](phase-08-intellisense.md) | #9, #10 | ⬜ Pending | 0% |

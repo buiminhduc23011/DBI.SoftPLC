@@ -7,6 +7,11 @@
 
     ⚠️ Cũng như Studio: KHÔNG tham chiếu DBI.Controller.Runtime (ADR-001).
   -->
+  <!-- MVVM toolkit là netstandard, không kéo WPF vào — ViewModel ở đây vẫn test được. -->
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\DBI.Controller.Core\DBI.Controller.Core.csproj" />
     <ProjectReference Include="..\DBI.Controller.Protocol\DBI.Controller.Protocol.csproj" />

@@ -1,0 +1,25 @@
+<!--
+    Bảng màu Dark. Cùng bộ key với Light.xaml — đổi theme là swap MergedDictionaries, thiếu một
+    key nào thì chỗ đó sẽ trống trơn lúc chạy.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <SolidColorBrush x:Key="WindowBg"      Color="#1E1E1E" />
+    <SolidColorBrush x:Key="CardBg"        Color="#252526" />
+    <SolidColorBrush x:Key="HeaderBg"      Color="#2D2D30" />
+    <SolidColorBrush x:Key="TextPrimary"   Color="#CCCCCC" />
+    <SolidColorBrush x:Key="TextSecondary" Color="#808080" />
+    <SolidColorBrush x:Key="BorderColor"   Color="#3F3F46" />
+    <SolidColorBrush x:Key="AccentColor"   Color="#007ACC" />
+
+    <!-- Màu trạng thái máy — sáng hơn bản Light một chút để đủ tương phản trên nền tối. -->
+    <SolidColorBrush x:Key="SuccessColor"  Color="#16A34A" />
+    <SolidColorBrush x:Key="DangerColor"   Color="#E5484D" />
+    <SolidColorBrush x:Key="WarningColor"  Color="#D4A017" />
+    <SolidColorBrush x:Key="IdleColor"     Color="#808080" />
+
+    <SolidColorBrush x:Key="SelectionBg"   Color="#094771" />
+    <SolidColorBrush x:Key="HoverBg"       Color="#2A2D2E" />
+
+</ResourceDictionary>

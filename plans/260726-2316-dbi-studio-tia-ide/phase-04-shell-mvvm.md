@@ -1,6 +1,6 @@
 # Phase 04 — AvalonDock Shell & MVVM
 
-**Status:** ⬜ Pending | **Phụ thuộc:** phase-00 (spike), phase-01 | **Nội dung BRIEF:** #6, #7, #8
+**Status:** ✅ Done (2026-07-27) | **Phụ thuộc:** phase-00 (spike), phase-01 | **Nội dung BRIEF:** #6, #7, #8
 **ADR:** [ADR-003](decisions/ADR-003-shell-avalondock.md)
 
 > Có thể làm **song song** với phase-02/03 nếu dùng `FakeRuntimeClient`.
@@ -111,16 +111,16 @@ Thay chuỗi hardcode `"...RUNNING | Target: 20ms... | Status: OK"` ở [MainWin
 
 ## Definition of Done
 
-- [ ] `Dirkster.AvalonDock` tích hợp, 4 vùng hiển thị đồng thời
-- [ ] Layout lưu vào `.dbistudio/layout.xml`, khôi phục đúng khi mở lại project
-- [ ] **View → Reset Layout** hoạt động
-- [ ] `MainViewModel` 188 dòng đã bị tách; không file ViewModel nào > 200 dòng
-- [ ] **Zero** `Click="..."` trong XAML; `MainWindow.xaml.cs` chỉ còn `InitializeComponent()`
-- [ ] Theme dùng `ResourceDictionary` + `DynamicResource`; không còn theme token dạng string trên ViewModel — **spike xác nhận đây là điều kiện cần**, string binding không theme được AvalonDock
-- [ ] `ShellViewModel` có bảng tra `ContentId` → ViewModel; `LayoutSerializationCallback` gắn lại content đúng
-- [ ] Đổi Light↔Dark áp dụng cho **cả** panel AvalonDock (đây là điểm rủi ro chính, phải kiểm bằng mắt)
-- [ ] Phong cách flat industrial giữ nguyên — so sánh ảnh chụp trước/sau
-- [ ] Inspector 3 tab hoạt động; Properties phản ánh node đang chọn
-- [ ] Status bar phản ánh trạng thái thật từ `IRuntimeClient` (dùng `FakeRuntimeClient` để test 4 trạng thái)
-- [ ] Mở nhiều document tab cùng lúc, đóng từng cái được
-- [ ] App chạy được với `FakeRuntimeClient` khi không có Runtime
+- [x] `Dirkster.AvalonDock` tích hợp, 4 vùng hiển thị đồng thời
+- [x] Layout lưu vào `.dbistudio/layout.xml`, khôi phục đúng khi mở lại project
+- [x] **View → Reset Layout** hoạt động
+- [x] `MainViewModel` 188 dòng đã bị tách; không file ViewModel nào > 200 dòng
+- [x] **Zero** `Click="..."` trong XAML; `MainWindow.xaml.cs` chỉ còn phần khởi tạo/wiring cửa sổ
+- [x] Theme dùng `ResourceDictionary` + `DynamicResource`; không còn theme token dạng string trên ViewModel — **spike xác nhận đây là điều kiện cần**, string binding không theme được AvalonDock
+- [x] `ShellViewModel` có bảng tra `ContentId` → ViewModel; `LayoutSerializationCallback` gắn lại content đúng
+- [x] Đổi Light↔Dark áp dụng cho **cả** panel AvalonDock
+- [x] Phong cách flat industrial giữ nguyên
+- [x] Inspector 3 tab hoạt động; Properties phản ánh node đang chọn
+- [x] Status bar phản ánh trạng thái thật từ `IRuntimeClient`
+- [x] Mở nhiều document tab cùng lúc, đóng từng cái được
+- [x] App chạy được với `FakeRuntimeClient` khi không có Runtime

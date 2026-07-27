@@ -13,6 +13,9 @@
 
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
+    <!-- Ghim version cụ thể: wildcard làm build không tái lập được giữa các máy. -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Dirkster.AvalonDock" Version="4.74.1" />
     <!-- Version ghim ở Directory.Build.props — xem ghi chú NU1608 ở đó. -->
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(DbiRoslynVersion)" />
   </ItemGroup>

@@ -1,9 +1,16 @@
-﻿<Application x:Class="DBI.Controller.Studio.App"
+<Application x:Class="DBI.Controller.Studio.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:DBI.Controller.Studio"
-             StartupUri="MainWindow.xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--
+        Không đặt StartupUri: App.OnStartup tự dựng cửa sổ để tiêm được service (ADR-003).
+        Light.xaml nạp sẵn làm theme mặc định; ThemeService swap mục [0] khi đổi theme.
+    -->
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Light.xaml" />
+                <ResourceDictionary Source="Themes/Shared.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>
