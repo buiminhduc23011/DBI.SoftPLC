@@ -3,8 +3,6 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
@@ -19,13 +17,19 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(DbiRoslynVersion)" />
   </ItemGroup>
 
+  <!--
+    ⚠️ ADR-001 — KHÔNG tham chiếu DBI.Controller.Runtime hay Drivers/*.
+    Studio nói chuyện với Runtime qua DBI.Controller.Protocol, và driver DLL đóng gói kèm Runtime.
+    Nếu thêm lại reference tới Runtime, ranh giới tiến trình chỉ còn là hình thức.
+
+    Core + SDK giữ lại vì cần để BIÊN DỊCH code người dùng (phase-07), không phải để chạy.
+  -->
   <ItemGroup>
     <ProjectReference Include="..\DBI.Controller.Core\DBI.Controller.Core.csproj" />
     <ProjectReference Include="..\DBI.Controller.SDK\DBI.Controller.SDK.csproj" />
+    <ProjectReference Include="..\DBI.Controller.Protocol\DBI.Controller.Protocol.csproj" />
     <ProjectReference Include="..\DBI.Controller.Studio.Core\DBI.Controller.Studio.Core.csproj" />
-    <ProjectReference Include="..\DBI.Controller.Runtime\DBI.Controller.Runtime.csproj" />
     <ProjectReference Include="..\DBI.Controller.Diagnostics\DBI.Controller.Diagnostics.csproj" />
-    <ProjectReference Include="..\..\Drivers\DBI.Controller.Driver.Simulation\DBI.Controller.Driver.Simulation.csproj" />
   </ItemGroup>
 
 </Project>

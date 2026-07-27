@@ -33,3 +33,17 @@
 [2026-07-27 01:05] DONE test: MemorySnapshotTests + DriverMemoryImageTests (có ForcingMemoryImage mô phỏng Force layer phase-11)
 [2026-07-27 01:08] DONE phase-00: build 0 warning/0 error, test 25/25 pass, toàn bộ DoD đạt
 [2026-07-27 01:10] START phase-01 Project Model & Persistence
+[2026-07-27 01:15] START phase-02 IPC Contract & Runtime Host
+[2026-07-27 01:35] DONE DBI.Controller.Protocol: contract, IpcFraming length-prefix, NamedPipeTransport
+[2026-07-27 01:40] DECISION: TagRoute/DeviceSpec/TagDataType đặt ở Core chứ không phải Protocol — IDriver cần chúng trong chữ ký
+[2026-07-27 01:50] DONE B-5: TagRoutingTable + DriverManager cắt route theo thiết bị; 5 driver đổi chữ ký IDriver
+[2026-07-27 02:00] DONE B-4: RuntimeHost + IpcServer + Program.Main thật. ADR-004 IProgramSwapper, ADR-005 DeploymentStore
+[2026-07-27 02:05] BUG FOUND: mọi lệnh IPC treo vô hạn. Nguyên nhân: ProtocolJson ghi PascalCase nhưng client dò "requestId" (phân biệt hoa/thường) -> mọi response bị coi là push
+[2026-07-27 02:08] BUG FOUND: jitter 6ms không phải lỗi công thức. Timer Windows mặc định ~15.6ms. Thêm HighResolutionTimerScope -> jitter dưới 1ms
+[2026-07-27 02:10] BUG FOUND: SimulationDriver "không route thì ghi tất" làm thiết bị 0 tag vơ hết tag thiết bị khác. Đổi thành MirrorAllTags opt-in
+[2026-07-27 02:12] FIXED: Directory.Build.props khai net8.0 nhưng mọi project đè net10.0. Sửa props cho khớp thực tế
+[2026-07-27 02:15] DONE phase-02: test 162/162, determinism 60 giây pass
+[2026-07-27 02:20] START phase-03 Studio Runtime Client
+[2026-07-27 02:25] DECISION: client đặt ở Studio.Core, marshal event bằng SynchronizationContext thay Dispatcher — tầng lõi không kéo WPF vào mà vẫn test được
+[2026-07-27 02:28] DONE phase-03: cắt ProjectReference Studio -> Runtime. IRuntimeClient/NamedPipe/Fake/ProcessLauncher. Xoá LiveMonitoringService
+[2026-07-27 02:30] DONE phase-03: test 187/187, build 0 warning/0 error

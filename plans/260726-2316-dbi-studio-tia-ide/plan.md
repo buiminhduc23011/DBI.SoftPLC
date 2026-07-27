@@ -1,4 +1,4 @@
-# Plan: DBI.Studio — TIA Portal-style IDE cho C# Soft PLC
+﻿# Plan: DBI.Studio — TIA Portal-style IDE cho C# Soft PLC
 
 **Created:** 2026-07-26 23:16 | **Version:** 1.0 | **Status:** 🟡 In Progress
 **Nguồn:** [BRIEF-STUDIO.md](../../docs/BRIEF-STUDIO.md) | **BRIEF cha:** [BRIEF.md](../../docs/BRIEF.md)
@@ -35,7 +35,7 @@
 | C-3 | Tag Table là **nguồn sự thật duy nhất**, code sinh ra từ bảng, xem [ADR-002](decisions/ADR-002-tag-source-of-truth.md) | User |
 | C-4 | Tag trỏ **trực tiếp** tới `(Device, Address)`, không có tầng `%I0.0` trung gian | User |
 | C-5 | Protocol driver **bắt buộc** dùng core client từ `DBI.Drivers`, không tự viết | [BRIEF.md §5](../../docs/BRIEF.md) |
-| C-6 | Studio: WPF `net10.0-windows`. Core/SDK/Runtime: `net8.0` — không được phá tương thích | `Directory.Build.props` |
+| C-6 | Studio: WPF `net10.0-windows`. Mọi project còn lại: `net10.0` | `Directory.Build.props` |
 | C-7 | Project trên đĩa phải **Git-friendly**: `.cs` là file thật, config là JSON | [BRIEF-STUDIO.md §4.4](../../docs/BRIEF-STUDIO.md) |
 
 ### Out of Scope (v1.0)
@@ -197,10 +197,10 @@ MyMachine/
 | Phase | Tên | Nội dung BRIEF | Status | Progress |
 |-------|-----|---|--------|----------|
 | 00 | [Spike & Foundation Fixes](phase-00-spike-foundation.md) | #0 + B-1→B-3 | ✅ Done | **100%** |
-| 01 | [Project Model & Persistence](phase-01-project-model.md) | #1 | 🟡 Đang làm | 0% |
-| 02 | [IPC Contract & Runtime Host](phase-02-ipc-runtime-host.md) | #16a + B-4, B-5 | ⬜ Pending | 0% |
-| 03 | [Studio Runtime Client](phase-03-studio-runtime-client.md) | #16b | ⬜ Pending | 0% |
-| 04 | [AvalonDock Shell & MVVM](phase-04-shell-mvvm.md) | #6, #7, #8 | ⬜ Pending | 0% |
+| 01 | [Project Model & Persistence](phase-01-project-model.md) | #1 | ✅ Done | **100%** |
+| 02 | [IPC Contract & Runtime Host](phase-02-ipc-runtime-host.md) | #16a + B-4, B-5 | ✅ Done | **100%** |
+| 03 | [Studio Runtime Client](phase-03-studio-runtime-client.md) | #16b | ✅ Done | **100%** |
+| 04 | [AvalonDock Shell & MVVM](phase-04-shell-mvvm.md) | #6, #7, #8 | 🟡 Đang làm | 0% |
 | 05 | [Project Tree & Block Templates](phase-05-project-tree.md) | #2 | ⬜ Pending | 0% |
 | 06 | [Tag Table & Code Generator](phase-06-tag-table-codegen.md) | #4, #5 | ⬜ Pending | 0% |
 | 07 | [Multi-file Compile & Deploy](phase-07-compile-deploy.md) 🏁 | #3 | ⬜ Pending | 0% |
@@ -237,7 +237,7 @@ MyMachine/
 | ~~AvalonDock theme đè phong cách industrial phẳng~~ | ✅ **ĐÃ GỠ** | [Spike 2026-07-27](reports/spike-avalondock.md): 7/7 PASS, theme được cả Light lẫn Dark |
 | Monitoring qua IPC trễ / tốn băng thông | 🟡 | Chỉ push tag đã `SubscribeTags`; hạ tần suất 100ms→250ms; đổi JSON→MessagePack |
 | Live overlay AvalonEdit quá khó | 🟡 | phase-10 (Watch Table) đã cho 80% giá trị debug — phase-13 có thể cắt |
-| Cross-targeting net8.0 ↔ net10.0 khi load assembly | 🟡 | User assembly build target `net8.0`; Runtime host `net8.0`; chỉ Studio `net10.0-windows` |
+| ~~Cross-targeting net8.0 ↔ net10.0 khi load assembly~~ | ✅ **KHÔNG XẢY RA** | phase-02 phát hiện `Directory.Build.props` khai `net8.0` nhưng **mọi project đều đè thành `net10.0`** — tài liệu nói một đằng, code chạy một nẻo. Đã sửa props cho khớp thực tế. Không có cross-targeting nào cả |
 | **MỚI:** `RoslynCodeEditor` tạo project cô lập 1 file → IntelliSense sai âm thầm | 🟡 | Phải nối editor vào workspace của project — [spike §Phát hiện 4](reports/spike-roslynpad.md). Có task riêng ở phase-08 |
 
 ---

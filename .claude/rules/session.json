@@ -2,40 +2,44 @@
   "working_on": {
     "feature": "DBI.Studio — TIA Portal-style IDE",
     "current_plan_path": "plans/260726-2316-dbi-studio-tia-ide/",
-    "current_phase": "phase-01",
-    "task": "Project Model & Persistence — .dbiproj JSON schema, load/save, Git-friendly layout",
+    "current_phase": "phase-04",
+    "task": "AvalonDock Shell & MVVM — 4 vùng dock, theme ResourceDictionary, DI",
     "status": "coding"
   },
   "pending_tasks": [
-    "phase-01 — Project Model & Persistence",
-    "phase-02 — IPC Contract & Runtime Host (B-4, B-5)",
-    "phase-03 — Studio Runtime Client",
     "phase-04 — AvalonDock Shell & MVVM",
     "phase-05 — Project Tree & Block Templates",
     "phase-06 — Tag Table & Code Generator",
-    "phase-07 — Multi-file Compile & Deploy (MVP boundary)",
+    "phase-07 — Multi-file Compile & Deploy (ranh giới MVP)",
     "phase-08 → phase-13"
   ],
   "errors_encountered": [],
   "skipped_tests": [],
   "decisions_made": [
-    "ADR-001: Runtime chạy tiến trình riêng + IPC (NamedPipe). Studio bỏ ProjectReference tới Runtime sau phase-03.",
+    "ADR-001: Runtime chạy tiến trình riêng + IPC (NamedPipe). Studio đã bỏ ProjectReference tới Runtime ở phase-03.",
     "ADR-002: Tag Table là nguồn sự thật, sinh Generated/IO.g.cs. IOContainer bỏ DynamicObject.",
     "ADR-003: AvalonDock 4 vùng thay TabControl. Theme phải là ResourceDictionary, không phải string binding.",
     "ADR-004: Deploy dùng Cold Restart, tách IProgramSwapper để sau cắm Hot Reload.",
     "ADR-005: Runtime tự chạy lại sau mất điện. Hai chốt chặn: không tự chạy sau Fault; tệp .norun.",
     "Spike 2026-07-27: RoslynPad.Editor DÙNG ĐƯỢC (10/10). Điều kiện: ghim Roslyn 5.3.0.",
     "Spike 2026-07-27: AvalonDock DÙNG ĐƯỢC (7/7). Theme override về flat industrial OK cả Light lẫn Dark.",
-    "Tag truyền qua IPC bằng TÊN dạng chuỗi (không phải số thứ tự). Ngưỡng an toàn ~500 tag.",
+    "Tag truyền qua IPC bằng TÊN dạng chuỗi. Ngưỡng an toàn ~500 tag.",
     "Tag trỏ trực tiếp (Device, Address), không có tầng %I0.0 trung gian.",
-    "phase-00 2026-07-27: CHỈ input hoán đổi tham chiếu. Output giữ publish-copy vì output là trạng thái GIỮ (latch) — hoán đổi tham chiếu sẽ làm băng tải tự tắt sau 1 chu kỳ. Xem phase-00 Task 00.4."
+    "phase-00: CHỈ input hoán đổi tham chiếu. Output giữ publish-copy vì output là trạng thái GIỮ (latch) — hoán đổi sẽ làm băng tải tự tắt sau 1 chu kỳ.",
+    "phase-01: model + service đặt ở project mới DBI.Controller.Studio.Core (không phụ thuộc WPF) để test project tham chiếu được.",
+    "phase-02: TagRoute/DeviceSpec/TagDataType đặt ở Core, không phải Protocol — IDriver cần chúng trong chữ ký, bắt Core tham chiếu Protocol là lộn ngược tầng.",
+    "phase-02: ProtocolJson PHẢI camelCase. Client dò requestId trên JsonDocument để phân biệt response với push, phép dò đó phân biệt hoa/thường.",
+    "phase-02: thêm HighResolutionTimerScope (timeBeginPeriod 1ms). Không có nó jitter ~6ms vì timer Windows mặc định ~15.6ms.",
+    "phase-02: Directory.Build.props sửa net8.0 → net10.0 cho khớp thực tế. Không có cross-targeting nào cả.",
+    "phase-03: client marshal event bằng SynchronizationContext bắt lúc khởi tạo, không dùng Dispatcher — để tầng lõi không kéo WPF vào mà vẫn test được."
   ],
   "known_gaps": [
-    "B-6: cả 5 driver phần cứng (Modbus/FactoryIO/Delta/Omron) vẫn chỉ đọc/ghi bool. SimulationDriver đã hỗ trợ đủ 3 kiểu. Task 09.0 xử lý 4 driver còn lại.",
+    "B-6: 4 driver phần cứng (Modbus/FactoryIO/Delta/Omron) vẫn chỉ đọc/ghi bool. Nhưng HẾT im lặng: gặp tag Int/Real thì ghi LastError rõ ràng. Task 09.0 xử lý. SimulationDriver đã đủ 3 kiểu.",
     "Ràng buộc mô hình input double-buffer: driver PHẢI ghi đủ mọi tag nó quản lý mỗi chu kỳ, vì buffer ghi sau khi hoán đổi chứa dữ liệu của 2 chu kỳ trước.",
-    "B-4/B-5 chưa sửa: Program.Main chưa gọi SetProgram/Start; chưa có bảng định tuyến tag→device. phase-02 xử lý.",
-    "ScanEngine: Thread.Sleep((int)) cắt cụt thập phân; JitterMs tính sai công thức. phase-02 xử lý.",
+    "Force I/O (CommandType.ForceTag) mới có chỗ trong contract, Runtime trả 'chưa hỗ trợ'. phase-11 làm thật.",
+    "Tag chưa từng được ghi thì không có trong SnapshotAll nên không được push. Watch Table phase-10 cần lấy danh sách tag từ TagRoutingTable, không phải từ snapshot.",
+    "MainViewModel hiện vẫn là shell demo cũ, mới nối tạm vào FakeRuntimeClient. phase-04 dựng lại.",
     "Chưa quyết: nhiều tab editor thì mỗi tab một RoslynWorkspace hay dùng chung qua CreatingDocument."
   ],
-  "updated_at": "2026-07-27T01:10:00+07:00"
+  "updated_at": "2026-07-27T02:30:00+07:00"
 }

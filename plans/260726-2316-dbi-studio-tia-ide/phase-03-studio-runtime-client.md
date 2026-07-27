@@ -1,6 +1,6 @@
 # Phase 03 — Studio Runtime Client
 
-**Status:** ⬜ Pending | **Phụ thuộc:** phase-02 | **Nội dung BRIEF:** #16b
+**Status:** ✅ Done (2026-07-27) | **Phụ thuộc:** phase-02 | **Nội dung BRIEF:** #16b
 **ADR:** [ADR-001](decisions/ADR-001-runtime-ipc-boundary.md)
 
 > Phía Studio của cầu IPC. Kết thúc phase này, Studio **cắt đứt** phụ thuộc trực tiếp vào Runtime.
@@ -82,15 +82,26 @@ Giữ `Core` + `SDK` (cần để biên dịch code người dùng) và `Diagnos
 
 ---
 
+## ⚠️ Lệch so với plan — client nằm ở `Studio.Core`, marshal bằng `SynchronizationContext`
+
+Plan đặt client ở `src/DBI.Controller.Studio/Services/Runtime/`. Nhưng project đó là `net10.0-windows`, test project không tham chiếu được — mà đây là phase có DoD nặng về hành vi (nối lại, mất kết nối giữa lúc deploy, marshal event). Đặt ở `DBI.Controller.Studio.Core`.
+
+Kéo theo: không dùng được `Dispatcher.BeginInvoke`. Thay bằng **bắt `SynchronizationContext.Current` lúc khởi tạo client** rồi `Post` mọi event về đó. Ở Studio, client được tạo trên UI thread nên `SynchronizationContext.Current` chính là `DispatcherSynchronizationContext` — kết quả y hệt, mà lại test được và không kéo WPF vào tầng lõi.
+
+Test dùng một `SynchronizationContext` giả có thread pump riêng, ghi lại thread nào thật sự chạy callback.
+
+---
+
 ## Definition of Done
 
-- [ ] `IRuntimeClient` + `NamedPipeRuntimeClient` hoạt động end-to-end với Runtime của phase-02
-- [ ] **`DBI.Controller.Studio.csproj` KHÔNG còn `ProjectReference` tới `DBI.Controller.Runtime`** — solution vẫn build xanh
-- [ ] Không còn `using DBI.Controller.Runtime.*` nào trong Studio
-- [ ] Tự kết nối lại hoạt động: kill Runtime → Studio báo offline → khởi động lại Runtime → Studio tự nối lại
-- [ ] `RuntimeProcessLauncher` không khởi động trùng khi đã có Runtime chạy
-- [ ] Đóng Studio **không** giết Runtime; có cảnh báo khi Runtime đang `Running`
-- [ ] Mọi event của client raise trên UI thread (test bằng `Dispatcher.CheckAccess`)
-- [ ] `FakeRuntimeClient` đủ dùng để chạy Studio không cần Runtime
-- [ ] Test: mất kết nối giữa lúc deploy → không treo UI, báo lỗi rõ ràng
-- [ ] `LiveMonitoringService` cũ đã bị xoá
+- [x] `IRuntimeClient` + `NamedPipeRuntimeClient` hoạt động end-to-end với Runtime của phase-02 (deploy, start/stop, poll status, nhận push tag, đọc trạng thái thiết bị)
+- [x] **`DBI.Controller.Studio.csproj` KHÔNG còn `ProjectReference` tới `DBI.Controller.Runtime`** — cũng bỏ luôn `Driver.Simulation`. Solution build xanh. Có test đọc thẳng tệp `.csproj` canh
+- [x] Không còn `using DBI.Controller.Runtime.*` nào trong Studio; `Studio.Core` cũng không tham chiếu Runtime (test đọc `GetReferencedAssemblies`)
+- [x] Tự kết nối lại hoạt động: giết Runtime → client sang `Reconnecting` → Runtime lên lại đúng pipe → client tự nối lại. Backoff 1s → 2s → 5s → 10s
+- [x] `RuntimeProcessLauncher` không khởi động trùng khi đã có Runtime chạy; target ở máy khác thì **không bao giờ** tự khởi động
+- [x] Đóng Studio **không** giết Runtime — có test khẳng định lớp launcher không hề có method Kill/Terminate/Shutdown; hằng `ClosingWhileRunningWarning` cho cảnh báo
+- [x] Mọi event của client raise trên UI thread — test bằng `SynchronizationContext` giả có thread riêng, đối chiếu `ManagedThreadId`
+- [x] `FakeRuntimeClient` đủ dùng để chạy Studio không cần Runtime: deploy, subscribe, giả lập fault, giả lập mất kết nối, Stop xả output về 0
+- [x] Test: mất kết nối giữa lúc deploy → trả `DeployResult` báo lỗi rõ ràng, không treo
+- [x] `LiveMonitoringService` cũ đã bị xoá — có test canh không quay lại
+- [x] `dotnet test`: **187/187 pass**, build 0 warning / 0 error

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using DBI.Controller.Studio.Core.Services.Runtime;
 using DBI.Controller.Studio.Services;
 
 namespace DBI.Controller.Studio.ViewModels;
@@ -142,7 +143,12 @@ public class ConveyorLogic : ControllerProgram
     }
 
     public RoslynCompilerService CompilerService { get; } = new();
-    public LiveMonitoringService MonitoringService { get; } = new();
+
+    /// <summary>
+    /// Cầu nối tới Runtime. Mặc định là bản giả để shell chạy được khi chưa có Runtime —
+    /// phase-04 thay bằng <c>NamedPipeRuntimeClient</c> nạp qua DI.
+    /// </summary>
+    public IRuntimeClient RuntimeClient { get; } = new FakeRuntimeClient();
 
     public void ToggleTheme()
     {
@@ -164,18 +170,23 @@ public class ConveyorLogic : ControllerProgram
         }
     }
 
-    public void ToggleOnline()
+    public async void ToggleOnline()
     {
         IsOnline = !IsOnline;
+
         if (IsOnline)
         {
-            MonitoringService.GoOnline();
-            CompilerOutput = "TIA Portal-Style Live Glasses Mode Activated.";
+            bool connected = await RuntimeClient.ConnectAsync(new RuntimeConnectionTarget());
+
+            IsOnline = connected;
+            CompilerOutput = connected
+                ? "Đã kết nối Runtime. Chế độ theo dõi trực tiếp đang bật."
+                : "Không kết nối được Runtime. Hãy kiểm tra Runtime đã chạy chưa.";
         }
         else
         {
-            MonitoringService.GoOffline();
-            CompilerOutput = "Disconnected from Live Glasses Mode.";
+            await RuntimeClient.DisconnectAsync();
+            CompilerOutput = "Đã ngắt kết nối Runtime. Máy vẫn chạy tiếp.";
         }
     }
 

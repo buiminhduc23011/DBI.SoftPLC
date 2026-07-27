@@ -2,8 +2,14 @@
 
   <!--
     Phần lõi của Studio KHÔNG phụ thuộc WPF: mô hình project, đọc/ghi .dbiproj, validation,
-    sinh code. Tách khỏi DBI.Controller.Studio để test project tham chiếu được — net10.0
-    không thể tham chiếu net10.0-windows.
+    client IPC, sinh code. Tách khỏi DBI.Controller.Studio để test project tham chiếu được —
+    net10.0 không thể tham chiếu net10.0-windows.
+
+    ⚠️ Cũng như Studio: KHÔNG tham chiếu DBI.Controller.Runtime (ADR-001).
   -->
+  <ItemGroup>
+    <ProjectReference Include="..\DBI.Controller.Core\DBI.Controller.Core.csproj" />
+    <ProjectReference Include="..\DBI.Controller.Protocol\DBI.Controller.Protocol.csproj" />
+  </ItemGroup>
 
 </Project>

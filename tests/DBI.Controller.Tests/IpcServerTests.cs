@@ -42,9 +42,13 @@ internal sealed class IpcFixture : IAsyncDisposable
     private readonly TempStore _temp = new();
     private readonly Task _serverLoop;
 
-    public IpcFixture(DriverFactory? driverFactory = null, int scanIntervalMs = 5, int pushIntervalMs = 20)
+    public IpcFixture(
+        DriverFactory? driverFactory = null,
+        int scanIntervalMs = 5,
+        int pushIntervalMs = 20,
+        string? pipeName = null)
     {
-        PipeName = "DBI.Test." + Guid.NewGuid().ToString("N");
+        PipeName = pipeName ?? "DBI.Test." + Guid.NewGuid().ToString("N");
 
         Host = new RuntimeHost(_temp.Store, driverFactory: driverFactory, scanIntervalMs: scanIntervalMs);
         Server = new IpcServer(Host, PipeName) { PushIntervalMs = pushIntervalMs };
