@@ -109,6 +109,13 @@ Xoá device khi còn tag trỏ tới → **chặn**, liệt kê tag đang dùng.
 
 ## Definition of Done
 
+### Checkpoint 2026-07-28
+
+- [x] Driver catalog đã có đủ 5 loại driver, setting mặc định và address placeholder.
+- [x] ProjectService có Add/Rename/Delete device; rename cập nhật các tag liên quan và delete bị chặn khi còn usage.
+- [x] Regression tests catalog + CRUD: `3/3` pass.
+- [ ] Driver hardware Int/Real và UI editor device vẫn đang triển khai.
+
 - [ ] 🔴 **Task 09.0:** cả 5 driver đọc/ghi được `Int` và `Real`, không chỉ `Bool`
 - [ ] Test end-to-end: tag `Real` map vào Modbus `40001` → đọc đúng giá trị thật, **không phải 0**
 - [ ] `wordOrder` cấu hình được cho `Real` 2 word; mặc định BigEndian

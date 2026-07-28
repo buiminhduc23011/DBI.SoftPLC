@@ -439,6 +439,42 @@ public class ProjectService
         return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
     }
 
+    public ProjectLoadResult AddDevice(string name, string driverType)
+    {
+        if (Current is null) throw new InvalidOperationException("Chưa mở project nào.");
+        if (!ProjectValidator.IsValidCSharpIdentifier(name.Trim()))
+            return ProjectLoadResult.Failed($"Tên device '{name}' không hợp lệ.");
+        if (Current.Devices.Any(d => d.Name.Equals(name.Trim(), StringComparison.OrdinalIgnoreCase)))
+            return ProjectLoadResult.Failed($"Đã có device tên '{name.Trim()}'.");
+        try { Current.Devices.Add(Devices.DriverCatalog.CreateDefault(driverType, name.Trim())); }
+        catch (ArgumentException ex) { return ProjectLoadResult.Failed(ex.Message); }
+        Current.IsDirty = true;
+        return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
+    }
+
+    public ProjectLoadResult RenameDevice(DeviceConfig device, string newName)
+    {
+        if (Current is null) throw new InvalidOperationException("Chưa mở project nào.");
+        string candidate = newName.Trim();
+        if (!ProjectValidator.IsValidCSharpIdentifier(candidate)) return ProjectLoadResult.Failed($"Tên device '{candidate}' không hợp lệ.");
+        if (Current.Devices.Any(d => !ReferenceEquals(d, device) && d.Name.Equals(candidate, StringComparison.OrdinalIgnoreCase)))
+            return ProjectLoadResult.Failed($"Đã có device tên '{candidate}'.");
+        foreach (var tag in Current.AllTags().Where(t => t.Device.Equals(device.Name, StringComparison.OrdinalIgnoreCase))) tag.Device = candidate;
+        device.Name = candidate;
+        Current.IsDirty = true;
+        return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
+    }
+
+    public ProjectLoadResult DeleteDevice(DeviceConfig device)
+    {
+        if (Current is null) throw new InvalidOperationException("Chưa mở project nào.");
+        var usages = Current.AllTags().Where(t => t.Device.Equals(device.Name, StringComparison.OrdinalIgnoreCase)).Select(t => t.Name).ToList();
+        if (usages.Count > 0) return ProjectLoadResult.Failed($"Không thể xoá device '{device.Name}'; đang được dùng bởi: {string.Join(", ", usages)}.");
+        Current.Devices.Remove(device);
+        Current.IsDirty = true;
+        return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
+    }
+
     private static void CopyDirectory(string source, string destination)
     {
         if (!Directory.Exists(source)) return;
