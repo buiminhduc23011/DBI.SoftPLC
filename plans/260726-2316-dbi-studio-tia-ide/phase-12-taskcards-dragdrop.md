@@ -89,6 +89,12 @@ Giống TIA — nội dung task card phụ thuộc document đang mở:
 
 ## Definition of Done
 
+### Checkpoint 2026-07-28
+
+- [x] Task Cards liệt kê primitive SDK bằng reflection và sinh snippet cơ bản.
+- [x] Toolbox đã thay placeholder bằng danh sách Instructions trong UI.
+- [ ] Drag/drop mapping, device tag browser và context-sensitive cards đang tiếp tục triển khai.
+
 - [ ] Task Card Instructions liệt kê đủ primitive từ SDK bằng reflection
 - [ ] Kéo primitive vào editor chèn đúng snippet, biên dịch được ngay
 - [ ] Double-click primitive cũng chèn được

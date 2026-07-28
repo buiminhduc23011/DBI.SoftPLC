@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Reflection;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DBI.Controller.Studio.Core.Models;
@@ -309,8 +310,29 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
 /// </summary>
 public partial class TaskCardsViewModel : PaneViewModelBase
 {
-    public TaskCardsViewModel() : base("TaskCards", "Toolbox") { }
+    public TaskCardsViewModel() : base("TaskCards", "Toolbox")
+    {
+        Instructions = Assembly.Load("DBI.Controller.SDK").GetTypes()
+            .Where(t => t.IsPublic && t.IsClass && t.Namespace == "DBI.Controller.SDK.Primitives")
+            .OrderBy(t => t.Name)
+            .Select(t => new TaskCardItem(t.Name, SnippetFor(t.Name)))
+            .ToList();
+    }
+
+    public IReadOnlyList<TaskCardItem> Instructions { get; }
+
+    private static string SnippetFor(string name) => name switch
+    {
+        "Ton" => "private readonly Ton _timer = new(1000);\n_timer.In = /* condition */;",
+        "Tof" => "private readonly Tof _timer = new(1000);\n_timer.In = /* condition */;",
+        "Tp" => "private readonly Tp _pulse = new(1000);\n_pulse.In = /* condition */;",
+        "Counter" => "var counter = new Counter();",
+        "RisingEdge" => "var edge = new RisingEdge();",
+        _ => $"var {name.ToLowerInvariant()} = new {name}();"
+    };
 
     [ObservableProperty]
     private string _placeholder = "Thẻ tác vụ và kéo-thả tag sẽ có ở phase-12.";
 }
+
+public sealed record TaskCardItem(string Name, string Snippet);

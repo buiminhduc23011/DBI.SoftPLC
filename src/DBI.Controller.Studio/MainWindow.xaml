@@ -103,8 +103,18 @@
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:TaskCardsViewModel}">
-            <TextBlock Text="{Binding Placeholder}" Style="{StaticResource MutedText}"
-                       TextWrapping="Wrap" Margin="10" />
+            <ScrollViewer Margin="8" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Instructions" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,8" />
+                    <ItemsControl ItemsSource="{Binding Instructions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding Name}" ToolTip="{Binding Snippet}" Style="{StaticResource FlatButton}" HorizontalContentAlignment="Left" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:CodeEditorViewModel}">
