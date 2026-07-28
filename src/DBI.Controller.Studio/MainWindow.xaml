@@ -177,6 +177,22 @@
             </DockPanel>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type vm:WatchTableViewModel}">
+            <DockPanel Margin="6">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <Button Content="Monitor" Style="{StaticResource FlatButton}" Command="{Binding ToggleMonitoringCommand}" />
+                    <Button Content="Add tag" Style="{StaticResource FlatButton}" Command="{Binding AddTagCommand}" />
+                </StackPanel>
+                <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Tag" Binding="{Binding Name}" IsReadOnly="True" Width="220" />
+                        <DataGridTextColumn Header="Value" Binding="{Binding ValueText}" IsReadOnly="True" Width="160" />
+                        <DataGridTextColumn Header="Updated" Binding="{Binding UpdatedAt}" IsReadOnly="True" Width="220" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type vm:GeneratedCodeViewModel}">
             <DockPanel Margin="6">
                 <Border DockPanel.Dock="Top" Background="{DynamicResource WarningColor}" Padding="8" Margin="0,0,0,8">

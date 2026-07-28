@@ -213,6 +213,8 @@ public partial class ShellViewModel : ObservableObject
             Inspector.LogInformation("Diagnostics sẽ mở thành document riêng ở phase-10.");
         else if (node.Kind == ProjectNodeKind.DeviceConfiguration && Project is not null)
             Editors.OpenDeviceConfiguration(Project, _projects);
+        else if (node.Kind == ProjectNodeKind.WatchTable && Project is not null && node.Payload is WatchTable watch)
+            Editors.OpenWatchTable(Project, watch, Runtime, _projects);
     }
 
     [RelayCommand]

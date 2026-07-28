@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DBI.Controller.Studio.Core.Models;
 using DBI.Controller.Studio.Core.Services;
+using DBI.Controller.Studio.Core.Services.Runtime;
 
 namespace DBI.Controller.Studio.Core.ViewModels;
 
@@ -106,6 +107,14 @@ public partial class DocumentHostViewModel : ObservableObject
         Documents.Add(document);
         ActiveDocument = document;
         return document;
+    }
+
+    public WatchTableViewModel OpenWatchTable(DbiProject project, WatchTable table, IRuntimeClient runtime, ProjectService projects)
+    {
+        if (Documents.FirstOrDefault(d => d.ContentId == $"Watch:{table.Name}") is WatchTableViewModel opened)
+        { ActiveDocument = opened; return opened; }
+        var document = new WatchTableViewModel(project, table, runtime, projects);
+        Documents.Add(document); ActiveDocument = document; return document;
     }
 
     /// <summary>Đóng tab. Hỏi lại nếu còn thay đổi chưa lưu.</summary>

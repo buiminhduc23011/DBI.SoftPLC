@@ -65,6 +65,13 @@ Ghi một lần vào tag (khác với Force của phase-11 — Force giữ giá 
 
 ## Definition of Done
 
+### Checkpoint 2026-07-28
+
+- [x] Watch table mở được thành document tab và hiển thị các dòng tag.
+- [x] Monitoring subscribe/unsubscribe đúng các tag trong table.
+- [x] Giá trị push được format cho Bool/Int/Real; test FakeRuntime pass `1/1`.
+- [ ] Modify value, flash/loading benchmark và reconnect lifecycle đang tiếp tục triển khai.
+
 - [ ] Tạo/xoá/đổi tên watch table; lưu trong `.dbiproj`
 - [ ] Thêm tag bằng dropdown và bằng kéo-thả
 - [ ] Giá trị cập nhật real-time đúng cho cả 3 kiểu
