@@ -200,11 +200,15 @@
     <Style TargetType="{x:Type avalondock:LayoutAnchorableControl}">
         <Setter Property="Background" Value="{DynamicResource CardBg}" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Padding" Value="0" />
     </Style>
 
     <Style TargetType="{x:Type avalondock:LayoutDocumentControl}">
         <Setter Property="Background" Value="{DynamicResource CardBg}" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Padding" Value="0" />
     </Style>
 
     <Style TargetType="{x:Type avalondock:DockingManager}">
