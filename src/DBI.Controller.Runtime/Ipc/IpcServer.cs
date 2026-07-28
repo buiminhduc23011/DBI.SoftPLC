@@ -1,5 +1,6 @@
 using System.IO.Pipes;
 using System.Reflection;
+using System.Text.Json;
 using DBI.Controller.Protocol;
 using DBI.Controller.Runtime.Host;
 using DBI.Controller.Runtime.Safety;
@@ -175,8 +176,8 @@ public sealed class IpcServer : IAsyncDisposable
                 CommandType.SubscribeTags => SubscribeTags(request),
                 CommandType.UnsubscribeTags => UnsubscribeTags(request),
                 CommandType.GetDeviceStates => Ok(request, _host.GetDeviceStates()),
-                CommandType.ForceTag => IpcResponse.Failure(request.RequestId, "Force I/O chưa hỗ trợ (phase-11)."),
-                CommandType.GetForceList => Ok(request, new ForceListResponse(new List<ForceInfo>())),
+                CommandType.ForceTag => ForceTag(request),
+                CommandType.GetForceList => Ok(request, new ForceListResponse(_host.GetForces().Select(f => new ForceInfo(f.Key, ProtocolJson.Serialize(f.Value))).ToList())),
                 _ => IpcResponse.Failure(request.RequestId, $"Lệnh '{request.Type}' chưa hỗ trợ.")
             };
         }
@@ -242,6 +243,18 @@ public sealed class IpcServer : IAsyncDisposable
     {
         _host.Reset();
         return Ok(request, _host.GetStatus());
+    }
+
+    private IpcResponse ForceTag(IpcRequest request)
+    {
+        var force = ProtocolJson.Deserialize<ForceTagRequest>(request.PayloadJson);
+        if (force is null) return IpcResponse.Failure(request.RequestId, "ForceTag thiếu payload.");
+        object? value = JsonSerializer.Deserialize<object>(force.ValueJson);
+        if (value is JsonElement element)
+            value = element.ValueKind switch { JsonValueKind.True or JsonValueKind.False => element.GetBoolean(), JsonValueKind.Number when element.TryGetInt32(out var i) => i, JsonValueKind.Number => element.GetSingle(), _ => null };
+        if (value is null) return IpcResponse.Failure(request.RequestId, "Giá trị force không hợp lệ.");
+        _host.SetForce(force.TagName, value, force.Enable);
+        return Ok(request, new { ok = true });
     }
 
     private IpcResponse SubscribeTags(IpcRequest request)

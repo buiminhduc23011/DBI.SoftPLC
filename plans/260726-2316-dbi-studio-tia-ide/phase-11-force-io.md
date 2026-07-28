@@ -112,6 +112,14 @@ Nút `Force` chỉ bật khi đã tick. **Không** có tuỳ chọn "đừng h�
 
 ## Definition of Done
 
+### Checkpoint 2026-07-28
+
+- [x] `IForceLayer` nằm trong `MemorySnapshot`, không dùng decorator.
+- [x] Force override input/output cho Bool, Int, Real.
+- [x] Runtime IPC ForceTag/GetForceList đã nối; deploy/fault clear force.
+- [x] Force regression test pass.
+- [ ] Force Table UI, safety confirmation dialog/banner và reconnect UX đang tiếp tục triển khai.
+
 - [ ] ✅ Điều kiện tiên quyết: `Select-String "is not MemorySnapshot" Drivers\*\*.cs` ra **rỗng** (DoD phase-00)
 - [ ] Force nằm **trong** `MemorySnapshot`, **không** làm decorator bọc `IMemoryImage`
 - [ ] `IForceLayer` hoạt động cho cả 3 kiểu dữ liệu

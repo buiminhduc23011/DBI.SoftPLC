@@ -68,6 +68,7 @@ public class RuntimeHost : IDisposable
         // 1. Dừng hẳn và xả output xuống THIẾT BỊ THẬT trước khi đụng vào chương trình.
         //    Bỏ bước này thì băng tải vẫn quay trong lúc nạp chương trình mới.
         await StopInternalAsync(ct).ConfigureAwait(false);
+        _memory.ClearAllForces();
 
         // 2. Nạp assembly mới
         var swap = await _swapper.SwapAsync(request.AssemblyBytes, request.Mode, _memory, ct).ConfigureAwait(false);
@@ -248,6 +249,12 @@ public class RuntimeHost : IDisposable
     public IReadOnlyDictionary<string, object> ReadTags() => _memory.SnapshotAll();
 
     public IReadOnlyCollection<string> KnownTagNames => _driverManager.RoutingTable.TagNames;
+    public IReadOnlyDictionary<string, object> GetForces() => _memory.GetAllForces();
+    public bool SetForce(string tagName, object value, bool enable)
+    {
+        if (enable) _memory.SetForce(tagName, value); else _memory.ClearForce(tagName);
+        return true;
+    }
 
     // ── Tự khởi động sau khi bật máy (ADR-005) ───────────────────────────────────
 
@@ -322,6 +329,7 @@ public class RuntimeHost : IDisposable
 
     private void OnFaultOccurred(object? sender, FaultEvent fault)
     {
+        _memory.ClearAllForces();
         SetState(RuntimeState.Faulted);
         FaultOccurred?.Invoke(this, fault);
     }

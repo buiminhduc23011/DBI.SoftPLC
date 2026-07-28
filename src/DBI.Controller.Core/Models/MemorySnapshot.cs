@@ -22,7 +22,7 @@ namespace DBI.Controller.Core.Models;
 /// OutputState sang OutputBuffer. Đây là O(n) nhưng ghi vào dictionary có sẵn, <b>không cấp phát</b>,
 /// nên không tạo áp lực GC lên scan thread.</para>
 /// </remarks>
-public class MemorySnapshot : IMemoryImage
+public class MemorySnapshot : IMemoryImage, IForceLayer
 {
     // ── INPUT: double-buffer, hoán đổi tham chiếu ────────────────────────────────
     private ConcurrentDictionary<string, bool> _inputWriteBool = NewMap<bool>();
@@ -43,6 +43,7 @@ public class MemorySnapshot : IMemoryImage
 
     private readonly ConcurrentDictionary<string, float> _outputStateFloat = NewMap<float>();
     private readonly ConcurrentDictionary<string, float> _outputBufferFloat = NewMap<float>();
+    private readonly ConcurrentDictionary<string, object> _forces = new(StringComparer.OrdinalIgnoreCase);
 
     private static ConcurrentDictionary<string, T> NewMap<T>() => new(StringComparer.OrdinalIgnoreCase);
 
@@ -50,6 +51,7 @@ public class MemorySnapshot : IMemoryImage
 
     public bool GetBool(string key)
     {
+        if (_forces.TryGetValue(key, out var forced) && forced is bool forcedBool) return forcedBool;
         if (Volatile.Read(ref _inputReadBool).TryGetValue(key, out var val))
             return val;
 
@@ -60,6 +62,7 @@ public class MemorySnapshot : IMemoryImage
 
     public int GetInt(string key)
     {
+        if (_forces.TryGetValue(key, out var forced) && forced is int forcedInt) return forcedInt;
         if (Volatile.Read(ref _inputReadInt).TryGetValue(key, out var val))
             return val;
 
@@ -70,6 +73,7 @@ public class MemorySnapshot : IMemoryImage
 
     public float GetFloat(string key)
     {
+        if (_forces.TryGetValue(key, out var forced) && forced is float forcedFloat) return forcedFloat;
         if (Volatile.Read(ref _inputReadFloat).TryGetValue(key, out var val))
             return val;
 
@@ -84,9 +88,19 @@ public class MemorySnapshot : IMemoryImage
     public void SetRawInput(string key, int value) => Volatile.Read(ref _inputWriteInt)[key] = value;
     public void SetRawInput(string key, float value) => Volatile.Read(ref _inputWriteFloat)[key] = value;
 
-    public bool GetRawOutputBool(string key) => _outputBufferBool.TryGetValue(key, out var val) && val;
-    public int GetRawOutputInt(string key) => _outputBufferInt.TryGetValue(key, out var val) ? val : 0;
-    public float GetRawOutputFloat(string key) => _outputBufferFloat.TryGetValue(key, out var val) ? val : 0f;
+    public bool GetRawOutputBool(string key) => _forces.TryGetValue(key, out var forced) && forced is bool b ? b : _outputBufferBool.TryGetValue(key, out var val) && val;
+    public int GetRawOutputInt(string key) => _forces.TryGetValue(key, out var forced) && forced is int i ? i : _outputBufferInt.TryGetValue(key, out var val) ? val : 0;
+    public float GetRawOutputFloat(string key) => _forces.TryGetValue(key, out var forced) && forced is float f ? f : _outputBufferFloat.TryGetValue(key, out var val) ? val : 0f;
+
+    public void SetForce(string tag, object value)
+    {
+        if (value is not (bool or int or float)) throw new ArgumentException("Force value must be bool, int, or float.", nameof(value));
+        _forces[tag] = value;
+    }
+    public void ClearForce(string tag) => _forces.TryRemove(tag, out _);
+    public void ClearAllForces() => _forces.Clear();
+    public bool IsForced(string tag) => _forces.ContainsKey(tag);
+    public IReadOnlyDictionary<string, object> GetAllForces() => new Dictionary<string, object>(_forces, StringComparer.OrdinalIgnoreCase);
 
     public IReadOnlyDictionary<string, object> GetRawOutputs()
     {
