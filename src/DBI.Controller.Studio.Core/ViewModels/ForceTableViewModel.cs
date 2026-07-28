@@ -34,7 +34,7 @@ public sealed partial class ForceTableViewModel : DocumentViewModelBase
     }
 
     public ObservableCollection<ForceRowViewModel> Rows { get; } = new();
-    public string Banner => Rows.Count == 0 ? "No active forces" : $"{Rows.Count} TAG ĐANG BỊ FORCE";
+    public string Banner => Rows.Count == 0 ? "No active forces" : $"{Rows.Count} ACTIVE FORCES";
 
     [RelayCommand]
     private async Task RefreshAsync()
@@ -58,7 +58,7 @@ public sealed partial class ForceTableViewModel : DocumentViewModelBase
     private async Task ClearAllAsync()
     {
         if (Rows.Count == 0 || !_prompt.Confirm(
-                $"{Rows.Count} tag đang bị force. Xoá toàn bộ force?", "Cảnh báo an toàn")) return;
+                $"{Rows.Count} tags are currently forced. Clear all forces?", "Safety confirmation")) return;
 
         foreach (var row in Rows.ToList())
             await _runtime.ForceTagAsync(row.TagName, Parse(row.ValueText), enable: false);

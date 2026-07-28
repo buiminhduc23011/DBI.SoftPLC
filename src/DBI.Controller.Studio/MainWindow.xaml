@@ -73,15 +73,15 @@
                 <TabItem Header="Properties">
                     <DataGrid ItemsSource="{Binding Properties}" Style="{StaticResource FlatDataGrid}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Thuoc tinh" Binding="{Binding Name}"
+                            <DataGridTextColumn Header="Property" Binding="{Binding Name}"
                                                 Width="180" IsReadOnly="True" />
-                            <DataGridTextColumn Header="Gia tri" Binding="{Binding Value}" Width="*" />
+                            <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </TabItem>
                 <TabItem Header="Information">
                     <DockPanel>
-                        <Button DockPanel.Dock="Top" Content="Xoa log" HorizontalAlignment="Left"
+                        <Button DockPanel.Dock="Top" Content="Clear log" HorizontalAlignment="Left"
                                 Margin="6" Style="{StaticResource FlatButton}"
                                 Command="{Binding ClearInformationCommand}" />
                         <ListBox ItemsSource="{Binding Information}" Background="{DynamicResource CardBg}"
@@ -90,7 +90,7 @@
                 </TabItem>
                 <TabItem Header="Diagnostics">
                     <DockPanel>
-                        <Button DockPanel.Dock="Top" Content="Xoa log" HorizontalAlignment="Left"
+                        <Button DockPanel.Dock="Top" Content="Clear log" HorizontalAlignment="Left"
                                 Margin="6" Style="{StaticResource FlatButton}"
                                 Command="{Binding ClearDiagnosticsCommand}" />
                         <ListBox ItemsSource="{Binding Diagnostics}" Background="{DynamicResource CardBg}"
@@ -250,24 +250,24 @@
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem Header="Project moi..." Command="{Binding NewProjectCommand}" />
-                <MenuItem Header="Mo project..." Command="{Binding OpenProjectCommand}" />
+                <MenuItem Header="New project..." Command="{Binding NewProjectCommand}" />
+                <MenuItem Header="Open project..." Command="{Binding OpenProjectCommand}" />
                 <Separator />
-                <MenuItem Header="Luu tat ca" Command="{Binding SaveAllCommand}" />
-                <MenuItem Header="Dong project" Command="{Binding CloseProjectCommand}" />
+                <MenuItem Header="Save all" Command="{Binding SaveAllCommand}" />
+                <MenuItem Header="Close project" Command="{Binding CloseProjectCommand}" />
             </MenuItem>
             <MenuItem Header="_Online">
-                <MenuItem Header="Bien dich" Command="{Binding CompileCommand}" IsEnabled="{Binding CanCompile}" />
-                <MenuItem Header="Nap xuong Runtime" Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" />
+                <MenuItem Header="Build" Command="{Binding CompileCommand}" IsEnabled="{Binding CanCompile}" />
+                <MenuItem Header="Deploy to Runtime" Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" />
                 <Separator />
-                <MenuItem Header="Chay" Command="{Binding StartRuntimeCommand}" IsEnabled="{Binding CanStart}" />
-                <MenuItem Header="Dung" Command="{Binding StopRuntimeCommand}" IsEnabled="{Binding CanStop}" />
+                <MenuItem Header="Start" Command="{Binding StartRuntimeCommand}" IsEnabled="{Binding CanStart}" />
+                <MenuItem Header="Stop" Command="{Binding StopRuntimeCommand}" IsEnabled="{Binding CanStop}" />
                 <MenuItem Header="Reset" Command="{Binding ResetRuntimeCommand}" IsEnabled="{Binding CanReset}" />
             </MenuItem>
             <MenuItem Header="_View">
                 <MenuItem Header="{Binding ThemeToggleText}" Command="{Binding ToggleThemeCommand}" />
                 <Separator />
-                <MenuItem Header="Dua bo cuc ve mac dinh" Command="{Binding ResetLayoutCommand}" />
+                <MenuItem Header="Reset layout" Command="{Binding ResetLayoutCommand}" />
             </MenuItem>
         </Menu>
 

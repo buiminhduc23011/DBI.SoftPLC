@@ -105,7 +105,7 @@ public partial class ShellViewModel : ObservableObject
         if (request is null) return;
 
         ApplyLoadResult(
-            _projects.CreateNew(request.Directory, request.Name), $"Đã tạo project '{request.Name}'.");
+            _projects.CreateNew(request.Directory, request.Name), $"Created project '{request.Name}'.");
     }
 
     [RelayCommand]
@@ -115,7 +115,7 @@ public partial class ShellViewModel : ObservableObject
         if (path is null) return;
 
         ApplyLoadResult(
-            _projects.Open(path), $"Đã mở project '{Path.GetFileNameWithoutExtension(path)}'.");
+            _projects.Open(path), $"Opened project '{Path.GetFileNameWithoutExtension(path)}'.");
     }
 
     private void ApplyLoadResult(ProjectLoadResult result, string successMessage)
@@ -123,7 +123,7 @@ public partial class ShellViewModel : ObservableObject
         if (!result.Success)
         {
             _prompt.ShowError(
-                string.Join("\n", result.Issues.Select(i => i.Message)), "Không mở được project");
+                string.Join("\n", result.Issues.Select(i => i.Message)), "Could not open project");
             Inspector.LogInformation(result.Issues);
             return;
         }
@@ -156,7 +156,7 @@ public partial class ShellViewModel : ObservableObject
         _roslynWorkspace.OpenProject(Project);
         SaveLayout();
 
-        Inspector.LogInformation("Đã lưu project và mọi khối đang mở.");
+        Inspector.LogInformation("Saved project and all open blocks.");
     }
 
     [RelayCommand]
@@ -165,7 +165,7 @@ public partial class ShellViewModel : ObservableObject
         if (Project is null) return;
 
         if (Editors.HasUnsavedChanges &&
-            !_prompt.Confirm("Còn khối chưa lưu. Đóng project và bỏ thay đổi?", "Đóng project"))
+            !_prompt.Confirm("There are unsaved blocks. Close the project and discard changes?", "Close project"))
         {
             return;
         }
@@ -175,7 +175,7 @@ public partial class ShellViewModel : ObservableObject
         StopWatchingProject();
         _projects.Close();
         ProjectTree.Load(null);
-        StatusBar.ProjectName = "(chưa mở project)";
+        StatusBar.ProjectName = "(no project open)";
         StatusBar.AutoStartEnabled = true;
         ResetBuildState();
         _roslynWorkspace.OpenProject(null);
@@ -210,7 +210,7 @@ public partial class ShellViewModel : ObservableObject
         }
 
         if (node.Kind == ProjectNodeKind.OnlineDiagnostics)
-            Inspector.LogInformation("Diagnostics sẽ mở thành document riêng ở phase-10.");
+            Inspector.LogInformation("Diagnostics will open as a separate document.");
         else if (node.Kind == ProjectNodeKind.DeviceConfiguration && Project is not null)
             Editors.OpenDeviceConfiguration(Project, _projects);
         else if (node.Kind == ProjectNodeKind.WatchTable && Project is not null && node.Payload is WatchTable watch)
@@ -232,7 +232,7 @@ public partial class ShellViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Inspector.LogDiagnostic($"IntelliSense không cập nhật được: {ex.Message}", IssueSeverity.Error);
+            Inspector.LogDiagnostic($"IntelliSense update failed: {ex.Message}", IssueSeverity.Error);
         }
     }
 
@@ -251,7 +251,7 @@ public partial class ShellViewModel : ObservableObject
     private void ResetLayout()
     {
         _layout?.ResetToDefault();
-        Inspector.LogInformation("Đã đưa bố cục cửa sổ về mặc định.");
+        Inspector.LogInformation("Reset window layout to default.");
     }
 
     /// <summary>
@@ -311,7 +311,7 @@ public partial class ShellViewModel : ObservableObject
         var result = _projects.AddBlock(request);
         if (!result.Success)
         {
-            ReportProjectIssues("Không tạo được khối", result.Issues);
+            ReportProjectIssues("Could not create block", result.Issues);
             return;
         }
 
@@ -319,7 +319,7 @@ public partial class ShellViewModel : ObservableObject
         ConfigureProjectTree();
         SelectAndOpenBlock(request.Name);
         if (Project is not null) _roslynWorkspace.OpenProject(Project);
-        Inspector.LogInformation($"Đã tạo khối '{request.Name}'.");
+        Inspector.LogInformation($"Created block '{request.Name}'.");
     }
 
     [RelayCommand]
@@ -327,13 +327,13 @@ public partial class ShellViewModel : ObservableObject
     {
         if (Project is null || node?.Payload is not CodeBlock block) return;
 
-        string? newName = _prompt.AskText("Đổi tên khối", "Tên mới:", block.Name);
+        string? newName = _prompt.AskText("Rename block", "New name:", block.Name);
         if (string.IsNullOrWhiteSpace(newName) || newName == block.Name) return;
 
         var result = _projects.RenameBlock(block, newName);
         if (!result.Success)
         {
-            ReportProjectIssues("Không đổi tên được khối", result.Issues);
+            ReportProjectIssues("Could not rename block", result.Issues);
             return;
         }
 
@@ -347,7 +347,7 @@ public partial class ShellViewModel : ObservableObject
         ConfigureProjectTree();
         SelectBlock(block);
         if (Project is not null) _roslynWorkspace.OpenProject(Project);
-        Inspector.LogInformation($"Đã đổi tên khối thành '{block.Name}'.");
+        Inspector.LogInformation($"Renamed block to '{block.Name}'.");
     }
 
     [RelayCommand]
@@ -355,7 +355,7 @@ public partial class ShellViewModel : ObservableObject
     {
         if (Project is null || node?.Payload is not CodeBlock block) return;
 
-        if (!_prompt.Confirm($"Xoá khối '{block.Name}' và tệp '{block.FileName}'?", "Xoá khối"))
+        if (!_prompt.Confirm($"Delete block '{block.Name}' and file '{block.FileName}'?", "Delete block"))
             return;
 
         if (Editors.Find(block) is { } opened)
@@ -365,7 +365,7 @@ public partial class ShellViewModel : ObservableObject
         ProjectTree.Load(Project);
         ConfigureProjectTree();
         if (Project is not null) _roslynWorkspace.OpenProject(Project);
-        Inspector.LogInformation($"Đã xoá khối '{block.Name}'.");
+        Inspector.LogInformation($"Deleted block '{block.Name}'.");
     }
 
     [RelayCommand]

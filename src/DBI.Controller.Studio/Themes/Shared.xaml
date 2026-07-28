@@ -11,7 +11,7 @@
 
     <Style x:Key="LabelText" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
-        <Setter Property="FontFamily" Value="Bahnschrift" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
@@ -28,7 +28,7 @@
 
     <!-- Giá trị tag, mã nguồn: chữ đơn cách để cột số thẳng hàng. -->
     <Style x:Key="MonospaceText" TargetType="TextBlock" BasedOn="{StaticResource LabelText}">
-        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="FontFamily" Value="Cascadia Code,Consolas" />
     </Style>
 
     <!-- ── Nút ───────────────────────────────────────────────────────────────── -->
@@ -41,7 +41,7 @@
         <Setter Property="Padding" Value="12,6" />
         <Setter Property="Margin" Value="3,0" />
         <Setter Property="MinHeight" Value="34" />
-        <Setter Property="FontFamily" Value="Bahnschrift" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
@@ -88,7 +88,7 @@
     <Style TargetType="Menu">
         <Setter Property="Background" Value="{DynamicResource HeaderBg}" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
-        <Setter Property="FontFamily" Value="Bahnschrift" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
         <Setter Property="FontSize" Value="13" />
     </Style>
 
@@ -116,7 +116,7 @@
         <Setter Property="HeadersVisibility" Value="Column" />
         <Setter Property="AutoGenerateColumns" Value="False" />
         <Setter Property="CanUserAddRows" Value="False" />
-        <Setter Property="FontFamily" Value="Bahnschrift" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="RowHeight" Value="34" />
     </Style>
@@ -149,7 +149,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="4,3" />
-        <Setter Property="FontFamily" Value="Bahnschrift" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
         <Setter Property="FontSize" Value="13" />
     </Style>
 

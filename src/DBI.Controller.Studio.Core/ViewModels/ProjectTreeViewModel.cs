@@ -179,34 +179,34 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
     {
         CodeBlock block => new[]
         {
-            new PropertyRow("Tên", block.Name),
-            new PropertyRow("Loại khối", block.Kind.ToString()),
-            new PropertyRow("Tệp", block.FileName),
-            new PropertyRow("Ghi chú", block.Comment, isEditable: true)
+            new PropertyRow("Name", block.Name),
+            new PropertyRow("Block type", block.Kind.ToString()),
+            new PropertyRow("File", block.FileName),
+            new PropertyRow("Comment", block.Comment, isEditable: true)
         },
         TagTable table => new[]
         {
-            new PropertyRow("Tên bảng", table.Name),
-            new PropertyRow("Số tag", table.Tags.Count.ToString())
+            new PropertyRow("Table name", table.Name),
+            new PropertyRow("Tag count", table.Tags.Count.ToString())
         },
         DeviceConfig device => new[]
         {
-            new PropertyRow("Tên thiết bị", device.Name),
-            new PropertyRow("Loại driver", device.DriverType),
-            new PropertyRow("Tham số", string.Join(", ", device.Settings.Select(s => $"{s.Key}={s.Value}")))
+            new PropertyRow("Device name", device.Name),
+            new PropertyRow("Driver type", device.DriverType),
+            new PropertyRow("Settings", string.Join(", ", device.Settings.Select(s => $"{s.Key}={s.Value}")))
         },
         WatchTable watch => new[]
         {
-            new PropertyRow("Tên bảng", watch.Name),
-            new PropertyRow("Số tag theo dõi", watch.TagNames.Count.ToString())
+            new PropertyRow("Table name", watch.Name),
+            new PropertyRow("Watched tags", watch.TagNames.Count.ToString())
         },
         DbiProject project => new[]
         {
-            new PropertyRow("Tên project", project.Name),
-            new PropertyRow("Mô tả", project.Description, isEditable: true),
+            new PropertyRow("Project name", project.Name),
+            new PropertyRow("Description", project.Description, isEditable: true),
             new PropertyRow("Schema", project.SchemaVersion),
-            new PropertyRow("Chu kỳ quét", $"{project.Runtime.ScanIntervalMs} ms"),
-            new PropertyRow("Tự chạy sau mất điện", project.Runtime.AutoStart ? "Có" : "Không")
+            new PropertyRow("Scan interval", $"{project.Runtime.ScanIntervalMs} ms"),
+            new PropertyRow("Auto-start after restart", project.Runtime.AutoStart ? "Yes" : "No")
         },
         _ => new[] { new PropertyRow("Tên", node.Title) }
     };

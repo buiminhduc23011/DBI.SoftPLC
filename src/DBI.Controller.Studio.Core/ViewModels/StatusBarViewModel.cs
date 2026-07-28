@@ -58,7 +58,7 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
     private double _jitterMs;
 
     [ObservableProperty]
-    private string _projectName = "(chưa mở project)";
+    private string _projectName = "(no project open)";
 
     [ObservableProperty]
     private bool _isConnected;
@@ -72,7 +72,7 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
     /// <summary>Dòng tóm tắt cho phần bên phải thanh trạng thái.</summary>
     public string MetricsSummary =>
         IsConnected
-            ? $"Scan {ScanTimeMs:F1}ms · Max {MaxScanTimeMs:F1}ms · Jitter {JitterMs:F2}ms · Chu kỳ {CycleCount:N0}"
+            ? $"Scan {ScanTimeMs:F1}ms · Max {MaxScanTimeMs:F1}ms · Jitter {JitterMs:F2}ms · Cycles {CycleCount:N0}"
             : "Scan -- · Jitter --";
 
     private void OnStatusUpdated(object? sender, StatusResponse status) => Apply(status);
@@ -104,7 +104,7 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
     private void OnConnectionLost(object? sender, string reason)
     {
         IsConnected = false;
-        StateLabel = "MẤT KẾT NỐI";
+        StateLabel = "DISCONNECTED";
         StateBrushKey = "DangerColor";
         FaultMessage = reason;
 
@@ -119,7 +119,7 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
 
         if (state == RuntimeClientState.Reconnecting)
         {
-            StateLabel = "ĐANG NỐI LẠI";
+            StateLabel = "RECONNECTING";
             StateBrushKey = "WarningColor";
         }
 

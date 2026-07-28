@@ -12,7 +12,7 @@ public sealed partial class GeneratedCodeViewModel : DocumentViewModelBase
     }
 
     public string AbsolutePath { get; }
-    public string BannerMessage => "File sinh tự động từ Tag Table. Sửa tag trong bảng, không sửa ở đây.";
+    public string BannerMessage => "Generated from the Tag Table. Edit tags in the table, not here.";
 
     [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
     private string _text;

@@ -10,13 +10,13 @@ namespace DBI.Controller.Studio.Services;
 /// <summary>Hộp thoại thật của WPF cho <see cref="IUserPrompt"/>.</summary>
 public class UserPrompt : IUserPrompt
 {
-    private const string ProjectFilter = "DBI Studio Project (*.dbiproj)|*.dbiproj|Tất cả tệp (*.*)|*.*";
+    private const string ProjectFilter = "DBI Studio Project (*.dbiproj)|*.dbiproj|All files (*.*)|*.*";
 
     public string? AskProjectToOpen()
     {
         var dialog = new OpenFileDialog
         {
-            Title = "Mở project",
+            Title = "Open project",
             Filter = ProjectFilter,
             CheckFileExists = true
         };
@@ -28,7 +28,7 @@ public class UserPrompt : IUserPrompt
     {
         var dialog = new SaveFileDialog
         {
-            Title = "Tạo project mới",
+            Title = "Create new project",
             Filter = ProjectFilter,
             FileName = "MyMachine.dbiproj",
             OverwritePrompt = false
@@ -46,7 +46,7 @@ public class UserPrompt : IUserPrompt
     {
         var dialog = new SaveFileDialog
         {
-            Title = "Lưu project thành",
+            Title = "Save project as",
             Filter = ProjectFilter,
             FileName = suggestedName + ".dbiproj"
         };
@@ -144,24 +144,24 @@ internal sealed class BlockPromptWindow : Window
         {
             [BlockKind.Main] = new RadioButton
             {
-                Content = "Main — điểm vào chu kỳ",
+                Content = "Main — cycle entry point",
                 IsEnabled = canCreateMain,
                 Margin = new Thickness(0, 2, 0, 2)
             },
             [BlockKind.FunctionBlock] = new RadioButton
             {
-                Content = "Function Block — có nhớ trạng thái",
+                Content = "Function Block — stateful",
                 IsChecked = true,
                 Margin = new Thickness(0, 2, 0, 2)
             },
             [BlockKind.Function] = new RadioButton
             {
-                Content = "Function — không nhớ trạng thái",
+                Content = "Function — stateless",
                 Margin = new Thickness(0, 2, 0, 2)
             },
             [BlockKind.DataBlock] = new RadioButton
             {
-                Content = "Data Block — chỉ chứa dữ liệu",
+                Content = "Data Block — data only",
                 Margin = new Thickness(0, 2, 0, 2)
             }
         };

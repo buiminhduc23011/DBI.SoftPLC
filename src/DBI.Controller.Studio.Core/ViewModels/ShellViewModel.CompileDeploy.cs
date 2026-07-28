@@ -42,9 +42,9 @@ public partial class ShellViewModel
 
         if (Runtime.LastStatus?.State == RuntimeState.Running &&
             !_prompt.Confirm(
-                "Runtime đang RUN.\n\nDeploy sẽ dừng máy, nạp chương trình mới rồi khởi động lại.\n" +
-                "Output sẽ về trạng thái an toàn trong lúc chuyển đổi.\n\nTiếp tục deploy?",
-                "Deploy khi máy đang chạy"))
+                "Runtime is RUNNING.\n\nDeploy will stop the machine, load the new program, then restart it.\n" +
+                "Outputs will enter a safe state during the transition.\n\nContinue deploy?",
+                "Deploy while running"))
         {
             return;
         }
@@ -61,7 +61,7 @@ public partial class ShellViewModel
 
             if (launch.Outcome == LaunchOutcome.Failed)
             {
-                Inspector.LogDiagnostic(launch.Message ?? "Khởi động Runtime thất bại.", IssueSeverity.Error);
+                Inspector.LogDiagnostic(launch.Message ?? "Failed to start Runtime.", IssueSeverity.Error);
                 return;
             }
 
@@ -70,7 +70,7 @@ public partial class ShellViewModel
 
             if (!await Runtime.ConnectAsync(target).ConfigureAwait(false))
             {
-                Inspector.LogDiagnostic("Không kết nối được tới Runtime.", IssueSeverity.Error);
+                Inspector.LogDiagnostic("Could not connect to Runtime.", IssueSeverity.Error);
                 return;
             }
 
@@ -81,16 +81,16 @@ public partial class ShellViewModel
 
             if (!deploy.Ok)
             {
-                Inspector.LogDiagnostic($"Deploy thất bại: {deploy.Error}", IssueSeverity.Error);
+                Inspector.LogDiagnostic($"Deploy failed: {deploy.Error}", IssueSeverity.Error);
                 return;
             }
 
-            Inspector.LogDiagnostic("Deploy thành công. Runtime đã nhận chương trình mới.", IssueSeverity.Warning);
+            Inspector.LogDiagnostic("Deploy succeeded. Runtime accepted the new program.", IssueSeverity.Warning);
 
             if (Project.Runtime.AutoStart)
             {
                 Inspector.LogDiagnostic(
-                    "Máy sẽ TỰ CHẠY LẠI sau khi mất điện nếu Runtime khởi động lại.",
+                    "The machine will AUTO-START after a power loss when Runtime restarts.",
                     IssueSeverity.Warning);
             }
         }
@@ -111,7 +111,7 @@ public partial class ShellViewModel
             if (await Runtime.ConnectAsync(GetRuntimeTarget(Project)).ConfigureAwait(false))
             {
                 await Runtime.StartAsync().ConfigureAwait(false);
-                Inspector.LogDiagnostic("Đã gửi lệnh Start tới Runtime.", IssueSeverity.Warning);
+                Inspector.LogDiagnostic("Start command sent to Runtime.", IssueSeverity.Warning);
             }
         }
         finally
@@ -127,7 +127,7 @@ public partial class ShellViewModel
         try
         {
             await Runtime.StopAsync().ConfigureAwait(false);
-            Inspector.LogDiagnostic("Đã gửi lệnh Stop tới Runtime.", IssueSeverity.Warning);
+                Inspector.LogDiagnostic("Stop command sent to Runtime.", IssueSeverity.Warning);
         }
         finally
         {
@@ -142,7 +142,7 @@ public partial class ShellViewModel
         try
         {
             await Runtime.ResetAsync().ConfigureAwait(false);
-            Inspector.LogDiagnostic("Đã gửi lệnh Reset tới Runtime.", IssueSeverity.Warning);
+                Inspector.LogDiagnostic("Reset command sent to Runtime.", IssueSeverity.Warning);
         }
         finally
         {
@@ -184,7 +184,7 @@ public partial class ShellViewModel
             if (!result.Success || result.AssemblyBytes is null)
             {
                 _lastCompiledAssembly = null;
-                Inspector.LogInformation("Build thất bại. Xem diagnostics để sửa lỗi.", IssueSeverity.Error);
+                Inspector.LogInformation("Build failed. Check Diagnostics for details.", IssueSeverity.Error);
                 RefreshCommandState();
                 return false;
             }

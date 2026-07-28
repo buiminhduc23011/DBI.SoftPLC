@@ -366,8 +366,8 @@ public class ShellViewModelTests
         shell.ProjectTree.SelectedNode = blockNode;
 
         Assert.Equal("Main", shell.Inspector.SelectedNodeTitle);
-        Assert.Contains(shell.Inspector.Properties, p => p.Name == "Tệp" && p.Value == "Blocks/Main.cs");
-        Assert.Contains(shell.Inspector.Properties, p => p.Name == "Loại khối" && p.Value == "Main");
+        Assert.Contains(shell.Inspector.Properties, p => p.Name == "File" && p.Value == "Blocks/Main.cs");
+        Assert.Contains(shell.Inspector.Properties, p => p.Name == "Block type" && p.Value == "Main");
     }
 
     [Fact]
@@ -426,7 +426,7 @@ public class ShellViewModelTests
         shell.ResetLayoutCommand.Execute(null);
 
         Assert.Equal(1, layout.ResetCount);
-        Assert.Contains(shell.Inspector.Information, e => e.Message.Contains("mặc định"));
+        Assert.Contains(shell.Inspector.Information, e => e.Message.Contains("default"));
     }
 
     [Fact]
