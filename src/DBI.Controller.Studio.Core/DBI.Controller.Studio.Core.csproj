@@ -10,6 +10,7 @@
   <!-- MVVM toolkit là netstandard, không kéo WPF vào — ViewModel ở đây vẫn test được. -->
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="RoslynPad.Roslyn" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>

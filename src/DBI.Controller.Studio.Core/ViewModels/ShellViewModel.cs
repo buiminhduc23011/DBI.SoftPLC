@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using DBI.Controller.Protocol;
 using DBI.Controller.Studio.Core.Models;
 using DBI.Controller.Studio.Core.Services;
+using DBI.Controller.Studio.Core.Services.CodeAnalysis;
 using DBI.Controller.Studio.Core.Services.Runtime;
 
 namespace DBI.Controller.Studio.Core.ViewModels;
@@ -25,6 +26,7 @@ public partial class ShellViewModel : ObservableObject
     private readonly IoCodeGenerator _generator;
     private readonly IProjectCompiler _compiler;
     private readonly RuntimeProcessLauncher _launcher;
+    private readonly StudioRoslynWorkspace _roslynWorkspace;
     private readonly SynchronizationContext? _uiContext;
 
     private ILayoutPersistence? _layout;
@@ -38,7 +40,8 @@ public partial class ShellViewModel : ObservableObject
         IProjectCompiler compiler,
         RuntimeProcessLauncher launcher,
         IThemeSwitcher theme,
-        ILayoutPersistence? layout = null)
+        ILayoutPersistence? layout = null,
+        StudioRoslynWorkspace? roslynWorkspace = null)
     {
         _projects = projects ?? throw new ArgumentNullException(nameof(projects));
         _prompt = prompt ?? throw new ArgumentNullException(nameof(prompt));
@@ -47,6 +50,8 @@ public partial class ShellViewModel : ObservableObject
         _launcher = launcher ?? throw new ArgumentNullException(nameof(launcher));
         _theme = theme ?? throw new ArgumentNullException(nameof(theme));
         _layout = layout;
+        _roslynWorkspace = roslynWorkspace ?? StudioRoslynWorkspace.Current ?? new StudioRoslynWorkspace();
+        _roslynWorkspace.WorkspaceChanged += OnRoslynWorkspaceChanged;
         _uiContext = SynchronizationContext.Current;
 
         Runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
@@ -130,6 +135,7 @@ public partial class ShellViewModel : ObservableObject
         StatusBar.ProjectName = result.Project!.Name;
         StatusBar.AutoStartEnabled = result.Project.Runtime.AutoStart;
         ResetBuildState();
+        _roslynWorkspace.OpenProject(result.Project);
 
         Inspector.LogInformation(successMessage);
         Inspector.LogInformation(result.Issues);
@@ -147,6 +153,7 @@ public partial class ShellViewModel : ObservableObject
         await Editors.SaveDirtyAsync();
         EnsureGeneratedCode(Project);
         _projects.Save();
+        _roslynWorkspace.OpenProject(Project);
         SaveLayout();
 
         Inspector.LogInformation("Đã lưu project và mọi khối đang mở.");
@@ -171,6 +178,7 @@ public partial class ShellViewModel : ObservableObject
         StatusBar.ProjectName = "(chưa mở project)";
         StatusBar.AutoStartEnabled = true;
         ResetBuildState();
+        _roslynWorkspace.OpenProject(null);
 
         OnPropertyChanged(nameof(Project));
     }
@@ -209,6 +217,19 @@ public partial class ShellViewModel : ObservableObject
 
     [RelayCommand]
     private void CloseDocument(DocumentViewModelBase? document) => Editors.Close(document);
+
+    private async void OnRoslynWorkspaceChanged(object? sender, EventArgs e)
+    {
+        try
+        {
+            var diagnostics = await _roslynWorkspace.GetCurrentDiagnosticsAsync().ConfigureAwait(true);
+            Inspector.SetCodeDiagnostics(diagnostics);
+        }
+        catch (Exception ex)
+        {
+            Inspector.LogDiagnostic($"IntelliSense không cập nhật được: {ex.Message}", IssueSeverity.Error);
+        }
+    }
 
     // ── Giao diện ────────────────────────────────────────────────────────────────
 
@@ -292,6 +313,7 @@ public partial class ShellViewModel : ObservableObject
         ProjectTree.Load(Project);
         ConfigureProjectTree();
         SelectAndOpenBlock(request.Name);
+        if (Project is not null) _roslynWorkspace.OpenProject(Project);
         Inspector.LogInformation($"Đã tạo khối '{request.Name}'.");
     }
 
@@ -319,6 +341,7 @@ public partial class ShellViewModel : ObservableObject
         ProjectTree.Load(Project);
         ConfigureProjectTree();
         SelectBlock(block);
+        if (Project is not null) _roslynWorkspace.OpenProject(Project);
         Inspector.LogInformation($"Đã đổi tên khối thành '{block.Name}'.");
     }
 
@@ -336,6 +359,7 @@ public partial class ShellViewModel : ObservableObject
         _projects.DeleteBlock(block);
         ProjectTree.Load(Project);
         ConfigureProjectTree();
+        if (Project is not null) _roslynWorkspace.OpenProject(Project);
         Inspector.LogInformation($"Đã xoá khối '{block.Name}'.");
     }
 
@@ -348,6 +372,7 @@ public partial class ShellViewModel : ObservableObject
         ProjectTree.Load(Project);
         ConfigureProjectTree();
         SelectBlock(block);
+        if (Project is not null) _roslynWorkspace.OpenProject(Project);
         Inspector.LogInformation($"Đã đặt '{block.Name}' làm khối Main.");
     }
 
@@ -368,7 +393,9 @@ public partial class ShellViewModel : ObservableObject
 
         ProjectTree.Load(Project);
         ConfigureProjectTree();
+        if (Project is not null) _roslynWorkspace.OpenProject(Project);
         SelectAndOpenTagTable(name.Trim());
+        if (Project is not null) _roslynWorkspace.OpenProject(Project);
         Inspector.LogInformation($"Đã tạo tag table '{name.Trim()}'.");
     }
 
@@ -390,6 +417,7 @@ public partial class ShellViewModel : ObservableObject
         ProjectTree.Load(Project);
         ConfigureProjectTree();
         SelectAndOpenTagTable(table.Name);
+        if (Project is not null) _roslynWorkspace.OpenProject(Project);
     }
 
     [RelayCommand]
@@ -413,6 +441,7 @@ public partial class ShellViewModel : ObservableObject
         ProjectTree.Load(Project);
         ConfigureProjectTree();
         EnsureGeneratedCode(Project);
+        if (Project is not null) _roslynWorkspace.OpenProject(Project);
         Inspector.LogInformation($"Đã xoá tag table '{table.Name}'.");
     }
 

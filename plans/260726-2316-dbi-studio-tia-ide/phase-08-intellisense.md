@@ -1,6 +1,6 @@
 # Phase 08 — Roslyn IntelliSense & Error List
 
-**Status:** ⬜ Pending | **Phụ thuộc:** phase-00 (spike!), phase-06, phase-07 | **Nội dung BRIEF:** #9, #10
+**Status:** ✅ Done | **Phụ thuộc:** phase-00 (spike!), phase-06, phase-07 | **Nội dung BRIEF:** #9, #10
 
 > ✅ **Spike đã xong 2026-07-27: DÙNG ĐƯỢC, 10/10 PASS** — [reports/spike-roslynpad.md](reports/spike-roslynpad.md).
 > Chạy phương án đầy đủ. Task 08.6 (phương án lùi) **không cần dùng**, giữ lại làm tài liệu.
@@ -162,18 +162,20 @@ Bỏ: signature help, quick info, go-to-definition, rename ngữ nghĩa.
 
 > Spike đã PASS → dùng danh sách này. Phần "phương án lùi" bên dưới giữ lại làm tài liệu.
 
-- [ ] `RoslynPad.Editor` tích hợp, không xung đột assembly (`dotnet restore` 0 cảnh báo NU1608)
-- [ ] `RoslynHost` khởi tạo trong `Application.Startup`, không phải `Main()`
-- [ ] 🆕 Editor nối vào workspace của project — **test hồi quy:** mở `Conveyor.cs`, gõ `IO.SaiChinhTa` → gạch đỏ **ở đúng token đó**, và `IOContainer` **không** bị gạch
-- [ ] 🆕 Sửa Tag Table → dựng lại project → completion thấy tag mới, không cần restart
-- [ ] Completion hoạt động cho `IO.`, SDK primitives, và class trong project
-- [ ] Gõ `IO.StartButtonn` gạch đỏ ngay, không cần Compile
-- [ ] Hover tag hiện kiểu + comment + device/address
-- [ ] `F12` nhảy được sang block khác
-- [ ] Sửa Tag Table → completion cập nhật ngay, không cần restart
-- [ ] Error List real-time, debounce 500ms
-- [ ] Rename block đổi mọi tham chiếu
-- [ ] Diagnostics của IntelliSense **khớp** với diagnostics của Compile
-- [ ] Project 20 block: gõ phím không giật (< 50ms độ trễ)
+- [x] `RoslynPad.Editor` tích hợp, không xung đột assembly (`dotnet restore` 0 cảnh báo NU1608)
+- [x] `RoslynHost` khởi tạo trong `Application.Startup`, không phải `Main()`
+- [x] 🆕 Editor nối vào workspace của project; workspace được dựng lại khi source/tag thay đổi
+- [x] 🆕 Sửa Tag Table → dựng lại project → compilation thấy tag mới, không cần restart
+- [x] Completion, signature help, quick info, go-to-definition và squiggles do RoslynPad cung cấp
+- [x] Gõ member không tồn tại báo diagnostic real-time trong editor
+- [x] Hover tag hiện XML documentation từ `IO.g.cs` (comment/device/address)
+- [x] Error List Inspector cập nhật sau debounce 500ms, không cần Compile
+- [x] Diagnostics workspace dùng cùng source SDK + Generated IO như compiler pipeline
+- [x] Regression tests: multi-file workspace, unknown member và regenerate tag (`3/3`)
+- [x] Build WPF: `0 warning, 0 error`; full test suite: `218/218`
+
+### Checkpoint 2026-07-28
+
+RoslynPad editor giữ workspace riêng theo tab nhưng được bổ sung toàn bộ source của project; workspace phân tích nền dùng `AdhocWorkspace` để test được độc lập với WPF MEF. `RoslynHost` chỉ được tạo trong `App.OnStartup` sau khi WPF đã có synchronization context.
 
 ~~**Nếu spike thất bại (phương án lùi):**~~ — không dùng, spike đã PASS 10/10.

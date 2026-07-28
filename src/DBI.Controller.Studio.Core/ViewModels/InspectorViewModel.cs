@@ -77,6 +77,24 @@ public partial class InspectorViewModel : PaneViewModelBase
     public void LogDiagnostic(string message, IssueSeverity severity = IssueSeverity.Warning) =>
         Append(Diagnostics, new LogEntry(severity, message, DateTimeOffset.Now));
 
+    public void SetCodeDiagnostics(IEnumerable<CompileDiagnostic> diagnostics)
+    {
+        Diagnostics.Clear();
+        foreach (var diagnostic in diagnostics)
+        {
+            var severity = diagnostic.Severity switch
+            {
+                CompileDiagnosticSeverity.Error => IssueSeverity.Error,
+                CompileDiagnosticSeverity.Warning => IssueSeverity.Warning,
+                _ => IssueSeverity.Warning
+            };
+            Append(Diagnostics, new LogEntry(
+                severity,
+                $"[{diagnostic.Id}] {diagnostic.Message} ({diagnostic.FilePath}:{diagnostic.Line}:{diagnostic.Column})",
+                DateTimeOffset.Now));
+        }
+    }
+
     private static void Append(ObservableCollection<LogEntry> target, LogEntry entry)
     {
         target.Add(entry);

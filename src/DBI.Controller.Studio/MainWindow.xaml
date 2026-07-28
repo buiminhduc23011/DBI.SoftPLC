@@ -4,6 +4,7 @@
         xmlns:avalondock="https://github.com/Dirkster99/AvalonDock"
         xmlns:adcontrols="clr-namespace:AvalonDock.Controls;assembly=AvalonDock"
         xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
+        xmlns:roslynpad="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Windows"
         xmlns:vm="clr-namespace:DBI.Controller.Studio.Core.ViewModels;assembly=DBI.Controller.Studio.Core"
         xmlns:behaviors="clr-namespace:DBI.Controller.Studio.Behaviors"
         xmlns:converters="clr-namespace:DBI.Controller.Studio.Converters"
@@ -107,14 +108,12 @@
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:CodeEditorViewModel}">
-            <avalonedit:TextEditor behaviors:BindableTextEditor.Text="{Binding Text, Mode=TwoWay}"
-                                   SyntaxHighlighting="C#"
-                                   FontFamily="Consolas"
-                                   FontSize="13"
-                                   ShowLineNumbers="True"
-                                   WordWrap="False"
-                                   Background="{DynamicResource CardBg}"
-                                   Foreground="{DynamicResource TextPrimary}" />
+            <roslynpad:RoslynCodeEditor behaviors:RoslynCodeEditorBehaviors.EnableRoslyn="True"
+                                        FontFamily="Consolas"
+                                        FontSize="13"
+                                        ShowLineNumbers="True"
+                                        Background="{DynamicResource CardBg}"
+                                        Foreground="{DynamicResource TextPrimary}" />
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:TagTableViewModel}">

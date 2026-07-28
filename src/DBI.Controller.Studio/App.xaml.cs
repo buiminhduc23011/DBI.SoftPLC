@@ -1,8 +1,10 @@
 using System.Windows;
 using DBI.Controller.Studio.Core.Services;
+using DBI.Controller.Studio.Core.Services.CodeAnalysis;
 using DBI.Controller.Studio.Core.Services.Runtime;
 using DBI.Controller.Studio.Core.ViewModels;
 using DBI.Controller.Studio.Services;
+using RoslynPad.Roslyn;
 
 namespace DBI.Controller.Studio;
 
@@ -27,6 +29,9 @@ public partial class App : Application
             ? new FakeRuntimeClient()
             : new NamedPipeRuntimeClient();
 
+        // RoslynHost must be created after WPF has installed its SynchronizationContext.
+        var roslynWorkspace = new StudioRoslynWorkspace(new RoslynHost());
+
         var shell = new ShellViewModel(
             new ProjectService(),
             runtime,
@@ -34,7 +39,8 @@ public partial class App : Application
             new IoCodeGenerator(),
             new RoslynCompilerService(),
             new RuntimeProcessLauncher(),
-            new ThemeService());
+            new ThemeService(),
+            roslynWorkspace: roslynWorkspace);
 
         var window = new MainWindow(shell);
         MainWindow = window;

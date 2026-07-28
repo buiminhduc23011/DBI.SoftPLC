@@ -16,6 +16,7 @@
     <!-- Ghim version cụ thể: wildcard làm build không tái lập được giữa các máy. -->
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Dirkster.AvalonDock" Version="4.74.1" />
+    <PackageReference Include="RoslynPad.Editor.Windows" Version="5.0.0" />
     <!-- Version ghim ở Directory.Build.props — xem ghi chú NU1608 ở đó. -->
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(DbiRoslynVersion)" />
   </ItemGroup>
