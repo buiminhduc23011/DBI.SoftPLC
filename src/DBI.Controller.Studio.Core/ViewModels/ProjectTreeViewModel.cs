@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using DBI.Controller.Studio.Core.Models;
 
 namespace DBI.Controller.Studio.Core.ViewModels;
@@ -323,6 +324,13 @@ public partial class TaskCardsViewModel : PaneViewModelBase
     }
 
     public IReadOnlyList<TaskCardItem> Instructions { get; }
+    public event EventHandler<TaskCardItem>? SnippetRequested;
+
+    [RelayCommand]
+    private void InsertInstruction(TaskCardItem? item)
+    {
+        if (item is not null) SnippetRequested?.Invoke(this, item);
+    }
 
     private static string SnippetFor(string name) => name switch
     {

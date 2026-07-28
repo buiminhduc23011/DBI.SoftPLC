@@ -107,7 +107,11 @@
                     <ItemsControl ItemsSource="{Binding Instructions}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Content="{Binding Name}" ToolTip="{Binding Snippet}" Style="{StaticResource FlatButton}" HorizontalContentAlignment="Left" />
+                                <Button Content="{Binding Name}"
+                                        ToolTip="Click to insert snippet"
+                                        Command="{Binding DataContext.InsertInstructionCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource FlatButton}" HorizontalContentAlignment="Left" />
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>

@@ -44,6 +44,17 @@ public partial class CodeEditorViewModel : DocumentViewModelBase
 
     partial void OnTextChanged(string value) => IsDirty = !string.Equals(value, _savedText, StringComparison.Ordinal);
 
+    public void InsertAtCaret(string snippet)
+    {
+        if (string.IsNullOrEmpty(snippet)) return;
+        var lines = Text.Replace("\r\n", "\n").Split('\n');
+        var lineIndex = Math.Clamp(CaretLine - 1, 0, lines.Length - 1);
+        var column = Math.Clamp(CaretColumn - 1, 0, lines[lineIndex].Length);
+        var offset = lines.Take(lineIndex).Sum(line => line.Length + 1) + column;
+        Text = Text.Insert(offset, snippet);
+        CaretColumn += snippet.Length;
+    }
+
     public override async Task SaveAsync()
     {
         string? directory = Path.GetDirectoryName(_absolutePath);

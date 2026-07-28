@@ -61,6 +61,7 @@ public partial class ShellViewModel : ObservableObject
 
         ProjectTree.NodeActivated += (_, node) => OpenNode(node);
         ProjectTree.PropertyChanged += OnProjectTreeSelectionChanged;
+        TaskCards.SnippetRequested += (_, card) => InsertSnippet(card);
         Editors.Notice += (_, n) => Inspector.LogInformation(n.Message, n.Severity);
         Runtime.FaultOccurred += (_, fault) =>
             Inspector.LogDiagnostic($"FAULT: {fault.Message}", IssueSeverity.Error);
@@ -74,6 +75,18 @@ public partial class ShellViewModel : ObservableObject
     public DocumentHostViewModel Editors { get; }
 
     public ObservableCollection<PaneViewModelBase> Panes { get; }
+
+    private void InsertSnippet(TaskCardItem card)
+    {
+        if (Editors.ActiveDocument is not CodeEditorViewModel editor)
+        {
+            Inspector.LogInformation("Open a code block before inserting an instruction.");
+            return;
+        }
+
+        editor.InsertAtCaret(card.Snippet);
+        Inspector.LogInformation($"Inserted {card.Name} snippet into '{editor.Title}'.");
+    }
 
     public DbiProject? Project => _projects.Current;
 
