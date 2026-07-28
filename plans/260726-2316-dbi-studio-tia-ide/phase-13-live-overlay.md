@@ -90,6 +90,13 @@ Kịch bản end-to-end trên Factory I/O thật:
 
 ## Definition of Done
 
+### Checkpoint 2026-07-28
+
+- [x] Core overlay service maps `IO.<tag>` references to source lines and stores latest pushed values.
+- [x] Overlay mapping regression tests pass.
+- [x] Initial Studio user guide added.
+- [ ] AvalonEdit inline rendering, visible-range subscription and Factory I/O acceptance remain.
+
 - [ ] Overlay hiện giá trị đúng bên phải dòng code
 - [ ] Chỉ subscribe tag trong vùng nhìn thấy
 - [ ] Tắt monitoring → overlay biến mất sạch, unsubscribe hết
