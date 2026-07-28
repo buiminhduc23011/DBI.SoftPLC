@@ -23,4 +23,18 @@ public sealed class LiveCodeOverlayServiceTests
         Assert.True(overlay.TryGetValue("StartButton", out var value));
         Assert.Equal("true", value.ValueJson);
     }
+
+    [Fact]
+    public void BuildVisibleMarkers_OnlyReturnsVisibleKnownValues()
+    {
+        var overlay = new LiveCodeOverlayService();
+        var refs = overlay.Analyze("if (IO.StartButton)\nIO.Missing = false;\nIO.StartButton = false;");
+        overlay.Apply(new TagValueUpdate("StartButton", "true", 1));
+
+        var markers = overlay.BuildVisibleMarkers(refs, 3, 3);
+
+        var marker = Assert.Single(markers);
+        Assert.Equal(3, marker.Line);
+        Assert.Equal("TRUE", marker.DisplayValue);
+    }
 }
