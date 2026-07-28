@@ -321,7 +321,7 @@
                            TextTrimming="CharacterEllipsis" />
 
                 <TextBlock Grid.Column="3" Style="{StaticResource MutedText}" FontSize="11">
-                    <Run Text="{Binding AutoStartIndicator}" />
+                    <Run Text="{Binding AutoStartIndicator, Mode=OneWay}" />
                     <Run Text=" · Project: " />
                     <Run Text="{Binding ProjectName, Mode=OneWay}" />
                 </TextBlock>
