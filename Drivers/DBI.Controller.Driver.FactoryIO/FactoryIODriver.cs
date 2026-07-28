@@ -74,13 +74,22 @@ public class FactoryIODriver : IDriver
         foreach (var route in routes)
         {
             if (route.Direction != TagDirection.Input) continue;
-            if (!EnsureBool(route)) continue;
             if (!TryParseAddress(route, out ushort address)) continue;
 
             try
             {
-                bool[] inputs = _modbusMaster.ReadDiscreteInputs(SlaveId, address, 1);
-                if (inputs.Length > 0) memoryImage.SetRawInput(route.TagName, inputs[0]);
+                if (route.DataType == TagDataType.Bool)
+                {
+                    bool[] inputs = _modbusMaster.ReadDiscreteInputs(SlaveId, address, 1);
+                    if (inputs.Length > 0) memoryImage.SetRawInput(route.TagName, inputs[0]);
+                }
+                else
+                {
+                    ushort[] words = _modbusMaster.ReadHoldingRegisters(SlaveId, address, route.DataType == TagDataType.Real ? (ushort)2 : (ushort)1);
+                    if (route.DataType == TagDataType.Int && words.Length > 0) memoryImage.SetRawInput(route.TagName, (int)(short)words[0]);
+                    if (route.DataType == TagDataType.Real && words.Length >= 2)
+                        memoryImage.SetRawInput(route.TagName, BitConverter.Int32BitsToSingle((words[0] << 16) | words[1]));
+                }
             }
             catch (Exception ex)
             {
@@ -103,12 +112,19 @@ public class FactoryIODriver : IDriver
         foreach (var route in routes)
         {
             if (route.Direction != TagDirection.Output) continue;
-            if (!EnsureBool(route)) continue;
             if (!TryParseAddress(route, out ushort address)) continue;
 
             try
             {
-                _modbusMaster.WriteSingleCoil(SlaveId, address, memoryImage.GetRawOutputBool(route.TagName));
+                if (route.DataType == TagDataType.Bool)
+                    _modbusMaster.WriteSingleCoil(SlaveId, address, memoryImage.GetRawOutputBool(route.TagName));
+                else if (route.DataType == TagDataType.Int)
+                    _modbusMaster.WriteSingleRegister(SlaveId, address, unchecked((ushort)memoryImage.GetRawOutputInt(route.TagName)));
+                else
+                {
+                    int bits = BitConverter.SingleToInt32Bits(memoryImage.GetRawOutputFloat(route.TagName));
+                    _modbusMaster.WriteMultipleRegisters(SlaveId, address, new[] { (ushort)(bits >> 16), (ushort)bits });
+                }
             }
             catch (Exception ex)
             {
@@ -126,17 +142,6 @@ public class FactoryIODriver : IDriver
         _modbusMaster?.Dispose();
         State = ConnectionState.Disconnected;
         return Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// B-6: driver này mới hỗ trợ <c>Bool</c>. Báo lỗi rõ thay vì im lặng trả 0 — task 09.0 bổ sung Int/Real.
-    /// </summary>
-    private bool EnsureBool(TagRoute route)
-    {
-        if (route.DataType == TagDataType.Bool) return true;
-
-        LastError = $"Tag '{route.TagName}' kiểu {route.DataType}: driver Factory I/O hiện chỉ hỗ trợ Bool.";
-        return false;
     }
 
     /// <summary>Lấy phần số trong địa chỉ: <c>Input_7</c> → 7, <c>7</c> → 7.</summary>

@@ -82,25 +82,28 @@ public class ModbusDriverAdapter : IDriver
         foreach (var route in routes)
         {
             if (route.Direction != TagDirection.Input) continue;
-            if (!EnsureBool(route)) continue;
             if (!TryParseAddress(route, out var registerType, out ushort address)) continue;
 
             try
             {
-                bool[] values = registerType switch
+                if (route.DataType == TagDataType.Bool)
                 {
-                    ModbusRegisterType.Coil => _modbusMaster.ReadCoils(SlaveId, address, 1),
-                    ModbusRegisterType.DiscreteInput => _modbusMaster.ReadDiscreteInputs(SlaveId, address, 1),
-                    _ => Array.Empty<bool>()
-                };
-
-                if (values.Length > 0)
-                {
-                    memoryImage.SetRawInput(route.TagName, values[0]);
+                    bool[] values = registerType == ModbusRegisterType.Coil
+                        ? _modbusMaster.ReadCoils(SlaveId, address, 1)
+                        : _modbusMaster.ReadDiscreteInputs(SlaveId, address, 1);
+                    if (values.Length > 0) memoryImage.SetRawInput(route.TagName, values[0]);
                 }
                 else
                 {
-                    LastError = $"Tag '{route.TagName}': loại thanh ghi {registerType} chưa hỗ trợ đọc Bool.";
+                    ushort[] words = registerType == ModbusRegisterType.InputRegister
+                        ? _modbusMaster.ReadInputRegisters(SlaveId, address, route.DataType == TagDataType.Real ? (ushort)2 : (ushort)1)
+                        : _modbusMaster.ReadHoldingRegisters(SlaveId, address, route.DataType == TagDataType.Real ? (ushort)2 : (ushort)1);
+                    if (route.DataType == TagDataType.Int && words.Length > 0) memoryImage.SetRawInput(route.TagName, (int)(short)words[0]);
+                    if (route.DataType == TagDataType.Real && words.Length >= 2)
+                    {
+                        int bits = (words[0] << 16) | words[1];
+                        memoryImage.SetRawInput(route.TagName, BitConverter.Int32BitsToSingle(bits));
+                    }
                 }
             }
             catch (Exception ex)
@@ -124,10 +127,9 @@ public class ModbusDriverAdapter : IDriver
         foreach (var route in routes)
         {
             if (route.Direction != TagDirection.Output) continue;
-            if (!EnsureBool(route)) continue;
             if (!TryParseAddress(route, out var registerType, out ushort address)) continue;
 
-            if (registerType != ModbusRegisterType.Coil)
+            if (route.DataType == TagDataType.Bool && registerType != ModbusRegisterType.Coil)
             {
                 LastError = $"Tag '{route.TagName}': chỉ ghi được vào Coil, không phải {registerType}.";
                 continue;
@@ -135,7 +137,20 @@ public class ModbusDriverAdapter : IDriver
 
             try
             {
-                _modbusMaster.WriteSingleCoil(SlaveId, address, memoryImage.GetRawOutputBool(route.TagName));
+                if (route.DataType == TagDataType.Bool)
+                    _modbusMaster.WriteSingleCoil(SlaveId, address, memoryImage.GetRawOutputBool(route.TagName));
+                else
+                {
+                    if (registerType != ModbusRegisterType.HoldingRegister)
+                    { LastError = $"Tag '{route.TagName}': output register must be HR."; continue; }
+                    if (route.DataType == TagDataType.Int)
+                        _modbusMaster.WriteSingleRegister(SlaveId, address, unchecked((ushort)memoryImage.GetRawOutputInt(route.TagName)));
+                    else
+                    {
+                        int bits = BitConverter.SingleToInt32Bits(memoryImage.GetRawOutputFloat(route.TagName));
+                        _modbusMaster.WriteMultipleRegisters(SlaveId, address, new[] { (ushort)(bits >> 16), (ushort)bits });
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -155,24 +170,15 @@ public class ModbusDriverAdapter : IDriver
         return Task.CompletedTask;
     }
 
-    /// <summary>B-6: mới hỗ trợ Bool. Báo lỗi rõ thay vì im lặng trả 0 — task 09.0 bổ sung Int/Real.</summary>
-    private bool EnsureBool(TagRoute route)
-    {
-        if (route.DataType == TagDataType.Bool) return true;
-
-        LastError = $"Tag '{route.TagName}' kiểu {route.DataType}: driver Modbus hiện chỉ hỗ trợ Bool.";
-        return false;
-    }
-
     /// <summary>
     /// Phân giải cú pháp địa chỉ Modbus. Công khai để Studio kiểm tra địa chỉ ngay lúc kỹ sư gõ
     /// vào Tag Table, thay vì đợi tới lúc chạy mới biết sai.
     /// </summary>
     public bool TryParseAddress(TagRoute route, out ModbusRegisterType registerType, out ushort address)
     {
-        registerType = route.Direction == TagDirection.Output
-            ? ModbusRegisterType.Coil
-            : ModbusRegisterType.DiscreteInput;
+        registerType = route.DataType == TagDataType.Bool
+            ? (route.Direction == TagDirection.Output ? ModbusRegisterType.Coil : ModbusRegisterType.DiscreteInput)
+            : ModbusRegisterType.HoldingRegister;
 
         string raw = route.Address.Trim();
         int separator = raw.IndexOf(':');

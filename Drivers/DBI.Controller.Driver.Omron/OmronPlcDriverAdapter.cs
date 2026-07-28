@@ -12,7 +12,7 @@ public class OmronPlcDriverAdapter : IDriver
 {
     public const string DriverTypeId = "DBI.Controller.Driver.Omron";
 
-    private static readonly string[] KnownAreas = { "CIO", "WR", "HR" };
+    private static readonly string[] KnownAreas = { "CIO", "WR", "HR", "DM" };
 
     private OmronClient? _client;
 
@@ -68,20 +68,20 @@ public class OmronPlcDriverAdapter : IDriver
         foreach (var route in routes)
         {
             if (route.Direction != TagDirection.Input) continue;
-            if (!EnsureBool(route)) continue;
             if (!TryParseAddress(route, out string area, out int address)) continue;
 
             try
             {
-                bool[] values = area switch
+                if (route.DataType == TagDataType.Bool)
                 {
-                    "CIO" => _client.ReadCIO(address, 1),
-                    "WR" => _client.ReadWR(address, 1),
-                    "HR" => _client.ReadHR(address, 1),
-                    _ => Array.Empty<bool>()
-                };
-
-                if (values.Length > 0) memoryImage.SetRawInput(route.TagName, values[0]);
+                    bool[] values = area switch { "CIO" => _client.ReadCIO(address, 1), "WR" => _client.ReadWR(address, 1), "HR" => _client.ReadHR(address, 1), _ => Array.Empty<bool>() };
+                    if (values.Length > 0) memoryImage.SetRawInput(route.TagName, values[0]);
+                }
+                else if (area == "DM")
+                {
+                    if (route.DataType == TagDataType.Int) memoryImage.SetRawInput(route.TagName, _client.ReadDMInt(address));
+                    else memoryImage.SetRawInput(route.TagName, _client.ReadDMFloat(address));
+                }
             }
             catch (Exception ex)
             {
@@ -104,13 +104,13 @@ public class OmronPlcDriverAdapter : IDriver
         foreach (var route in routes)
         {
             if (route.Direction != TagDirection.Output) continue;
-            if (!EnsureBool(route)) continue;
             if (!TryParseAddress(route, out string area, out int address)) continue;
-
-            bool[] value = { memoryImage.GetRawOutputBool(route.TagName) };
 
             try
             {
+                if (route.DataType == TagDataType.Int && area == "DM") { _client.WriteDMInt(address, memoryImage.GetRawOutputInt(route.TagName)); continue; }
+                if (route.DataType == TagDataType.Real && area == "DM") { _client.WriteDMFloat(address, memoryImage.GetRawOutputFloat(route.TagName)); continue; }
+                bool[] value = { memoryImage.GetRawOutputBool(route.TagName) };
                 switch (area)
                 {
                     case "CIO": _client.WriteCIO(address, value); break;

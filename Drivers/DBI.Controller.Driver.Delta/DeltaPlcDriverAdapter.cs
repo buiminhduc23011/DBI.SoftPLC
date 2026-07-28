@@ -73,21 +73,20 @@ public class DeltaPlcDriverAdapter : IDriver
         foreach (var route in routes)
         {
             if (route.Direction != TagDirection.Input) continue;
-            if (!EnsureBool(route)) continue;
             if (!TryParseAddress(route, out char area, out int address)) continue;
 
             try
             {
-                bool[] values = area switch
+                if (route.DataType == TagDataType.Bool)
                 {
-                    'X' => _client.ReadX(address, 1),
-                    'Y' => _client.ReadY(address, 1),
-                    'M' => _client.ReadM(address, 1),
-                    _ => Array.Empty<bool>()
-                };
-
-                if (values.Length > 0)
-                    memoryImage.SetRawInput(route.TagName, values[0]);
+                    bool[] values = area switch { 'X' => _client.ReadX(address, 1), 'Y' => _client.ReadY(address, 1), 'M' => _client.ReadM(address, 1), _ => Array.Empty<bool>() };
+                    if (values.Length > 0) memoryImage.SetRawInput(route.TagName, values[0]);
+                }
+                else if (area == 'D')
+                {
+                    if (route.DataType == TagDataType.Int) memoryImage.SetRawInput(route.TagName, _client.ReadDInt(address));
+                    else memoryImage.SetRawInput(route.TagName, _client.ReadFloat(address));
+                }
                 else
                     LastError = $"Tag '{route.TagName}': vùng nhớ '{area}' chưa hỗ trợ đọc Bool.";
             }
@@ -112,13 +111,13 @@ public class DeltaPlcDriverAdapter : IDriver
         foreach (var route in routes)
         {
             if (route.Direction != TagDirection.Output) continue;
-            if (!EnsureBool(route)) continue;
             if (!TryParseAddress(route, out char area, out int address)) continue;
-
-            bool value = memoryImage.GetRawOutputBool(route.TagName);
 
             try
             {
+                if (route.DataType == TagDataType.Int && area == 'D') { _client.WriteDInt(address, memoryImage.GetRawOutputInt(route.TagName)); continue; }
+                if (route.DataType == TagDataType.Real && area == 'D') { _client.WriteFloat(address, memoryImage.GetRawOutputFloat(route.TagName)); continue; }
+                bool value = memoryImage.GetRawOutputBool(route.TagName);
                 switch (area)
                 {
                     case 'Y': _client.WriteY(address, new[] { value }); break;
