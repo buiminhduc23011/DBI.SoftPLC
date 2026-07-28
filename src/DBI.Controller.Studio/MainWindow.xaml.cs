@@ -16,6 +16,9 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         DataContext = _shell;
+        ProjectPane.Content = _shell.ProjectTree;
+        InspectorPane.Content = _shell.Inspector;
+        ToolboxPane.Content = _shell.TaskCards;
 
         // DockingManager chỉ tồn tại sau InitializeComponent, nên dịch vụ bố cục phải ráp ở đây.
         // Nó vẫn đi qua interface ILayoutPersistence — ShellViewModel không biết AvalonDock là gì.

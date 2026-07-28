@@ -342,10 +342,9 @@
                 <avalondock:LayoutPanel Orientation="Horizontal">
                     <avalondock:LayoutAnchorablePaneGroup DockWidth="260">
                         <avalondock:LayoutAnchorablePane>
-                            <avalondock:LayoutAnchorable Title="Project"
+                            <avalondock:LayoutAnchorable x:Name="ProjectPane" Title="Project"
                                                          ContentId="ProjectTree"
-                                                         CanClose="False"
-                                                         Content="{Binding ProjectTree}" />
+                                                         CanClose="False" />
                         </avalondock:LayoutAnchorablePane>
                     </avalondock:LayoutAnchorablePaneGroup>
 
@@ -356,20 +355,18 @@
 
                         <avalondock:LayoutAnchorablePaneGroup DockHeight="180">
                             <avalondock:LayoutAnchorablePane>
-                                <avalondock:LayoutAnchorable Title="Inspector"
+                                <avalondock:LayoutAnchorable x:Name="InspectorPane" Title="Inspector"
                                                              ContentId="Inspector"
-                                                             CanClose="False"
-                                                             Content="{Binding Inspector}" />
+                                                             CanClose="False" />
                             </avalondock:LayoutAnchorablePane>
                         </avalondock:LayoutAnchorablePaneGroup>
                     </avalondock:LayoutPanel>
 
                     <avalondock:LayoutAnchorablePaneGroup DockWidth="240">
                         <avalondock:LayoutAnchorablePane>
-                            <avalondock:LayoutAnchorable Title="Toolbox"
+                            <avalondock:LayoutAnchorable x:Name="ToolboxPane" Title="Toolbox"
                                                          ContentId="TaskCards"
-                                                         CanClose="False"
-                                                         Content="{Binding TaskCards}" />
+                                                         CanClose="False" />
                         </avalondock:LayoutAnchorablePane>
                     </avalondock:LayoutAnchorablePaneGroup>
                 </avalondock:LayoutPanel>
