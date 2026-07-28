@@ -51,8 +51,8 @@ public partial class ShellViewModel : ObservableObject
         _theme = theme ?? throw new ArgumentNullException(nameof(theme));
         _layout = layout;
         _roslynWorkspace = roslynWorkspace ?? StudioRoslynWorkspace.Current ?? new StudioRoslynWorkspace();
-        _roslynWorkspace.WorkspaceChanged += OnRoslynWorkspaceChanged;
         _uiContext = SynchronizationContext.Current;
+        _roslynWorkspace.WorkspaceChanged += OnRoslynWorkspaceChanged;
 
         Runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
         StatusBar = new StatusBarViewModel(runtime);
@@ -222,10 +222,11 @@ public partial class ShellViewModel : ObservableObject
 
     private async void OnRoslynWorkspaceChanged(object? sender, EventArgs e)
     {
+        if (_uiContext is null) return;
         try
         {
             var diagnostics = await _roslynWorkspace.GetCurrentDiagnosticsAsync().ConfigureAwait(true);
-            Inspector.SetCodeDiagnostics(diagnostics);
+            _uiContext.Post(_ => Inspector.SetCodeDiagnostics(diagnostics), null);
         }
         catch (Exception ex)
         {

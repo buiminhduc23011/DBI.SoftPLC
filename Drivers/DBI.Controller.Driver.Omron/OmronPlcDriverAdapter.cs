@@ -158,6 +158,12 @@ public class OmronPlcDriverAdapter : IDriver
             if (raw.StartsWith(candidate, StringComparison.Ordinal) &&
                 int.TryParse(raw[candidate.Length..], out address))
             {
+                if (candidate == "DM" && route.DataType == TagDataType.Bool)
+                {
+                    area = "";
+                    LastError = $"Tag '{route.TagName}': DM chỉ dùng cho Int/Real, không phải Bool (địa chỉ hợp lệ ví dụ CIO100).";
+                    return false;
+                }
                 area = candidate;
                 return true;
             }

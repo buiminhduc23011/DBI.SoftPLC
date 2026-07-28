@@ -62,7 +62,7 @@ public sealed class IpcServer : IAsyncDisposable
                 {
                     await pipe.WaitForConnectionAsync(ct).ConfigureAwait(false);
                 }
-                catch (Exception ex) when (ex is OperationCanceledException or ObjectDisposedException)
+                catch (Exception ex) when (ex is OperationCanceledException or ObjectDisposedException or IOException)
                 {
                     await pipe.DisposeAsync().ConfigureAwait(false);
                     break;
