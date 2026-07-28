@@ -1,6 +1,6 @@
 # Phase 10 — Watch Table & Live Monitoring
 
-**Status:** ⬜ Pending | **Phụ thuộc:** phase-03, phase-06 | **Nội dung BRIEF:** #14
+**Status:** 🟡 Core done; UI performance/modify acceptance pending | **Phụ thuộc:** phase-03, phase-06 | **Nội dung BRIEF:** #14
 
 > Đây là phase cho **80% giá trị debug với 20% công sức** so với live overlay (phase-13). Làm trước, và nếu ngân sách hết thì phase-13 có thể cắt.
 

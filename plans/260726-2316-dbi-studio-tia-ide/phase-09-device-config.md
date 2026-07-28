@@ -1,6 +1,6 @@
 # Phase 09 — Device Config & Tag Routing
 
-**Status:** ⬜ Pending | **Phụ thuộc:** phase-02, phase-05, phase-06 | **Nội dung BRIEF:** #17
+**Status:** 🟡 Core done; hardware acceptance pending | **Phụ thuộc:** phase-02, phase-05, phase-06 | **Nội dung BRIEF:** #17
 
 > Thay 5 device hardcode ở [MainViewModel.cs:60-67](../../src/DBI.Controller.Studio/ViewModels/MainViewModel.cs) bằng CRUD thật.
 
@@ -117,6 +117,7 @@ Xoá device khi còn tag trỏ tới → **chặn**, liệt kê tag đang dùng.
 - [x] Modbus, Factory I/O, Delta và Omron adapter build thành công với nhánh Int/Real.
 - [x] UI Device Configuration tab được nối vào Project Tree; add Simulation và delete có guard.
 - [ ] Dynamic driver form, connection test/status polling và end-to-end hardware test vẫn đang triển khai.
+- [x] Dynamic driver form đã sinh theo catalog và validate tên device trước khi tạo.
 
 - [ ] 🔴 **Task 09.0:** cả 5 driver đọc/ghi được `Int` và `Real`, không chỉ `Bool`
 - [ ] Test end-to-end: tag `Real` map vào Modbus `40001` → đọc đúng giá trị thật, **không phải 0**

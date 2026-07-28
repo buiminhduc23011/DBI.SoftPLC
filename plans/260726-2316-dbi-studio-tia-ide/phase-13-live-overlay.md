@@ -1,6 +1,6 @@
 # Phase 13 — Live Code Overlay & Integration
 
-**Status:** ⬜ Pending | **Phụ thuộc:** phase-08, phase-10 | **Nội dung BRIEF:** #13
+**Status:** 🟡 Core done; AvalonEdit/Factory I/O acceptance pending | **Phụ thuộc:** phase-08, phase-10 | **Nội dung BRIEF:** #13
 
 > 🎯 Đây là "chế độ kính" (monitoring glasses) của TIA Portal — thứ gây ấn tượng mạnh nhất khi demo.
 >

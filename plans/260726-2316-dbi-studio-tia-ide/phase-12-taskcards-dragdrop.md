@@ -1,6 +1,6 @@
 # Phase 12 — Task Cards & Drag-drop Tag Mapping
 
-**Status:** ⬜ Pending | **Phụ thuộc:** phase-04, phase-06, phase-09 | **Nội dung BRIEF:** #11, #12
+**Status:** 🟡 Mapping core done; WPF drag/drop wiring pending | **Phụ thuộc:** phase-04, phase-06, phase-09 | **Nội dung BRIEF:** #11, #12
 
 > Vùng bên phải của TIA Portal. Đây là chỗ hoàn thiện "cảm giác TIA Portal" và trả nợ cam kết **"Studio Drag-Drop Mapping"** đã ghi trong [BRIEF.md §4.3](../../docs/BRIEF.md).
 

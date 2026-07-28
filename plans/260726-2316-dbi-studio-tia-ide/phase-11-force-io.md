@@ -1,6 +1,6 @@
 # Phase 11 — Force I/O
 
-**Status:** ⬜ Pending | **Phụ thuộc:** phase-02, phase-10 | **Nội dung BRIEF:** #15
+**Status:** 🟡 Core done; safety UX acceptance pending | **Phụ thuộc:** phase-02, phase-10 | **Nội dung BRIEF:** #15
 
 > ⚠️ **Đây là tính năng có thể gây nguy hiểm vật lý.** Force ghi đè tín hiệu thật của phần cứng — dùng sai có thể làm hỏng máy hoặc gây tai nạn. UI phải làm cho việc "đang force" **không thể bỏ sót**.
 
