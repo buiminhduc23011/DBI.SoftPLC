@@ -93,6 +93,21 @@ public partial class DocumentHostViewModel : ObservableObject
         return editor;
     }
 
+    public DeviceConfigurationViewModel OpenDeviceConfiguration(DbiProject project, ProjectService projects)
+    {
+        if (Documents.FirstOrDefault(d => d.ContentId == "DeviceConfiguration") is DeviceConfigurationViewModel opened)
+        {
+            ActiveDocument = opened;
+            opened.Refresh();
+            return opened;
+        }
+
+        var document = new DeviceConfigurationViewModel(project, projects);
+        Documents.Add(document);
+        ActiveDocument = document;
+        return document;
+    }
+
     /// <summary>Đóng tab. Hỏi lại nếu còn thay đổi chưa lưu.</summary>
     /// <returns><c>false</c> nếu người dùng huỷ.</returns>
     public bool Close(DocumentViewModelBase? document)

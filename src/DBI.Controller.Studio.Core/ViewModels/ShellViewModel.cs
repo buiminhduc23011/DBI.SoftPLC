@@ -211,8 +211,8 @@ public partial class ShellViewModel : ObservableObject
 
         if (node.Kind == ProjectNodeKind.OnlineDiagnostics)
             Inspector.LogInformation("Diagnostics sẽ mở thành document riêng ở phase-10.");
-        else if (node.Kind == ProjectNodeKind.DeviceConfiguration)
-            Inspector.LogInformation("Device Configuration sẽ mở thành document riêng ở phase-09.");
+        else if (node.Kind == ProjectNodeKind.DeviceConfiguration && Project is not null)
+            Editors.OpenDeviceConfiguration(Project, _projects);
     }
 
     [RelayCommand]

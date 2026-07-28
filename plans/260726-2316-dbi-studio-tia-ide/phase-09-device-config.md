@@ -115,7 +115,8 @@ Xoá device khi còn tag trỏ tới → **chặn**, liệt kê tag đang dùng.
 - [x] ProjectService có Add/Rename/Delete device; rename cập nhật các tag liên quan và delete bị chặn khi còn usage.
 - [x] Regression tests catalog + CRUD: `3/3` pass.
 - [x] Modbus, Factory I/O, Delta và Omron adapter build thành công với nhánh Int/Real.
-- [ ] UI editor device và end-to-end hardware test vẫn đang triển khai.
+- [x] UI Device Configuration tab được nối vào Project Tree; add Simulation và delete có guard.
+- [ ] Dynamic driver form, connection test/status polling và end-to-end hardware test vẫn đang triển khai.
 
 - [ ] 🔴 **Task 09.0:** cả 5 driver đọc/ghi được `Int` và `Real`, không chỉ `Bool`
 - [ ] Test end-to-end: tag `Real` map vào Modbus `40001` → đọc đúng giá trị thật, **không phải 0**

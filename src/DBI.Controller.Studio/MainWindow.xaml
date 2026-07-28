@@ -160,6 +160,23 @@
             </DockPanel>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type vm:DeviceConfigurationViewModel}">
+            <DockPanel Margin="6">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <Button Content="+ Add Simulation" Style="{StaticResource FlatButton}" Command="{Binding AddSimulationCommand}" />
+                    <Button Content="Delete" Style="{StaticResource FlatButton}" Command="{Binding DeleteSelectedCommand}" />
+                </StackPanel>
+                <DataGrid ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
+                          AutoGenerateColumns="False" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Name" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="180" />
+                        <DataGridTextColumn Header="Driver" Binding="{Binding DriverType}" Width="160" IsReadOnly="True" />
+                        <DataGridTextColumn Header="Settings" Binding="{Binding Settings.Count, StringFormat={}{0} settings}" Width="160" IsReadOnly="True" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type vm:GeneratedCodeViewModel}">
             <DockPanel Margin="6">
                 <Border DockPanel.Dock="Top" Background="{DynamicResource WarningColor}" Padding="8" Margin="0,0,0,8">
