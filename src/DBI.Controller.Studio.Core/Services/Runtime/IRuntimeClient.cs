@@ -55,6 +55,8 @@ public interface IRuntimeClient : IAsyncDisposable
     /// <summary>phase-11.</summary>
     Task<bool> ForceTagAsync(string tagName, object value, bool enable, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<ForceInfo>> GetForcesAsync(CancellationToken cancellationToken = default);
+
     /// <summary>phase-09.</summary>
     Task<IReadOnlyList<DeviceStateInfo>> GetDeviceStatesAsync(CancellationToken cancellationToken = default);
 

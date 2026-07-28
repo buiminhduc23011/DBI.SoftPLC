@@ -182,6 +182,14 @@ public sealed class NamedPipeRuntimeClient : IRuntimeClient
         return response.Ok;
     }
 
+    public async Task<IReadOnlyList<ForceInfo>> GetForcesAsync(CancellationToken ct = default)
+    {
+        var response = await SendAsync(NewRequest(CommandType.GetForceList), ct).ConfigureAwait(false);
+        return response.Ok
+            ? ProtocolJson.Deserialize<ForceListResponse>(response.PayloadJson)?.Forces ?? []
+            : [];
+    }
+
     public async Task<IReadOnlyList<DeviceStateInfo>> GetDeviceStatesAsync(CancellationToken ct = default)
     {
         var response = await SendAsync(NewRequest(CommandType.GetDeviceStates), ct).ConfigureAwait(false);

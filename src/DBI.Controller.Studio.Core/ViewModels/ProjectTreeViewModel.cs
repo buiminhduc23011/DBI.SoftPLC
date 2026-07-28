@@ -16,7 +16,8 @@ public enum ProjectNodeKind
     Block,
     TagTable,
     Device,
-    WatchTable
+    WatchTable,
+    ForceTable
 }
 
 public sealed class MenuActionViewModel
@@ -74,6 +75,7 @@ public partial class ProjectNode : ObservableObject
         ProjectNodeKind.TagTable => "▦",
         ProjectNodeKind.Device => "⬢",
         ProjectNodeKind.WatchTable => "◉",
+        ProjectNodeKind.ForceTable => "🔒",
         _ => "•"
     };
 }
@@ -130,6 +132,7 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
         generated.Children.Add(CreateNode(ProjectNodeKind.GeneratedFile, "IO.g.cs", payload: null, "Generated:IO.g.cs"));
 
         var watches = CreateFixedNode(ProjectNodeKind.Folder, "Watch & Force Tables", key: "Watches");
+        watches.Children.Add(CreateFixedNode(ProjectNodeKind.ForceTable, "Force Table", key: "ForceTable"));
         foreach (var watch in project.WatchTables)
             watches.Children.Add(CreateNode(ProjectNodeKind.WatchTable, watch.Name, watch, $"Watch:{watch.Name}"));
 

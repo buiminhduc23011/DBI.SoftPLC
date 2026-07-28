@@ -16,6 +16,7 @@ public sealed class FakeRuntimeClient : IRuntimeClient
     private readonly SynchronizationContext? _uiContext;
     private readonly Dictionary<string, object> _tags = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _subscribed = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, object> _forces = new(StringComparer.OrdinalIgnoreCase);
 
     private RuntimeClientState _state = RuntimeClientState.Disconnected;
     private RuntimeState _runtimeState = RuntimeState.NoProgram;
@@ -146,9 +147,13 @@ public sealed class FakeRuntimeClient : IRuntimeClient
 
     public Task<bool> ForceTagAsync(string tagName, object value, bool enable, CancellationToken ct = default)
     {
-        if (enable) SetTagValue(tagName, value);
+        if (enable) { _forces[tagName] = value; SetTagValue(tagName, value); }
+        else _forces.Remove(tagName);
         return Task.FromResult(true);
     }
+
+    public Task<IReadOnlyList<ForceInfo>> GetForcesAsync(CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<ForceInfo>>(_forces.Select(f => new ForceInfo(f.Key, ProtocolJson.Serialize(f.Value))).ToList());
 
     public Task<IReadOnlyList<DeviceStateInfo>> GetDeviceStatesAsync(CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<DeviceStateInfo>>(DeviceStates.ToList());

@@ -203,6 +203,27 @@
             </DockPanel>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type vm:ForceTableViewModel}">
+            <DockPanel Margin="6">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="{Binding Banner}" Foreground="{DynamicResource DangerColor}" FontWeight="Bold" VerticalAlignment="Center" />
+                    <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" Margin="12,0,0,0" />
+                    <Button Content="CLEAR ALL FORCES" Style="{StaticResource AccentButton}" Command="{Binding ClearAllCommand}" Margin="6,0,0,0" />
+                </StackPanel>
+                <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="🔒 Tag" Binding="{Binding TagName}" IsReadOnly="True" Width="240" />
+                        <DataGridTextColumn Header="Force value" Binding="{Binding ValueText}" IsReadOnly="True" Width="180" />
+                        <DataGridTemplateColumn Header="" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate><Button Content="Clear" Command="{Binding DataContext.ClearCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" /></DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type vm:GeneratedCodeViewModel}">
             <DockPanel Margin="6">
                 <Border DockPanel.Dock="Top" Background="{DynamicResource WarningColor}" Padding="8" Margin="0,0,0,8">

@@ -17,8 +17,9 @@ public sealed partial class WatchRowViewModel : ObservableObject
     [ObservableProperty] private DateTimeOffset? _updatedAt;
 }
 
-public partial class WatchTableViewModel : DocumentViewModelBase
+public partial class WatchTableViewModel : DocumentViewModelBase, IDisposable
 {
+    private readonly DbiProject _project;
     private readonly WatchTable _table;
     private readonly IRuntimeClient _runtime;
     private readonly ProjectService _projects;
@@ -27,7 +28,7 @@ public partial class WatchTableViewModel : DocumentViewModelBase
     public WatchTableViewModel(DbiProject project, WatchTable table, IRuntimeClient runtime, ProjectService projects)
         : base($"Watch:{table.Name}", table.Name)
     {
-        _table = table; _runtime = runtime; _projects = projects;
+        _project = project; _table = table; _runtime = runtime; _projects = projects;
         foreach (var name in table.TagNames) Rows.Add(new WatchRowViewModel(name));
         _runtime.TagValueChanged += OnTagValueChanged;
     }
@@ -46,8 +47,8 @@ public partial class WatchTableViewModel : DocumentViewModelBase
     [RelayCommand]
     private void AddTag()
     {
-        if (_table.TagNames.Count == 0) return;
-        var name = _table.TagNames.FirstOrDefault(n => Rows.All(r => !r.Name.Equals(n, StringComparison.OrdinalIgnoreCase)));
+        var name = _project.AllTags().Select(t => t.Name)
+            .FirstOrDefault(n => Rows.All(r => !r.Name.Equals(n, StringComparison.OrdinalIgnoreCase)));
         if (name is null) return;
         Rows.Add(new WatchRowViewModel(name)); IsDirty = true;
     }
@@ -88,5 +89,12 @@ public partial class WatchTableViewModel : DocumentViewModelBase
         _table.TagNames.Clear(); _table.TagNames.AddRange(Rows.Select(r => r.Name));
         _projects.Save(); IsDirty = false;
         await UnsubscribeAsync();
+    }
+
+    public void Dispose()
+    {
+        _runtime.TagValueChanged -= OnTagValueChanged;
+        _ = UnsubscribeAsync();
+        GC.SuppressFinalize(this);
     }
 }

@@ -117,6 +117,20 @@ public partial class DocumentHostViewModel : ObservableObject
         Documents.Add(document); ActiveDocument = document; return document;
     }
 
+    public ForceTableViewModel OpenForceTable(IRuntimeClient runtime)
+    {
+        if (Documents.FirstOrDefault(d => d.ContentId == "ForceTable") is ForceTableViewModel opened)
+        {
+            ActiveDocument = opened;
+            _ = opened.RefreshCommand.ExecuteAsync(null);
+            return opened;
+        }
+        var document = new ForceTableViewModel(runtime, _prompt);
+        Documents.Add(document); ActiveDocument = document;
+        _ = document.RefreshCommand.ExecuteAsync(null);
+        return document;
+    }
+
     /// <summary>Đóng tab. Hỏi lại nếu còn thay đổi chưa lưu.</summary>
     /// <returns><c>false</c> nếu người dùng huỷ.</returns>
     public bool Close(DocumentViewModelBase? document)
@@ -131,6 +145,9 @@ public partial class DocumentHostViewModel : ObservableObject
 
         Documents.Remove(document);
 
+        if (document is IDisposable disposable)
+            disposable.Dispose();
+
         if (ReferenceEquals(ActiveDocument, document))
             ActiveDocument = Documents.LastOrDefault();
 
@@ -139,6 +156,8 @@ public partial class DocumentHostViewModel : ObservableObject
 
     public void CloseAll()
     {
+        foreach (var document in Documents.OfType<IDisposable>())
+            document.Dispose();
         Documents.Clear();
         ActiveDocument = null;
     }

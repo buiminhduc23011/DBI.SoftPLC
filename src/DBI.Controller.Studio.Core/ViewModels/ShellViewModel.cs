@@ -215,6 +215,8 @@ public partial class ShellViewModel : ObservableObject
             Editors.OpenDeviceConfiguration(Project, _projects);
         else if (node.Kind == ProjectNodeKind.WatchTable && Project is not null && node.Payload is WatchTable watch)
             Editors.OpenWatchTable(Project, watch, Runtime, _projects);
+        else if (node.Kind == ProjectNodeKind.ForceTable)
+            Editors.OpenForceTable(Runtime);
     }
 
     [RelayCommand]
