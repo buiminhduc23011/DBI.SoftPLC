@@ -60,9 +60,7 @@
                 </TreeView.ItemContainerStyle>
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                        <StackPanel Orientation="Horizontal" Margin="0,2">
-                            <TextBlock Text="{Binding Glyph}" Margin="0,0,6,0"
-                                       Foreground="{DynamicResource AccentColor}" />
+                        <StackPanel Orientation="Horizontal" Margin="4,3">
                             <TextBlock Text="{Binding Title}" Style="{StaticResource LabelText}" />
                         </StackPanel>
                     </HierarchicalDataTemplate>
@@ -221,7 +219,7 @@
                 </StackPanel>
                 <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="🔒 Tag" Binding="{Binding TagName}" IsReadOnly="True" Width="240" />
+                        <DataGridTextColumn Header="Forced tag" Binding="{Binding TagName}" IsReadOnly="True" Width="240" />
                         <DataGridTextColumn Header="Force value" Binding="{Binding ValueText}" IsReadOnly="True" Width="180" />
                         <DataGridTemplateColumn Header="" Width="100">
                             <DataGridTemplateColumn.CellTemplate>

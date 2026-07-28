@@ -67,7 +67,7 @@ public partial class StatusBarViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(AutoStartIndicator))]
     private bool _autoStartEnabled = true;
 
-    public string AutoStartIndicator => AutoStartEnabled ? "⚡ AUTOSTART" : "MANUAL";
+    public string AutoStartIndicator => AutoStartEnabled ? "AUTOSTART" : "MANUAL";
 
     /// <summary>Dòng tóm tắt cho phần bên phải thanh trạng thái.</summary>
     public string MetricsSummary =>

@@ -6,21 +6,21 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <SolidColorBrush x:Key="WindowBg"      Color="#F3F3F3" />
+    <SolidColorBrush x:Key="WindowBg"      Color="#EEF2F6" />
     <SolidColorBrush x:Key="CardBg"        Color="#FFFFFF" />
-    <SolidColorBrush x:Key="HeaderBg"      Color="#E8E8E8" />
-    <SolidColorBrush x:Key="TextPrimary"   Color="#1A1A1A" />
-    <SolidColorBrush x:Key="TextSecondary" Color="#555555" />
-    <SolidColorBrush x:Key="BorderColor"   Color="#CCCCCC" />
-    <SolidColorBrush x:Key="AccentColor"   Color="#005A9E" />
+    <SolidColorBrush x:Key="HeaderBg"      Color="#DCE3EA" />
+    <SolidColorBrush x:Key="TextPrimary"   Color="#182433" />
+    <SolidColorBrush x:Key="TextSecondary" Color="#5D6C7D" />
+    <SolidColorBrush x:Key="BorderColor"   Color="#C2CDD9" />
+    <SolidColorBrush x:Key="AccentColor"   Color="#1E5FBF" />
 
     <!-- Màu trạng thái máy — giống nhau ở cả hai theme để kỹ sư không phải học lại. -->
-    <SolidColorBrush x:Key="SuccessColor"  Color="#107C41" />
-    <SolidColorBrush x:Key="DangerColor"   Color="#C72C3B" />
-    <SolidColorBrush x:Key="WarningColor"  Color="#B8860B" />
-    <SolidColorBrush x:Key="IdleColor"     Color="#808080" />
+    <SolidColorBrush x:Key="SuccessColor"  Color="#247A50" />
+    <SolidColorBrush x:Key="DangerColor"   Color="#BF3A30" />
+    <SolidColorBrush x:Key="WarningColor"  Color="#B86E16" />
+    <SolidColorBrush x:Key="IdleColor"     Color="#7F8B99" />
 
-    <SolidColorBrush x:Key="SelectionBg"   Color="#CCE4F7" />
-    <SolidColorBrush x:Key="HoverBg"       Color="#E5F1FB" />
+    <SolidColorBrush x:Key="SelectionBg"   Color="#E6EEF9" />
+    <SolidColorBrush x:Key="HoverBg"       Color="#E3EBF7" />
 
 </ResourceDictionary>

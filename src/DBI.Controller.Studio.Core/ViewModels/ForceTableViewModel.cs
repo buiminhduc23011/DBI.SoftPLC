@@ -34,7 +34,7 @@ public sealed partial class ForceTableViewModel : DocumentViewModelBase
     }
 
     public ObservableCollection<ForceRowViewModel> Rows { get; } = new();
-    public string Banner => Rows.Count == 0 ? "No active forces" : $"⚠ {Rows.Count} TAG ĐANG BỊ FORCE";
+    public string Banner => Rows.Count == 0 ? "No active forces" : $"{Rows.Count} TAG ĐANG BỊ FORCE";
 
     [RelayCommand]
     private async Task RefreshAsync()

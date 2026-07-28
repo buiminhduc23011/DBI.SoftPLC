@@ -79,7 +79,7 @@ public partial class ShellViewModel : ObservableObject
 
     public bool IsDarkMode => _theme.IsDark;
 
-    public string ThemeToggleText => _theme.IsDark ? "☀️ Light Mode" : "🌙 Dark Mode";
+    public string ThemeToggleText => _theme.IsDark ? "Light mode" : "Dark mode";
 
     /// <summary>
     /// Tra <c>ContentId</c> → ViewModel khi AvalonDock khôi phục layout.
