@@ -274,23 +274,32 @@
         <Border DockPanel.Dock="Top" Background="{DynamicResource HeaderBg}"
                 BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,2" Padding="6,5">
             <StackPanel Orientation="Horizontal">
-                <Button Content="New" Style="{StaticResource FlatButton}" Command="{Binding NewProjectCommand}" />
-                <Button Content="Open" Style="{StaticResource FlatButton}" Command="{Binding OpenProjectCommand}" />
-                <Button Content="Save" Style="{StaticResource FlatButton}" Command="{Binding SaveAllCommand}" />
-                <Rectangle Width="2" Margin="8,2" Fill="{DynamicResource BorderColor}" />
-                <Button Content="Compile" Style="{StaticResource FlatButton}"
-                        Command="{Binding CompileCommand}" IsEnabled="{Binding CanCompile}" ToolTip="Ctrl+Shift+B" />
-                <Button Content="Deploy" Style="{StaticResource AccentButton}"
-                        Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" ToolTip="F5" />
-                <Button Content="Start" Style="{StaticResource FlatButton}"
-                        Command="{Binding StartRuntimeCommand}" IsEnabled="{Binding CanStart}" />
-                <Button Content="Stop" Style="{StaticResource FlatButton}"
-                        Command="{Binding StopRuntimeCommand}" IsEnabled="{Binding CanStop}" />
-                <Button Content="Reset" Style="{StaticResource FlatButton}"
-                        Command="{Binding ResetRuntimeCommand}" IsEnabled="{Binding CanReset}" />
-                <Rectangle Width="2" Margin="8,2" Fill="{DynamicResource BorderColor}" />
-                <Button Content="{Binding ThemeToggleText}" Style="{StaticResource FlatButton}"
-                        Command="{Binding ToggleThemeCommand}" />
+                <Button Style="{StaticResource FlatButton}" Command="{Binding NewProjectCommand}" ToolTip="New project">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="New" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource FlatButton}" Command="{Binding OpenProjectCommand}" ToolTip="Open project">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="Open" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource FlatButton}" Command="{Binding SaveAllCommand}" ToolTip="Save all">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="Save" /></StackPanel>
+                </Button>
+                <Rectangle Width="1" Margin="8,4" Fill="{DynamicResource BorderColor}" />
+                <Button Style="{StaticResource FlatButton}" Command="{Binding CompileCommand}" IsEnabled="{Binding CanCompile}" ToolTip="Build (Ctrl+Shift+B)">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE943;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="Build" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource AccentButton}" Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" ToolTip="Deploy (F5)">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="Deploy" /></StackPanel>
+                </Button>
+                <Rectangle Width="1" Margin="8,4" Fill="{DynamicResource BorderColor}" />
+                <Button Style="{StaticResource FlatButton}" Command="{Binding StartRuntimeCommand}" IsEnabled="{Binding CanStart}" ToolTip="Start Runtime">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="Start" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource FlatButton}" Command="{Binding StopRuntimeCommand}" IsEnabled="{Binding CanStop}" ToolTip="Stop Runtime">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="Stop" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource FlatButton}" Command="{Binding ResetRuntimeCommand}" IsEnabled="{Binding CanReset}" ToolTip="Reset Runtime">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="Reset" /></StackPanel>
+                </Button>
             </StackPanel>
         </Border>
 
