@@ -173,6 +173,9 @@
         <DataTemplate DataType="{x:Type vm:DeviceConfigurationViewModel}">
             <DockPanel Margin="6">
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <ComboBox Width="170" ItemsSource="{Binding DriverCatalog}" SelectedItem="{Binding SelectedDriver}" DisplayMemberPath="DisplayName" Margin="0,0,6,0" />
+                    <TextBox Width="150" Text="{Binding NewDeviceName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,6,0" />
+                    <Button Content="+ Add Device" Style="{StaticResource FlatButton}" Command="{Binding AddDeviceCommand}" />
                     <Button Content="+ Add Simulation" Style="{StaticResource FlatButton}" Command="{Binding AddSimulationCommand}" />
                     <Button Content="Delete" Style="{StaticResource FlatButton}" Command="{Binding DeleteSelectedCommand}" />
                 </StackPanel>
@@ -182,6 +185,12 @@
                         <DataGridTextColumn Header="Name" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="180" />
                         <DataGridTextColumn Header="Driver" Binding="{Binding DriverType}" Width="160" IsReadOnly="True" />
                         <DataGridTextColumn Header="Settings" Binding="{Binding Settings.Count, StringFormat={}{0} settings}" Width="160" IsReadOnly="True" />
+                    </DataGrid.Columns>
+                </DataGrid>
+                <DataGrid DockPanel.Dock="Bottom" ItemsSource="{Binding Settings}" AutoGenerateColumns="False" Height="130" Margin="0,8,0,0" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Setting" Binding="{Binding Label}" IsReadOnly="True" Width="180" />
+                        <DataGridTextColumn Header="Value" Binding="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Width="*" />
                     </DataGrid.Columns>
                 </DataGrid>
             </DockPanel>
