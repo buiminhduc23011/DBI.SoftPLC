@@ -133,7 +133,7 @@ Nút `Force` chỉ bật khi đã tick. **Không** có tuỳ chọn "đừng h�
 - [x] Force không được ghi vào `.dbiproj`
 - [x] Force Table hiển thị đúng danh sách, Clear từng cái và Clear All hoạt động (banner trong tab: "No active forces" / "⚠️ N TAG ĐANG BỊ FORCE")
 - [x] Banner đỏ ở status bar hiện khi có force, biến mất khi hết (`ShellViewModel.HasActiveForces` + `ForceBanner`, cột đỏ riêng trong status bar)
-- [ ] Watch Table đánh dấu 🔒 dòng bị force *(chưa nối — chỉ báo hiện có ở Force Table và status bar)*
+- [x] Watch Table đánh dấu 🔒 dòng bị force (`WatchRowViewModel.IsForced` + `RefreshForcesAsync`; Shell forward `ForcesChanged` sang mọi watch table đang mở, nền hồng nhạt + tooltip; test pass)
 - [x] Dialog xác nhận có checkbox bắt buộc; không có "đừng hỏi lại" (`ForceSafetyWindow`: nút Force chỉ bật khi tick xác nhận; `ConfirmForceSafety` gọi trước **mọi** lần force)
 - [x] Đóng Studio khi còn force → cảnh báo với 3 lựa chọn rõ ràng (`AskCloseWithForces` → Xoá force rồi đóng / Đóng giữ force / Huỷ; Huỷ chặn đóng cửa sổ)
 - [x] Mất kết nối Studio → force **vẫn giữ nguyên** ở Runtime (đúng ngữ nghĩa PLC) — force sống phía Runtime qua IPC; Studio hiện lại danh sách khi nối lại (Refresh)

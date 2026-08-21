@@ -128,7 +128,8 @@
                     <ItemsControl ItemsSource="{Binding DeviceTags}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button ToolTip="Kéo hoặc double-click để chèn tham chiếu IO.TenTag vào code editor"
+                                <Button ToolTip="Kéo vào Tag Table / Watch Table / code editor, hoặc double-click để chèn tham chiếu IO.TenTag"
+                                        behaviors:TagDragDropBehaviors.DragSource="True"
                                         Command="{Binding DataContext.InsertDeviceTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                         CommandParameter="{Binding}"
                                         Style="{StaticResource FlatButton}" HorizontalContentAlignment="Left">
@@ -146,13 +147,17 @@
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:CodeEditorViewModel}">
-            <roslynpad:RoslynCodeEditor behaviors:RoslynCodeEditorBehaviors.EnableRoslyn="True"
-                                        behaviors:RoslynCodeEditorBehaviors.EnableOverlay="True"
-                                        FontFamily="Consolas"
-                                        FontSize="13"
-                                        ShowLineNumbers="True"
-                                        Background="{DynamicResource CardBg}"
-                                        Foreground="{DynamicResource TextPrimary}" />
+            <!-- Task 12.3 — drop target: kéo tag từ Toolbox vào editor chèn IO.TenTag tại caret -->
+            <Border BorderThickness="2" BorderBrush="Transparent"
+                    behaviors:TagDragDropBehaviors.DropTarget="True">
+                <roslynpad:RoslynCodeEditor behaviors:RoslynCodeEditorBehaviors.EnableRoslyn="True"
+                                            behaviors:RoslynCodeEditorBehaviors.EnableOverlay="True"
+                                            FontFamily="Consolas"
+                                            FontSize="13"
+                                            ShowLineNumbers="True"
+                                            Background="{DynamicResource CardBg}"
+                                            Foreground="{DynamicResource TextPrimary}" />
+            </Border>
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:TagTableViewModel}">
@@ -164,38 +169,42 @@
                             Command="{Binding DeleteRowCommand}" />
                 </StackPanel>
 
-                <DataGrid ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
-                          Style="{StaticResource FlatDataGrid}" AutoGenerateColumns="False"
-                          CanUserAddRows="False">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Name" Width="180">
-                            <DataGridTextColumn.Binding>
-                                <Binding Path="Name" UpdateSourceTrigger="PropertyChanged"
-                                         ValidatesOnNotifyDataErrors="True" />
-                            </DataGridTextColumn.Binding>
-                        </DataGridTextColumn>
-                        <DataGridComboBoxColumn Header="Type" Width="90"
-                                                SelectedItemBinding="{Binding DataType, UpdateSourceTrigger=PropertyChanged}"
-                                                ItemsSource="{Binding DataContext.DataTypes, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
-                        <DataGridComboBoxColumn Header="Direction" Width="110"
-                                                SelectedItemBinding="{Binding Direction, UpdateSourceTrigger=PropertyChanged}"
-                                                ItemsSource="{Binding DataContext.Directions, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
-                        <DataGridComboBoxColumn Header="Device" Width="160"
-                                                SelectedItemBinding="{Binding Device, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
-                                                ItemsSource="{Binding DataContext.AvailableDevices, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
-                        <DataGridTextColumn Header="Address" Width="140">
-                            <DataGridTextColumn.Binding>
-                                <Binding Path="Address" UpdateSourceTrigger="PropertyChanged"
-                                         ValidatesOnNotifyDataErrors="True" />
-                            </DataGridTextColumn.Binding>
-                        </DataGridTextColumn>
-                        <DataGridTextColumn Header="Comment" Width="*">
-                            <DataGridTextColumn.Binding>
-                                <Binding Path="Comment" UpdateSourceTrigger="PropertyChanged" />
-                            </DataGridTextColumn.Binding>
-                        </DataGridTextColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
+                <!-- Task 12.3 — drop target: kéo device tag từ Toolbox vào đây để map -->
+                <Border BorderThickness="2" BorderBrush="Transparent"
+                        behaviors:TagDragDropBehaviors.DropTarget="True">
+                    <DataGrid ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                              Style="{StaticResource FlatDataGrid}" AutoGenerateColumns="False"
+                              CanUserAddRows="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Name" Width="180">
+                                <DataGridTextColumn.Binding>
+                                    <Binding Path="Name" UpdateSourceTrigger="PropertyChanged"
+                                             ValidatesOnNotifyDataErrors="True" />
+                                </DataGridTextColumn.Binding>
+                            </DataGridTextColumn>
+                            <DataGridComboBoxColumn Header="Type" Width="90"
+                                                    SelectedItemBinding="{Binding DataType, UpdateSourceTrigger=PropertyChanged}"
+                                                    ItemsSource="{Binding DataContext.DataTypes, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                            <DataGridComboBoxColumn Header="Direction" Width="110"
+                                                    SelectedItemBinding="{Binding Direction, UpdateSourceTrigger=PropertyChanged}"
+                                                    ItemsSource="{Binding DataContext.Directions, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                            <DataGridComboBoxColumn Header="Device" Width="160"
+                                                    SelectedItemBinding="{Binding Device, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
+                                                    ItemsSource="{Binding DataContext.AvailableDevices, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                            <DataGridTextColumn Header="Address" Width="140">
+                                <DataGridTextColumn.Binding>
+                                    <Binding Path="Address" UpdateSourceTrigger="PropertyChanged"
+                                             ValidatesOnNotifyDataErrors="True" />
+                                </DataGridTextColumn.Binding>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Comment" Width="*">
+                                <DataGridTextColumn.Binding>
+                                    <Binding Path="Comment" UpdateSourceTrigger="PropertyChanged" />
+                                </DataGridTextColumn.Binding>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
             </DockPanel>
         </DataTemplate>
 
@@ -252,15 +261,21 @@
                     <Button Content="Remove" Style="{StaticResource FlatButton}" Command="{Binding RemoveSelectedCommand}"
                             CommandParameter="{Binding SelectedRow, Mode=OneWay}" Margin="6,0,0,0" />
                 </StackPanel>
-                <DataGrid ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
-                          AutoGenerateColumns="False" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}"
-                          EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True">
+                <!-- Task 12.3 — drop target: kéo device tag đã map từ Toolbox vào đây để watch -->
+                <Border BorderThickness="2" BorderBrush="Transparent"
+                        behaviors:TagDragDropBehaviors.DropTarget="True">
+                    <DataGrid ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                              AutoGenerateColumns="False" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}"
+                              EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True">
                     <DataGrid.RowStyle>
                         <Style TargetType="DataGridRow">
                             <Setter Property="Background" Value="Transparent" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsFlashing}" Value="True">
                                     <Setter Property="Background" Value="{DynamicResource WarningColor}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsForced}" Value="True">
+                                    <Setter Property="Background" Value="#33C72C3B" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding IsStale}" Value="True">
                                     <Setter Property="Background" Value="Transparent" />
@@ -270,7 +285,17 @@
                         </Style>
                     </DataGrid.RowStyle>
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Tag" Binding="{Binding Name}" IsReadOnly="True" Width="180" />
+                        <DataGridTemplateColumn Header="Tag" Width="180">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="🔒" Visibility="{Binding IsForced, Converter={StaticResource BoolToVisibility}}"
+                                                   ToolTip="{Binding ForcedToolTip}" Margin="0,0,4,0" />
+                                        <TextBlock Text="{Binding Name}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="Type" Binding="{Binding DataType}" IsReadOnly="True" Width="70" />
                         <DataGridTemplateColumn Header="Value" Width="130">
                             <DataGridTemplateColumn.CellTemplate>
@@ -299,8 +324,9 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
             </DockPanel>
         </DataTemplate>
 

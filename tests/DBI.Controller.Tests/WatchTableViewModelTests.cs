@@ -86,6 +86,35 @@ public sealed class WatchTableViewModelTests
         Assert.Contains("StartButton", runtime.SubscribedTags); // tự subscribe lại
     }
 
+    [Fact]
+    public async Task RefreshForces_MarksLockedRowsMatchingRuntimeForces()
+    {
+        var (view, runtime, _) = CreateView(extraTag: "StopButton");
+        view.SelectedTagName = "StopButton";
+        view.AddSelectedTagCommand.Execute(null);
+
+        await runtime.ForceTagAsync("StartButton", true, enable: true);
+
+        await view.RefreshForcesAsync();
+
+        Assert.True(view.Rows.Single(r => r.Name == "StartButton").IsForced);
+        Assert.False(view.Rows.Single(r => r.Name == "StopButton").IsForced);
+    }
+
+    [Fact]
+    public async Task RefreshForces_ClearsLockWhenForceRemoved()
+    {
+        var (view, runtime, _) = CreateView();
+        await runtime.ForceTagAsync("StartButton", true, enable: true);
+        await view.RefreshForcesAsync();
+        Assert.True(view.Rows.Single().IsForced);
+
+        await runtime.ForceTagAsync("StartButton", true, enable: false);
+        await view.RefreshForcesAsync();
+
+        Assert.False(view.Rows.Single().IsForced);
+    }
+
     private static (WatchTableViewModel View, FakeRuntimeClient Runtime, ProjectService Projects) CreateView(
         TagDirection direction = TagDirection.Input, string? extraTag = null)
     {

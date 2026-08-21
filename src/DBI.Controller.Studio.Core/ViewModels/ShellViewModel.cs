@@ -92,6 +92,10 @@ public partial class ShellViewModel : ObservableObject
     {
         if (sender is not ForceTableViewModel forceTable) return;
         ActiveForceCount = forceTable.Rows.Count;
+
+        // Task 11.4 — mọi Watch Table đang mở phải phản ánh ngay dấu 🔒 của force mới/gỡ force.
+        foreach (var watch in Editors.Documents.OfType<WatchTableViewModel>())
+            _ = watch.RefreshForcesAsync();
     }
 
     public IRuntimeClient Runtime { get; }

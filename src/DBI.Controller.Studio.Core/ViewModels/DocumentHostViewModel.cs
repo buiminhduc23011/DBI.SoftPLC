@@ -116,7 +116,9 @@ public partial class DocumentHostViewModel : ObservableObject
         { ActiveDocument = opened; return opened; }
         var document = new WatchTableViewModel(project, table, runtime, projects);
         document.Notice += (s, n) => Notice?.Invoke(this, n);
-        Documents.Add(document); ActiveDocument = document; return document;
+        Documents.Add(document); ActiveDocument = document;
+        _ = document.RefreshForcesAsync(); // force có thể đã tồn tại trước khi bảng được mở
+        return document;
     }
 
     public ForceTableViewModel OpenForceTable(IRuntimeClient runtime, DbiProject? project)

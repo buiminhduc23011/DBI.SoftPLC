@@ -3,11 +3,11 @@
     "feature": "DBI.Studio — TIA Portal-style IDE",
     "current_plan_path": "plans/260726-2316-dbi-studio-tia-ide/",
     "current_phase": "phase-10 → phase-13 (hoàn thiện sau MVP)",
-    "task": "Hoàn thiện phase 10–13: Watch Table CRUD/modify/flash/stale, Force safety UX, Device Tags card + chèn tag vào editor, Live overlay AvalonEdit",
-    "status": "done — build + test xanh 251/251 (3 lần liên tiếp), docs đã cập nhật"
+    "task": "Hoàn thiện phase 10–13 xong cả drag-drop mapping + 🔒 watch; còn lại chỉ nghiệm thu hiệu năng/phần cứng và discovery tag từ Runtime",
+    "status": "done — build + test xanh 260/260 (2 lần liên tiếp), docs đã cập nhật"
   },
   "pending_tasks": [
-    "phase-12 còn lại: drag-drop mapping thật (5 thao tác bảng Task 12.3), discovery tag từ Runtime cho driver có discovery, sinh danh sách vùng địa chỉ cho driver không có",
+    "phase-12 còn lại: discovery device-tag từ Runtime cho driver có discovery; sinh danh sách vùng địa chỉ cho driver không có; undo sau khi kéo-thả nhầm",
     "Nghiệm thu tải: watch 200 tag @ 10Hz UI 60fps; overlay ≥50fps, gõ phím <80ms; jitter Runtime <0.5ms khi monitoring bật",
     "Kịch bản end-to-end 13.5 trên Factory I/O thật (14 bước, gồm đóng Studio máy vẫn chạy)",
     "docs/STUDIO-USER-GUIDE.md bổ sung ảnh chụp màn hình; kiểm chứng lại sample project mở/deploy được",
@@ -34,14 +34,16 @@
     "phase-10: WatchTableViewModel tự giữ event Notice riêng thay vì phụ thuộc ProjectService.Notice (API đó không tồn tại). FlushPending public để test deterministic, không phụ thuộc timer.",
     "phase-11: luồng force AN TOÀN KHÔNG THOẢ HIỆP — IUserPrompt.ConfirmForceSafety gọi trước MỌI lần force; dialog checkbox bắt buộc, KHÔNG có 'đừng hỏi lại'; đóng Studio khi còn force hỏi 3 lựa chọn (xoá rồi đóng / giữ force / huỷ); force sống phía Runtime nên mất kết nối Studio không mất force.",
     "phase-12: bù drag-drop chưa làm bằng click-chèn InsertDeviceTagCommand chèn IO.TenTag tại caret; TaskCards.ShowInstructions chỉ bật khi document active là Code editor.",
+    "phase-12 (làm nốt): drag-drop thật qua TagDragDropBehaviors — payload DeviceTagItem trao đổi bằng DataObject format 'DBI.DeviceTag'; nghiệp vụ đặt trong VM (TagTableViewModel.MapFromDevice trả string? lý do từ chối, WatchTableViewModel.AddDeviceTag); drop target resolve handler theo DataContext đi lên visual tree; viền xanh #005A9E khi DragOver. MapFromDevice tự chọn dòng mới tạo → thả lần sau retarget dòng đó.",
+    "phase-11 (làm nốt): Watch Table đánh dấu 🔒 qua WatchRowViewModel.IsForced + RefreshForcesAsync hỏi GetForcesAsync; Shell forward ForcesChanged sang mọi watch table đang mở; reconnect cũng refresh lại force.",
     "phase-13: overlay vẽ bằng OverlayMarkerMargin : AbstractMargin gắn TextArea.LeftMargins (KHÔNG phải TextView), OnRender vẽ ⟨giá trị⟩ theo dòng trong VisualLines — tách hẳn khỏi văn bản nên gõ phím không chậm. Throttle 100ms DispatcherTimer Background = ≤10Hz. Regex IO.\\w cũng khớp comment/string — hạn chế chấp nhận của phương án lùi."
   ],
   "known_gaps": [
     "B-6: 4 driver phần cứng (Modbus/FactoryIO/Delta/Omron) vẫn chỉ đọc/ghi bool. Nhưng HẾT im lặng: gặp tag Int/Real thì ghi LastError rõ ràng. Task 09.0 xử lý. SimulationDriver đã đủ 3 kiểu.",
     "Ràng buộc mô hình input double-buffer: driver PHẢI ghi đủ mọi tag nó quản lý mỗi chu kỳ, vì buffer ghi sau khi hoán đổi chứa dữ liệu của 2 chu kỳ trước.",
     "Chưa đo hiệu năng: watch 200 tag @10Hz, overlay ≥50fps/<80ms gõ phím, jitter Runtime khi monitoring bật — thiết kế có buffer/throttle nhưng chưa có số nghiệm thu.",
-    "Phase-12 drag-drop mapping thật chưa làm (đang bù bằng click-chèn); discovery device-tag từ Runtime và sinh danh sách vùng địa chỉ cũng chưa nối.",
-    "Watch Table chưa đánh dấu 🔒 dòng bị force; STUDIO-USER-GUIDE.md chưa có ảnh; kịch bản 13.5 trên Factory I/O thật chưa chạy."
+    "Phase-12: discovery device-tag từ Runtime và sinh danh sách vùng địa chỉ chưa nối; undo sau kéo-thả nhầm chưa làm (xoá tay dòng được).",
+    "STUDIO-USER-GUIDE.md chưa có ảnh; kịch bản 13.5 trên Factory I/O thật chưa chạy."
   ],
   "updated_at": "2026-08-21T00:00:00+07:00"
 }

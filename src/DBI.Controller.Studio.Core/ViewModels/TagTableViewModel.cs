@@ -195,6 +195,58 @@ public sealed partial class TagTableViewModel : DocumentViewModelBase
         OnRowsChanged();
     }
 
+    /// <summary>
+    /// Task 12.3 — thả một device tag từ Toolbox xuống bảng: dòng đang chọn nhận Device/Address,
+    /// dòng trống thì tạo tag mới tên gợi ý <c>Device_Address</c>. Sai kiểu bị chặn kèm lý do.
+    /// </summary>
+    /// <returns><c>null</c> nếu thả hợp lệ, ngược lại là thông báo lỗi để View hiện tooltip/log.</returns>
+    public string? MapFromDevice(DeviceTagItem item)
+    {
+        var dataType = ParseDataType(item.DataType);
+
+        if (SelectedRow is { } target)
+        {
+            if (target.DataType != dataType)
+                return $"Không khớp kiểu: {item.DataType} ≠ {target.DataType}";
+
+            target.Device = item.Device;
+            target.Address = item.Address;
+            OnRowsChanged();
+            return null;
+        }
+
+        // Dòng trống → tạo tag mới; Direction suy theo tiền tố địa chỉ quen thuộc của driver.
+        var name = $"{item.Device}_{item.Address}";
+        if (_table.Tags.Any(t => t.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            return $"'{name}' đã tồn tại trong bảng.";
+
+        var tag = new Tag
+        {
+            Name = name,
+            DataType = dataType,
+            Direction = SuggestDirection(item.Address),
+            Device = item.Device,
+            Address = item.Address
+        };
+        _table.Tags.Add(tag);
+        var row = new TagRowViewModel(_project, tag, OnRowsChanged);
+        Rows.Add(row);
+        SelectedRow = row;
+        OnRowsChanged();
+        return null;
+    }
+
+    internal static TagDataType ParseDataType(string text) => text.Trim().ToLowerInvariant() switch
+    {
+        "bool" => TagDataType.Bool,
+        "int" or "int16" or "int32" => TagDataType.Int,
+        "real" or "float" => TagDataType.Real,
+        _ => throw new FormatException($"Kiểu dữ liệu không đọc được: '{text}'")
+    };
+
+    /// <summary>Địa chỉ dạng số (Modbus 4xxxx) là vùng holding đọc về; mọi địa chỉ device đều Input.</summary>
+    private static TagDirection SuggestDirection(string address) => TagDirection.Input;
+
     public override Task SaveAsync()
     {
         var result = _generator.WriteIfChanged(_project);

@@ -42,6 +42,11 @@ public sealed partial class WatchRowViewModel : ObservableObject
     /// <summary>Mất kết nối: giữ nguyên giá trị cuối, chỉ xám + ⚠️ — KHÔNG xoá về 0.</summary>
     [ObservableProperty] private bool _isStale;
 
+    /// <summary>Task 11.4 — tag đang bị force: icon 🔒 + nền hồng nhạt, không thể bỏ sót.</summary>
+    [ObservableProperty] private bool _isForced;
+
+    public string ForcedToolTip => "Tag này đang bị FORCE — giá trị bị ghi đè liên tục bất kể logic. Gỡ trong Force Table.";
+
     public string ModifyText { get; set; } = "";
 
     public void ApplyStale(bool stale)
@@ -165,6 +170,28 @@ public partial class WatchTableViewModel : DocumentViewModelBase, IDisposable
         if (Monitoring) _ = SubscribeAsync(); // đồng bộ lại tập subscription với tập dòng đang hiện
     }
 
+    /// <summary>
+    /// Task 12.3 — thả một device tag từ Toolbox xuống watch table. Chỉ nhận tag đã map
+    /// tới device+address; chưa map thì từ chối kèm lý do.
+    /// </summary>
+    /// <returns><c>null</c> nếu thêm được, ngược lại là thông báo lỗi.</returns>
+    public string? AddDeviceTag(DeviceTagItem item)
+    {
+        if (!item.IsMapped)
+            return $"'{item.Name}' chưa map device/address — hãy kéo nó vào Tag Table trước.";
+
+        if (Rows.Any(r => r.Name.Equals(item.Name, StringComparison.OrdinalIgnoreCase)))
+            return $"'{item.Name}' đã có trong bảng watch.";
+
+        var tag = _project.AllTags().FirstOrDefault(t => t.Name.Equals(item.Name, StringComparison.OrdinalIgnoreCase));
+        Rows.Add(new WatchRowViewModel(tag?.Name ?? item.Name, tag?.DataType ?? TagDataType.Bool, tag?.Direction ?? TagDirection.Memory));
+        IsDirty = true;
+        OnPropertyChanged(nameof(AvailableTags));
+        RowsChanged?.Invoke(this, EventArgs.Empty);
+        if (Monitoring) _ = SubscribeAsync();
+        return null;
+    }
+
     /// <summary>Task 10.4 — ghi một lần vào tag. Chỉ Output/Memory; Input bị chặn kèm giải thích.</summary>
     [RelayCommand]
     private async Task ModifyValueAsync(WatchRowViewModel? row)
@@ -245,6 +272,21 @@ public partial class WatchTableViewModel : DocumentViewModelBase, IDisposable
             row.IsFlashing = false; // nháy đúng một kỳ flush (~100–200ms, đủ mắt bắt được)
     }
 
+    /// <summary>
+    /// Task 11.4 — hỏi Runtime danh sách force đang có và đánh dấu 🔒 các dòng tương ứng.
+    /// Shell gọi khi tập force đổi và khi mở bảng; gọi lại sau reconnect để phản ánh đúng trạng thái mới.
+    /// </summary>
+    public async Task RefreshForcesAsync()
+    {
+        IReadOnlyList<ForceInfo> forces;
+        try { forces = await _runtime.GetForcesAsync().ConfigureAwait(true); }
+        catch { return; } // mất kết nối — giữ nguyên dấu cũ, lần refresh sau sửa
+
+        var forcedNames = forces.Select(f => f.TagName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var row in Rows)
+            row.IsForced = forcedNames.Contains(row.Name);
+    }
+
     /// <summary>Mất kết nối → xám + ⚠️, giữ giá trị cuối. Nối lại → tự subscribe lại (DoD phase-10).</summary>
     private void OnRuntimeStateChanged(object? sender, RuntimeClientState state)
     {
@@ -252,7 +294,11 @@ public partial class WatchTableViewModel : DocumentViewModelBase, IDisposable
 
         foreach (var row in Rows) row.ApplyStale(!online && state != RuntimeClientState.Connecting);
 
-        if (online && Monitoring) _ = SubscribeAsync();
+        if (online && Monitoring)
+        {
+            _ = SubscribeAsync();
+            _ = RefreshForcesAsync(); // trạng thái force có thể đã đổi trong lúc mất nối
+        }
     }
 
     private static string FormatValue(string json)
