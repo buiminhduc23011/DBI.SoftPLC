@@ -11,7 +11,28 @@ public sealed class DeviceCatalogTests
     {
         Assert.Equal(5, DriverCatalog.All.Count);
         Assert.Equal("40001", DriverCatalog.Find("Modbus")!.AddressPlaceholder);
-        Assert.Equal("127.0.0.1", DriverCatalog.CreateDefault("Modbus", "PLC_1").Settings["host"]);
+        Assert.Equal("127.0.0.1", DriverCatalog.CreateDefault("Modbus", "PLC_1").Settings["ip"]);
+    }
+
+    [Fact]
+    public void Catalog_SettingsKeys_MatchWhatAdaptersRead()
+    {
+        // Adapter là nguồn sự thật: catalog không được sinh key mà FromSpec không đọc,
+        // nếu không cấu hình từ UI sẽ bị driver bỏ qua trong im lặng.
+        var expected = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Simulation"] = Array.Empty<string>(),
+            ["Modbus"] = new[] { "ip", "port", "slaveId" },
+            ["Delta.PLC"] = new[] { "ip", "port", "slaveId" },
+            ["Omron"] = new[] { "ip", "port" },
+            ["FactoryIO"] = new[] { "ip", "port", "slaveId" }
+        };
+
+        foreach (var (driverType, keys) in expected)
+        {
+            var descriptor = DriverCatalog.Find(driverType)!;
+            Assert.Equal(keys, descriptor.Settings.Select(s => s.Key).ToArray());
+        }
     }
 
     [Fact]

@@ -42,6 +42,7 @@ public sealed class FakeRuntimeClient : IRuntimeClient
     public StatusResponse? LastStatus { get; private set; }
 
     public event EventHandler<StatusResponse>? StatusUpdated;
+    public event EventHandler<IReadOnlyList<DeviceStateInfo>>? DeviceStatesChanged;
     public event EventHandler<TagValueUpdate>? TagValueChanged;
     public event EventHandler<FaultNotification>? FaultOccurred;
     public event EventHandler<string>? ConnectionLost;
@@ -158,6 +159,30 @@ public sealed class FakeRuntimeClient : IRuntimeClient
     public Task<IReadOnlyList<DeviceStateInfo>> GetDeviceStatesAsync(CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<DeviceStateInfo>>(DeviceStates.ToList());
 
+    /// <summary>Lỗi mà <see cref="TestDeviceConnectionAsync"/> trả về. <c>null</c> nghĩa là nối được.</summary>
+    public string? TestConnectionError { get; set; }
+
+    public Task<TestConnectionResponse> TestDeviceConnectionAsync(DeviceSpec device, CancellationToken ct = default) =>
+        Task.FromResult(TestConnectionError is null
+            ? new TestConnectionResponse(true, null)
+            : new TestConnectionResponse(false, TestConnectionError));
+
+    /// <summary>Lỗi mà <see cref="WriteTagAsync"/> trả về. <c>null</c> nghĩa là ghi được.</summary>
+    public string? WriteTagError { get; set; }
+
+    /// <summary>Tag vừa ghi qua <see cref="WriteTagAsync"/> — để test khẳng định giá trị đã tới Runtime.</summary>
+    public (string TagName, object Value)? LastWrite { get; private set; }
+
+    public Task<WriteTagResponse> WriteTagAsync(string tagName, object value, CancellationToken ct = default)
+    {
+        if (WriteTagError is not null)
+            return Task.FromResult(new WriteTagResponse(false, WriteTagError));
+
+        LastWrite = (tagName, value);
+        SetTagValue(tagName, value);
+        return Task.FromResult(new WriteTagResponse(true, null));
+    }
+
     // ── Điều khiển giả lập ───────────────────────────────────────────────────────
 
     /// <summary>Đổi giá trị một tag. Chỉ tag đã đăng ký mới phát event, giống Runtime thật.</summary>
@@ -195,6 +220,10 @@ public sealed class FakeRuntimeClient : IRuntimeClient
         _cycleCount += count;
         PublishStatus();
     }
+
+    /// <summary>Phát danh sách trạng thái thiết bị — giả lập vòng poll của Runtime thật.</summary>
+    public void RaiseDeviceStates(IReadOnlyList<DeviceStateInfo> states) =>
+        Raise(DeviceStatesChanged, states);
 
     private TagValueUpdate NewUpdate(string tagName, object value) =>
         new(tagName, ProtocolJson.Serialize(value), DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());

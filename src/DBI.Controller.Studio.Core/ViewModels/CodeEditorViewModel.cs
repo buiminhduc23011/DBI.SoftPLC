@@ -29,6 +29,12 @@ public partial class CodeEditorViewModel : DocumentViewModelBase
 
     public string AbsolutePath => _absolutePath;
 
+    /// <summary>
+    /// Live overlay (phase-13) — gắn sau khi dựng, vì cần <see cref="LiveCodeOverlayService"/>
+    /// và runtime client từ shell.
+    /// </summary>
+    public CodeOverlayViewModel? Overlay { get; set; }
+
     [ObservableProperty]
     private string _text;
 
@@ -42,7 +48,11 @@ public partial class CodeEditorViewModel : DocumentViewModelBase
     public static string ContentIdFor(CodeBlock block) =>
         string.IsNullOrWhiteSpace(block.FileName) ? "Block:" + block.Name : "Block:" + block.FileName;
 
-    partial void OnTextChanged(string value) => IsDirty = !string.Equals(value, _savedText, StringComparison.Ordinal);
+    partial void OnTextChanged(string value)
+    {
+        IsDirty = !string.Equals(value, _savedText, StringComparison.Ordinal);
+        Overlay?.UpdateSource(value); // overlay phân tích lại khi file đổi (Task 13.2)
+    }
 
     public void InsertAtCaret(string snippet)
     {

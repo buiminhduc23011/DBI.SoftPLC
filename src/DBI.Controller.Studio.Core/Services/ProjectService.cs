@@ -475,6 +475,50 @@ public class ProjectService
         return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
     }
 
+    // ── Watch tables (phase-10) ──────────────────────────────────────────────────
+
+    public ProjectLoadResult AddWatchTable(string name)
+    {
+        if (Current is null) throw new InvalidOperationException("Chưa mở project nào.");
+
+        string candidate = name.Trim();
+        if (string.IsNullOrWhiteSpace(candidate))
+            return ProjectLoadResult.Failed("Tên watch table không được để trống.");
+
+        if (Current.WatchTables.Any(t => t.Name.Equals(candidate, StringComparison.OrdinalIgnoreCase)))
+            return ProjectLoadResult.Failed($"Đã có watch table tên '{candidate}'.");
+
+        Current.WatchTables.Add(new WatchTable { Name = candidate });
+        Current.IsDirty = true;
+        return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
+    }
+
+    public ProjectLoadResult RenameWatchTable(WatchTable table, string newName)
+    {
+        if (Current is null) throw new InvalidOperationException("Chưa mở project nào.");
+
+        string candidate = newName.Trim();
+        if (string.IsNullOrWhiteSpace(candidate))
+            return ProjectLoadResult.Failed("Tên watch table không được để trống.");
+
+        if (Current.WatchTables.Any(t => !ReferenceEquals(t, table) &&
+                                         t.Name.Equals(candidate, StringComparison.OrdinalIgnoreCase)))
+            return ProjectLoadResult.Failed($"Đã có watch table tên '{candidate}'.");
+
+        table.Name = candidate;
+        Current.IsDirty = true;
+        return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
+    }
+
+    public ProjectLoadResult DeleteWatchTable(WatchTable table)
+    {
+        if (Current is null) throw new InvalidOperationException("Chưa mở project nào.");
+
+        Current.WatchTables.Remove(table);
+        Current.IsDirty = true;
+        return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
+    }
+
     private static void CopyDirectory(string source, string destination)
     {
         if (!Directory.Exists(source)) return;

@@ -60,8 +60,25 @@ public interface IRuntimeClient : IAsyncDisposable
     /// <summary>phase-09.</summary>
     Task<IReadOnlyList<DeviceStateInfo>> GetDeviceStatesAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Thử kết nối một thiết bị riêng lẻ qua Runtime — driver tạm, không đụng bộ driver đang chạy.
+    /// Kết quả (kể cả thất bại) nằm trong response, không ném exception cho lỗi thiết bị.
+    /// </summary>
+    Task<TestConnectionResponse> TestDeviceConnectionAsync(
+        DeviceSpec device, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Ghi một lần vào tag từ Watch Table (phase-10). Lỗi nghiệp vụ (tag Input, sai kiểu...)
+    /// nằm trong kết quả, không ném exception.
+    /// </summary>
+    Task<WriteTagResponse> WriteTagAsync(
+        string tagName, object value, CancellationToken cancellationToken = default);
+
     /// <summary>Poll 500ms khi đã kết nối.</summary>
     event EventHandler<StatusResponse>? StatusUpdated;
+
+    /// <summary>Poll 1s khi đã kết nối — trạng thái từng driver cho Device view và Project Tree.</summary>
+    event EventHandler<IReadOnlyList<DeviceStateInfo>>? DeviceStatesChanged;
 
     /// <summary>Runtime đẩy lên, chỉ tag đã đăng ký và chỉ khi giá trị đổi.</summary>
     event EventHandler<TagValueUpdate>? TagValueChanged;

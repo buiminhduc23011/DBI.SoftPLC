@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DBI.Controller.Core.Models;
 using DBI.Controller.Studio.Core.Models;
 
 namespace DBI.Controller.Studio.Core.ViewModels;
@@ -64,6 +65,14 @@ public partial class ProjectNode : ObservableObject
     [ObservableProperty]
     private bool _isSelected;
 
+    /// <summary>Ký hiệu trạng thái online của device node (phase-09): ● nối, ◐ đang nối, ○ ngắt, ✕ lỗi.</summary>
+    [ObservableProperty]
+    private string _statusGlyph = "";
+
+    /// <summary>Khóa màu trong theme cho <see cref="StatusGlyph"/> — VM không giữ mã màu.</summary>
+    [ObservableProperty]
+    private string _statusColorKey = "MutedColor";
+
     /// <summary>Ký hiệu hiển thị trước tên node. Giữ đơn giản, không cần bộ icon riêng.</summary>
     public string Glyph => Kind switch
     {
@@ -100,6 +109,41 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
     public event EventHandler<ProjectNode>? NodeActivated;
 
     public void RaiseNodeActivated(ProjectNode node) => NodeActivated?.Invoke(this, node);
+
+    /// <summary>
+    /// Cập nhật ký hiệu trạng thái trên các node device (phase-09 Task 09.4).
+    /// Gọi từ vòng poll <c>DeviceStatesChanged</c> của Shell.
+    /// </summary>
+    public void UpdateDeviceStatuses(IReadOnlyList<Protocol.DeviceStateInfo> states)
+    {
+        foreach (ProjectNode root in Roots) UpdateDeviceStatusesRecursive(root, states);
+    }
+
+    private static void UpdateDeviceStatusesRecursive(ProjectNode node, IReadOnlyList<Protocol.DeviceStateInfo> states)
+    {
+        if (node.Kind == ProjectNodeKind.Device)
+        {
+            var state = states.FirstOrDefault(s => s.DriverId.Equals(node.Title, StringComparison.OrdinalIgnoreCase));
+            node.StatusGlyph = state?.State switch
+            {
+                nameof(ConnectionState.Connected) => " ●",
+                nameof(ConnectionState.Connecting) => " ◐",
+                nameof(ConnectionState.Disconnected) => " ○",
+                nameof(ConnectionState.Faulted) => " ✕",
+                _ => ""
+            };
+            node.StatusColorKey = state?.State switch
+            {
+                nameof(ConnectionState.Connected) => "SuccessColor",
+                nameof(ConnectionState.Connecting) => "WarningColor",
+                nameof(ConnectionState.Disconnected) => "MutedColor",
+                _ => "DangerColor"
+            };
+        }
+
+        foreach (ProjectNode child in node.Children)
+            UpdateDeviceStatusesRecursive(child, states);
+    }
 
     /// <summary>Dựng lại cây từ project. Gọi khi mở project hoặc sau khi thêm/xoá khối.</summary>
     public void Load(DbiProject? project)
@@ -158,7 +202,10 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
         ICommand deleteBlockCommand,
         ICommand setMainBlockCommand,
         ICommand renameTagTableCommand,
-        ICommand deleteTagTableCommand)
+        ICommand deleteTagTableCommand,
+        ICommand addWatchTableCommand,
+        ICommand renameWatchTableCommand,
+        ICommand deleteWatchTableCommand)
     {
         foreach (ProjectNode root in Roots)
         {
@@ -171,7 +218,10 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
                 deleteBlockCommand,
                 setMainBlockCommand,
                 renameTagTableCommand,
-                deleteTagTableCommand);
+                deleteTagTableCommand,
+                addWatchTableCommand,
+                renameWatchTableCommand,
+                deleteWatchTableCommand);
         }
     }
 
@@ -221,7 +271,10 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
         ICommand deleteBlockCommand,
         ICommand setMainBlockCommand,
         ICommand renameTagTableCommand,
-        ICommand deleteTagTableCommand)
+        ICommand deleteTagTableCommand,
+        ICommand addWatchTableCommand,
+        ICommand renameWatchTableCommand,
+        ICommand deleteWatchTableCommand)
     {
         node.ContextMenuItems.Clear();
 
@@ -232,6 +285,10 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
         else if (node.Kind == ProjectNodeKind.Folder && node.Title == "PLC Tags")
         {
             node.ContextMenuItems.Add(new MenuActionViewModel("Add new tag table…", addTagTableCommand, node));
+        }
+        else if (node.Kind == ProjectNodeKind.Folder && node.Title == "Watch & Force Tables")
+        {
+            node.ContextMenuItems.Add(new MenuActionViewModel("Add new watch table…", addWatchTableCommand, node));
         }
         else if (node.Kind == ProjectNodeKind.Block)
         {
@@ -249,6 +306,12 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
             node.ContextMenuItems.Add(new MenuActionViewModel("Rename", renameTagTableCommand, node));
             node.ContextMenuItems.Add(new MenuActionViewModel("Delete", deleteTagTableCommand, node, !isDefault));
         }
+        else if (node.Kind == ProjectNodeKind.WatchTable)
+        {
+            node.ContextMenuItems.Add(new MenuActionViewModel("Open", openNodeCommand, node));
+            node.ContextMenuItems.Add(new MenuActionViewModel("Rename", renameWatchTableCommand, node));
+            node.ContextMenuItems.Add(new MenuActionViewModel("Delete", deleteWatchTableCommand, node));
+        }
         else if (node.Kind == ProjectNodeKind.GeneratedFile)
         {
             node.ContextMenuItems.Add(new MenuActionViewModel("Open", openNodeCommand, node));
@@ -265,7 +328,10 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
                 deleteBlockCommand,
                 setMainBlockCommand,
                 renameTagTableCommand,
-                deleteTagTableCommand);
+                deleteTagTableCommand,
+                addWatchTableCommand,
+                renameWatchTableCommand,
+                deleteWatchTableCommand);
         }
     }
 
@@ -310,7 +376,8 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
 }
 
 /// <summary>
-/// Bảng thẻ tác vụ bên phải. phase-12 làm nội dung thật (kéo-thả tag vào khối).
+/// Bảng thẻ tác vụ bên phải. Đổi nội dung theo document đang active (Task 12.4):
+/// code editor → Instructions · Device Tags; bảng khác → chỉ Device Tags.
 /// </summary>
 public partial class TaskCardsViewModel : PaneViewModelBase
 {
@@ -324,12 +391,45 @@ public partial class TaskCardsViewModel : PaneViewModelBase
     }
 
     public IReadOnlyList<TaskCardItem> Instructions { get; }
+
+    /// <summary>Tag của project theo device — nguồn cho card Device Tags (Task 12.2).</summary>
+    public IReadOnlyList<DeviceTagItem> DeviceTags { get; private set; } = Array.Empty<DeviceTagItem>();
+
+    /// <summary>Document đang active là code editor không — quyết định card nào hiện.</summary>
+    [ObservableProperty]
+    private bool _showInstructions = true;
+
+    /// <summary>Kéo/thả/double-click một tag từ Toolbox.</summary>
     public event EventHandler<TaskCardItem>? SnippetRequested;
+    public event EventHandler<DeviceTagItem>? TagDragRequested;
 
     [RelayCommand]
     private void InsertInstruction(TaskCardItem? item)
     {
         if (item is not null) SnippetRequested?.Invoke(this, item);
+    }
+
+    /// <summary>Double-click device tag cũng chèn như kéo-thả (Task 12.1).</summary>
+    [RelayCommand]
+    private void InsertDeviceTag(DeviceTagItem? item)
+    {
+        if (item is not null) TagDragRequested?.Invoke(this, item);
+    }
+
+    /// <summary>Nạp tag theo device từ project — gọi khi mở project hoặc tag table đổi.</summary>
+    public void LoadProject(DbiProject? project)
+    {
+        DeviceTags = project is null
+            ? Array.Empty<DeviceTagItem>()
+            : project.AllTags()
+                .Select(t => new DeviceTagItem(
+                    t.Name,
+                    t.DataType.ToString(),
+                    t.Device,
+                    t.Address,
+                    IsMapped: !string.IsNullOrWhiteSpace(t.Device) && t.Direction != Models.TagDirection.Memory && !string.IsNullOrWhiteSpace(t.Address)))
+                .ToList();
+        OnPropertyChanged(nameof(DeviceTags));
     }
 
     private static string SnippetFor(string name) => name switch
@@ -341,9 +441,19 @@ public partial class TaskCardsViewModel : PaneViewModelBase
         "RisingEdge" => "var edge = new RisingEdge();",
         _ => $"var {name.ToLowerInvariant()} = new {name}();"
     };
+}
 
-    [ObservableProperty]
-    private string _placeholder = "Thẻ tác vụ và kéo-thả tag sẽ có ở phase-12.";
+/// <summary>Một dòng trong card Device Tags: tag đã khai trong Tag Table kèm trạng thái map.</summary>
+/// <param name="IsMapped">● đã trỏ tới device+address; ○ chưa hoàn chỉnh.</param>
+public sealed record DeviceTagItem(
+    string Name,
+    string DataType,
+    string Device,
+    string Address,
+    bool IsMapped)
+{
+    public string MapGlyph => IsMapped ? "●" : "○";
+    public string Display => $"{Name} · {DataType} · {(string.IsNullOrEmpty(Device) ? "—" : Device)}{(string.IsNullOrEmpty(Address) ? "" : "/" + Address)}";
 }
 
 public sealed record TaskCardItem(string Name, string Snippet);

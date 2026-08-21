@@ -186,6 +186,29 @@ public class IpcServerTests
         Assert.Equal(nameof(ConnectionState.Connected), device.State);
     }
 
+    [Fact]
+    public async Task TestDeviceConnection_QuaIpc_TraVeKetQuaTrongPayload()
+    {
+        await using var fixture = new IpcFixture();
+        await using var client = await fixture.ConnectClientAsync();
+
+        var ok = await client.SendAsync(IpcFixture.Request(
+            CommandType.TestDeviceConnection,
+            new TestConnectionRequest(new DeviceSpec("SIM", "Simulation", new Dictionary<string, string>()))));
+
+        Assert.True(ok.Ok, ok.Error);
+        Assert.True(ProtocolJson.Deserialize<TestConnectionResponse>(ok.PayloadJson)!.Ok);
+
+        var fail = await client.SendAsync(IpcFixture.Request(
+            CommandType.TestDeviceConnection,
+            new TestConnectionRequest(new DeviceSpec("PLC", "Siemens_S7", new Dictionary<string, string>()))));
+
+        // Lỗi thiết bị nằm trong payload, không phải lỗi IPC — Studio hiển thị đúng thông điệp driver.
+        Assert.True(fail.Ok);
+        Assert.False(ProtocolJson.Deserialize<TestConnectionResponse>(fail.PayloadJson)!.Ok);
+        Assert.Contains("Siemens_S7", ProtocolJson.Deserialize<TestConnectionResponse>(fail.PayloadJson)!.Error);
+    }
+
     // ── SubscribeTags ────────────────────────────────────────────────────────────
 
     [Fact]

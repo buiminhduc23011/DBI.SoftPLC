@@ -94,7 +94,8 @@ public partial class DocumentHostViewModel : ObservableObject
         return editor;
     }
 
-    public DeviceConfigurationViewModel OpenDeviceConfiguration(DbiProject project, ProjectService projects)
+    public DeviceConfigurationViewModel OpenDeviceConfiguration(
+        DbiProject project, ProjectService projects, IRuntimeClient runtime, IUserPrompt prompt)
     {
         if (Documents.FirstOrDefault(d => d.ContentId == "DeviceConfiguration") is DeviceConfigurationViewModel opened)
         {
@@ -103,7 +104,7 @@ public partial class DocumentHostViewModel : ObservableObject
             return opened;
         }
 
-        var document = new DeviceConfigurationViewModel(project, projects);
+        var document = new DeviceConfigurationViewModel(project, projects, runtime, prompt);
         Documents.Add(document);
         ActiveDocument = document;
         return document;
@@ -114,10 +115,11 @@ public partial class DocumentHostViewModel : ObservableObject
         if (Documents.FirstOrDefault(d => d.ContentId == $"Watch:{table.Name}") is WatchTableViewModel opened)
         { ActiveDocument = opened; return opened; }
         var document = new WatchTableViewModel(project, table, runtime, projects);
+        document.Notice += (s, n) => Notice?.Invoke(this, n);
         Documents.Add(document); ActiveDocument = document; return document;
     }
 
-    public ForceTableViewModel OpenForceTable(IRuntimeClient runtime)
+    public ForceTableViewModel OpenForceTable(IRuntimeClient runtime, DbiProject? project)
     {
         if (Documents.FirstOrDefault(d => d.ContentId == "ForceTable") is ForceTableViewModel opened)
         {
@@ -125,7 +127,7 @@ public partial class DocumentHostViewModel : ObservableObject
             _ = opened.RefreshCommand.ExecuteAsync(null);
             return opened;
         }
-        var document = new ForceTableViewModel(runtime, _prompt);
+        var document = new ForceTableViewModel(runtime, _prompt, project);
         Documents.Add(document); ActiveDocument = document;
         _ = document.RefreshCommand.ExecuteAsync(null);
         return document;

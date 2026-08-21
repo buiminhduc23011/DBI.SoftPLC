@@ -240,6 +240,47 @@ public class RuntimeHost : IDisposable
             .ToList());
 
     /// <summary>
+    /// Thử kết nối thiết bị bằng driver tạm — không thay thế bộ driver đang chạy.
+    /// </summary>
+    /// <remarks>
+    /// Lỗi kết nối KHÔNG ném ra ngoài: trả về trong <see cref="TestConnectionResponse.Error"/> để
+    /// Studio hiển thị đúng thông điệp của driver thay vì lỗi IPC chung chung.
+    /// </remarks>
+    public async Task<TestConnectionResponse> TestDeviceConnectionAsync(TestConnectionRequest request, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        IDriver driver;
+        try
+        {
+            driver = _driverFactory.Create(request.Device);
+        }
+        catch (UnknownDriverException ex)
+        {
+            return new TestConnectionResponse(false, ex.Message);
+        }
+
+        try
+        {
+            await driver.ConnectAsync(ct).ConfigureAwait(false);
+            return new TestConnectionResponse(true, null);
+        }
+        catch (OperationCanceledException)
+        {
+            return new TestConnectionResponse(false, "Hết thời gian chờ kết nối.");
+        }
+        catch (Exception ex)
+        {
+            return new TestConnectionResponse(false, ex.Message);
+        }
+        finally
+        {
+            try { await driver.DisconnectAsync(CancellationToken.None).ConfigureAwait(false); }
+            catch { /* dọn dẹp tốt nhất có thể — kết quả test đã quyết rồi */ }
+        }
+    }
+
+    /// <summary>
     /// Đọc giá trị tag cho vòng push monitoring.
     /// </summary>
     /// <remarks>
@@ -254,6 +295,54 @@ public class RuntimeHost : IDisposable
     {
         if (enable) _memory.SetForce(tagName, value); else _memory.ClearForce(tagName);
         return true;
+    }
+
+    /// <summary>
+    /// Ghi một lần vào tag từ Watch Table (phase-10 Task 10.4).
+    /// </summary>
+    /// <remarks>
+    /// Ghi thẳng vào OutputState — cùng chỗ logic người dùng ghi, nên chu kỳ sau
+    /// <see cref="MemorySnapshot.SwapOutputBuffers"/> tự công bố xuống driver. Tag Input bị chặn vì
+    /// driver ghi đè mỗi chu kỳ — giá trị sẽ biến mất ngay và gây hiểu nhầm "ghi được mà không có tác dụng".
+    /// </remarks>
+    public WriteTagResponse WriteTag(WriteTagRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var route = _driverManager.RoutingTable.All.FirstOrDefault(
+            r => r.TagName.Equals(request.TagName, StringComparison.OrdinalIgnoreCase));
+
+        if (route is null)
+            return new WriteTagResponse(false, $"Tag '{request.TagName}' chưa được khai báo trong Tag Table.");
+
+        if (route.Direction == TagDirection.Input)
+            return new WriteTagResponse(false,
+                $"Tag '{request.TagName}' là Input — driver ghi đè mỗi chu kỳ nên không sửa được từ Studio. Dùng Force nếu cần ép giá trị.");
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(request.ValueJson);
+            switch (route.DataType)
+            {
+                case TagDataType.Bool:
+                    if (doc.RootElement.ValueKind is not (System.Text.Json.JsonValueKind.True or System.Text.Json.JsonValueKind.False))
+                        return new WriteTagResponse(false, $"Tag '{route.TagName}' kiểu Bool cần giá trị true/false.");
+                    _memory.SetBool(route.TagName, doc.RootElement.GetBoolean());
+                    break;
+                case TagDataType.Int:
+                    _memory.SetInt(route.TagName, doc.RootElement.GetInt32());
+                    break;
+                case TagDataType.Real:
+                    _memory.SetFloat(route.TagName, (float)doc.RootElement.GetDouble());
+                    break;
+            }
+        }
+        catch (FormatException)
+        {
+            return new WriteTagResponse(false, $"Giá trị '{request.ValueJson}' không hợp lệ cho tag '{route.TagName}' kiểu {route.DataType}.");
+        }
+
+        return new WriteTagResponse(true, null);
     }
 
     // ── Tự khởi động sau khi bật máy (ADR-005) ───────────────────────────────────

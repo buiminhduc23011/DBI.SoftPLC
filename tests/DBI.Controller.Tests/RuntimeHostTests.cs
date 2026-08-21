@@ -148,6 +148,37 @@ public class RuntimeHostTests
         Assert.Contains("Siemens_S7", result.Error);
     }
 
+    // ── Task 09.3: Test Connection qua Runtime ───────────────────────────────────
+
+    [Fact]
+    public async Task TestDeviceConnection_Simulation_NoiDuocVaKhongDungBoDriverChinh()
+    {
+        using var temp = new TempStore();
+        using var host = new RuntimeHost(temp.Store);
+
+        var result = await host.TestDeviceConnectionAsync(
+            new TestConnectionRequest(new DeviceSpec("SIM", "Simulation", new Dictionary<string, string>())),
+            CancellationToken.None);
+
+        Assert.True(result.Ok);
+        Assert.Null(result.Error);
+        Assert.Empty(host.Drivers.Drivers); // driver tạm không được lọt vào bộ đang chạy
+    }
+
+    [Fact]
+    public async Task TestDeviceConnection_DriverLa_TraLoiKhongNemException()
+    {
+        using var temp = new TempStore();
+        using var host = new RuntimeHost(temp.Store);
+
+        var result = await host.TestDeviceConnectionAsync(
+            new TestConnectionRequest(new DeviceSpec("PLC", "Siemens_S7", new Dictionary<string, string>())),
+            CancellationToken.None);
+
+        Assert.False(result.Ok);
+        Assert.Contains("Siemens_S7", result.Error);
+    }
+
     // ── ADR-004: IProgramSwapper ─────────────────────────────────────────────────
 
     [Fact]

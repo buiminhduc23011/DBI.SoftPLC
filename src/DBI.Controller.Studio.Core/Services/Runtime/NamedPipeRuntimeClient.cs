@@ -25,6 +25,7 @@ public sealed class NamedPipeRuntimeClient : IRuntimeClient
     private IIpcTransport? _transport;
     private CancellationTokenSource? _sessionCts;
     private Task? _statusLoop;
+    private Task? _deviceStatesLoop;
     private Task? _pushLoop;
     private Task? _reconnectLoop;
 
@@ -46,6 +47,9 @@ public sealed class NamedPipeRuntimeClient : IRuntimeClient
     /// <summary>Chu kỳ poll trạng thái.</summary>
     public int StatusPollIntervalMs { get; set; } = 500;
 
+    /// <summary>Chu kỳ poll trạng thái thiết bị (phase-09 Task 09.4).</summary>
+    public int DeviceStatesPollIntervalMs { get; set; } = 1000;
+
     /// <summary>Bật tự kết nối lại. Tắt trong test để không có task chạy nền ngoài ý muốn.</summary>
     public bool AutoReconnect { get; set; } = true;
 
@@ -59,6 +63,7 @@ public sealed class NamedPipeRuntimeClient : IRuntimeClient
     public StatusResponse? LastStatus { get; private set; }
 
     public event EventHandler<StatusResponse>? StatusUpdated;
+    public event EventHandler<IReadOnlyList<DeviceStateInfo>>? DeviceStatesChanged;
     public event EventHandler<TagValueUpdate>? TagValueChanged;
     public event EventHandler<FaultNotification>? FaultOccurred;
     public event EventHandler<string>? ConnectionLost;
@@ -93,6 +98,7 @@ public sealed class NamedPipeRuntimeClient : IRuntimeClient
             _sessionCts = new CancellationTokenSource();
 
             _statusLoop = Task.Run(() => StatusLoopAsync(_sessionCts.Token), CancellationToken.None);
+            _deviceStatesLoop = Task.Run(() => DeviceStatesLoopAsync(_sessionCts.Token), CancellationToken.None);
             _pushLoop = Task.Run(() => PushLoopAsync(_sessionCts.Token), CancellationToken.None);
 
             SetState(RuntimeClientState.Connected);
@@ -200,6 +206,29 @@ public sealed class NamedPipeRuntimeClient : IRuntimeClient
             ?? (IReadOnlyList<DeviceStateInfo>)Array.Empty<DeviceStateInfo>();
     }
 
+    public async Task<TestConnectionResponse> TestDeviceConnectionAsync(DeviceSpec device, CancellationToken ct = default)
+    {
+        var response = await SendAsync(
+            NewRequest(CommandType.TestDeviceConnection, new TestConnectionRequest(device)), ct).ConfigureAwait(false);
+
+        if (!response.Ok)
+            return new TestConnectionResponse(false, response.Error ?? "Test kết nối thất bại.");
+
+        return ProtocolJson.Deserialize<TestConnectionResponse>(response.PayloadJson)
+            ?? new TestConnectionResponse(false, "Runtime trả về payload không đọc được.");
+    }
+
+    public async Task<WriteTagResponse> WriteTagAsync(string tagName, object value, CancellationToken ct = default)
+    {
+        var response = await SendAsync(
+            NewRequest(CommandType.WriteTag, new WriteTagRequest(tagName, ProtocolJson.Serialize(value))), ct)
+            .ConfigureAwait(false);
+
+        return response.Ok
+            ? new WriteTagResponse(true, null)
+            : new WriteTagResponse(false, response.Error ?? "Ghi tag thất bại.");
+    }
+
     private static IpcRequest NewRequest(CommandType type, object? payload = null) =>
         new(Guid.NewGuid().ToString("N"), type, payload is null ? null : ProtocolJson.Serialize(payload));
 
@@ -239,6 +268,40 @@ public sealed class NamedPipeRuntimeClient : IRuntimeClient
                 return;
             }
         }
+    }
+
+    private async Task DeviceStatesLoopAsync(CancellationToken ct)
+    {
+        while (!ct.IsCancellationRequested)
+        {
+            try
+            {
+                var response = await SendAsync(NewRequest(CommandType.GetDeviceStates), ct).ConfigureAwait(false);
+
+                if (response.Ok)
+                {
+                    var states = ProtocolJson.Deserialize<DeviceStatesResponse>(response.PayloadJson)?.Devices;
+                    if (states is not null) RaiseDeviceStates(states);
+                }
+
+                await Task.Delay(DeviceStatesPollIntervalMs, ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch
+            {
+                // Trạng thái thiết bị là tiện ích theo dõi — mất một vòng thì bỏ qua,
+                // vòng StatusLoopAsync mới là bên phát hiện đứt kết nối.
+            }
+        }
+    }
+
+    private void RaiseDeviceStates(IReadOnlyList<DeviceStateInfo> states)
+    {
+        if (_uiContext is not null) _uiContext.Post(_ => DeviceStatesChanged?.Invoke(this, states), null);
+        else DeviceStatesChanged?.Invoke(this, states);
     }
 
     private async Task PushLoopAsync(CancellationToken ct)

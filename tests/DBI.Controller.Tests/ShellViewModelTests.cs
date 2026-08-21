@@ -17,6 +17,7 @@ internal sealed class ScriptedPrompt : IUserPrompt
 
     public List<string> Errors { get; } = new();
     public int ConfirmCount { get; private set; }
+    public int ForceSafetyCount { get; private set; }
 
     public string? AskProjectToOpen() => ProjectToOpen;
     public NewProjectRequest? AskNewProjectLocation() => NewProject;
@@ -29,6 +30,15 @@ internal sealed class ScriptedPrompt : IUserPrompt
         ConfirmCount++;
         return ConfirmAnswer;
     }
+
+    public bool ConfirmForceSafety(string tagName, string dataTypeDescription, string valueText)
+    {
+        ForceSafetyCount++;
+        return ConfirmAnswer;
+    }
+
+    public CloseWithForcesChoice? AskCloseWithForces(int forceCount) =>
+        ConfirmAnswer ? CloseWithForcesChoice.KeepForcesAndClose : CloseWithForcesChoice.Cancel;
 
     public void ShowError(string message, string title) => Errors.Add(message);
     public void ShowInformation(string message, string title) { }

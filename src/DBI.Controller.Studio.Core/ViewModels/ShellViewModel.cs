@@ -62,9 +62,36 @@ public partial class ShellViewModel : ObservableObject
         ProjectTree.NodeActivated += (_, node) => OpenNode(node);
         ProjectTree.PropertyChanged += OnProjectTreeSelectionChanged;
         TaskCards.SnippetRequested += (_, card) => InsertSnippet(card);
+        TaskCards.TagDragRequested += (_, tag) => InsertTagReference(tag);
+        Editors.PropertyChanged += OnActiveDocumentChanged;
         Editors.Notice += (_, n) => Inspector.LogInformation(n.Message, n.Severity);
         Runtime.FaultOccurred += (_, fault) =>
             Inspector.LogDiagnostic($"FAULT: {fault.Message}", IssueSeverity.Error);
+        Runtime.DeviceStatesChanged += OnDeviceStatesChanged;
+    }
+
+    private void OnDeviceStatesChanged(object? sender, IReadOnlyList<DeviceStateInfo> states) =>
+        ProjectTree.UpdateDeviceStatuses(states);
+
+    /// <summary>Số tag đang bị force — banner đỏ ở status bar và badge trên cây project.</summary>
+    /// <remarks>Force là trạng thái Runtime; Studio chỉ phản ánh số nó biết qua GetForces.</remarks>
+    [ObservableProperty]
+    private int _activeForceCount;
+
+    public bool HasActiveForces => ActiveForceCount > 0;
+
+    public string ForceBanner => $"⚠️ {ActiveForceCount} TAG ĐANG BỊ FORCE";
+
+    partial void OnActiveForceCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(HasActiveForces));
+        OnPropertyChanged(nameof(ForceBanner));
+    }
+
+    private void OnForcesChanged(object? sender, EventArgs e)
+    {
+        if (sender is not ForceTableViewModel forceTable) return;
+        ActiveForceCount = forceTable.Rows.Count;
     }
 
     public IRuntimeClient Runtime { get; }
@@ -86,6 +113,36 @@ public partial class ShellViewModel : ObservableObject
 
         editor.InsertAtCaret(card.Snippet);
         Inspector.LogInformation($"Inserted {card.Name} snippet into '{editor.Title}'.");
+    }
+
+    /// <summary>Kéo/double-click tag từ Toolbox vào code editor — chèn <c>IO.TenTag</c> tại con trỏ (Task 12.3).</summary>
+    private void InsertTagReference(DeviceTagItem tag)
+    {
+        if (Editors.ActiveDocument is not CodeEditorViewModel editor)
+        {
+            Inspector.LogInformation("Open a code block before inserting a tag reference.");
+            return;
+        }
+
+        editor.InsertAtCaret($"IO.{tag.Name}");
+        Inspector.LogInformation($"Inserted IO.{tag.Name} into '{editor.Title}'.");
+    }
+
+    /// <summary>Task 12.4 — card Toolbox đổi theo loại document đang active.</summary>
+    private void OnActiveDocumentChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(DocumentHostViewModel.ActiveDocument)) return;
+        TaskCards.ShowInstructions = Editors.ActiveDocument is CodeEditorViewModel;
+    }
+
+    /// <summary>Phase-13 — gắn live overlay cho editor (một lần, idempotent).</summary>
+    private void AttachOverlay(CodeEditorViewModel editor)
+    {
+        if (editor.Overlay is not null) return;
+
+        var overlay = new CodeOverlayViewModel(new LiveCodeOverlayService(), Runtime);
+        overlay.UpdateSource(editor.Text);
+        editor.Overlay = overlay;
     }
 
     public DbiProject? Project => _projects.Current;
@@ -145,6 +202,7 @@ public partial class ShellViewModel : ObservableObject
         EnsureGeneratedCode(result.Project!);
         ProjectTree.Load(result.Project);
         ConfigureProjectTree();
+        TaskCards.LoadProject(result.Project);
         StatusBar.ProjectName = result.Project!.Name;
         StatusBar.AutoStartEnabled = result.Project.Runtime.AutoStart;
         ResetBuildState();
@@ -188,6 +246,7 @@ public partial class ShellViewModel : ObservableObject
         StopWatchingProject();
         _projects.Close();
         ProjectTree.Load(null);
+        TaskCards.LoadProject(null);
         StatusBar.ProjectName = "(no project open)";
         StatusBar.AutoStartEnabled = true;
         ResetBuildState();
@@ -202,7 +261,8 @@ public partial class ShellViewModel : ObservableObject
     {
         if (node.Payload is CodeBlock block && Project is not null)
         {
-            Editors.OpenBlock(block, Project.ProjectDirectory);
+            var editor = Editors.OpenBlock(block, Project.ProjectDirectory);
+            AttachOverlay(editor);
             return;
         }
 
@@ -225,11 +285,15 @@ public partial class ShellViewModel : ObservableObject
         if (node.Kind == ProjectNodeKind.OnlineDiagnostics)
             Inspector.LogInformation("Diagnostics will open as a separate document.");
         else if (node.Kind == ProjectNodeKind.DeviceConfiguration && Project is not null)
-            Editors.OpenDeviceConfiguration(Project, _projects);
+            Editors.OpenDeviceConfiguration(Project, _projects, Runtime, _prompt);
         else if (node.Kind == ProjectNodeKind.WatchTable && Project is not null && node.Payload is WatchTable watch)
             Editors.OpenWatchTable(Project, watch, Runtime, _projects);
         else if (node.Kind == ProjectNodeKind.ForceTable)
-            Editors.OpenForceTable(Runtime);
+        {
+            var forceTable = Editors.OpenForceTable(Runtime, Project);
+            forceTable.ForcesChanged -= OnForcesChanged;
+            forceTable.ForcesChanged += OnForcesChanged;
+        }
     }
 
     [RelayCommand]
@@ -305,6 +369,28 @@ public partial class ShellViewModel : ObservableObject
         StatusBar.RuntimeState == Protocol.RuntimeState.Running
             ? RuntimeProcessLauncher.ClosingWhileRunningWarning
             : null;
+
+    /// <summary>
+    /// Gọi trước khi đóng cửa sổ: còn force thì hỏi 3 lựa chọn (xoá rồi đóng / giữ force và đóng /
+    /// huỷ). Trả về <c>false</c> nếu người dùng huỷ đóng.
+    /// </summary>
+    /// <remarks>Force sống ở Runtime, không chết theo Studio — người dùng phải được nói rõ điều đó.</remarks>
+    public async Task<bool> ConfirmCloseWithForcesAsync()
+    {
+        if (ActiveForceCount <= 0) return true;
+
+        var choice = _prompt.AskCloseWithForces(ActiveForceCount);
+        if (choice is null or CloseWithForcesChoice.Cancel) return false;
+
+        if (choice == CloseWithForcesChoice.ClearForcesAndClose &&
+            Editors.Find("ForceTable") is ForceTableViewModel forceTable)
+        {
+            await forceTable.ClearAllCommand.ExecuteAsync(null);
+        }
+
+        // Giữ force thì chỉ cần đóng — Runtime tự giữ trạng thái force của nó.
+        return true;
+    }
 
     [RelayCommand]
     private void OpenNodeFromMenu(ProjectNode? node)
@@ -463,6 +549,75 @@ public partial class ShellViewModel : ObservableObject
         Inspector.LogInformation($"Đã xoá tag table '{table.Name}'.");
     }
 
+    // ── Watch tables (phase-10) ──────────────────────────────────────────────────
+
+    [RelayCommand]
+    private void AddWatchTable(ProjectNode? _)
+    {
+        if (Project is null) return;
+
+        string? name = _prompt.AskText("Thêm watch table", "Tên bảng watch:", "Watch table_1");
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        var result = _projects.AddWatchTable(name);
+        if (!result.Success)
+        {
+            ReportProjectIssues("Không tạo được watch table", result.Issues);
+            return;
+        }
+
+        ProjectTree.Load(Project);
+        ConfigureProjectTree();
+        Inspector.LogInformation($"Đã tạo watch table '{name.Trim()}'.");
+    }
+
+    [RelayCommand]
+    private void RenameWatchTable(ProjectNode? node)
+    {
+        if (Project is null || node?.Payload is not WatchTable table) return;
+
+        string? newName = _prompt.AskText("Đổi tên watch table", "Tên mới:", table.Name);
+        if (string.IsNullOrWhiteSpace(newName) || string.Equals(newName, table.Name, StringComparison.Ordinal)) return;
+
+        var result = _projects.RenameWatchTable(table, newName);
+        if (!result.Success)
+        {
+            ReportProjectIssues("Không đổi tên được watch table", result.Issues);
+            return;
+        }
+
+        // Tab đang mở giữ ContentId cũ "Watch:<tên>" — đóng để lần mở sau dựng lại đúng tên mới.
+        if (Editors.Find($"Watch:{table.Name}") is { } opened)
+            Editors.Close(opened);
+
+        ProjectTree.Load(Project);
+        ConfigureProjectTree();
+        Inspector.LogInformation($"Đã đổi tên watch table thành '{table.Name}'.");
+    }
+
+    [RelayCommand]
+    private void DeleteWatchTable(ProjectNode? node)
+    {
+        if (Project is null || node?.Payload is not WatchTable table) return;
+
+        if (!_prompt.Confirm($"Xoá watch table '{table.Name}'?", "Xoá watch table"))
+            return;
+
+        if (Editors.Find($"Watch:{table.Name}") is { } opened)
+            Editors.Close(opened);
+
+        var result = _projects.DeleteWatchTable(table);
+        if (!result.Success)
+        {
+            ReportProjectIssues("Không xoá được watch table", result.Issues);
+            return;
+        }
+
+        ProjectTree.Load(Project);
+        ConfigureProjectTree();
+        Inspector.LogInformation($"Đã xoá watch table '{table.Name}'.");
+    }
+
     private void OnProjectTreeSelectionChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(ProjectTreeViewModel.SelectedNode)) return;
@@ -480,7 +635,10 @@ public partial class ShellViewModel : ObservableObject
             DeleteBlockCommand,
             SetMainBlockCommand,
             RenameTagTableCommand,
-            DeleteTagTableCommand);
+            DeleteTagTableCommand,
+            AddWatchTableCommand,
+            RenameWatchTableCommand,
+            DeleteWatchTableCommand);
 
     private void ReportProjectIssues(string title, IReadOnlyList<ValidationIssue> issues)
     {
@@ -611,6 +769,7 @@ public partial class ShellViewModel : ObservableObject
 
         ProjectTree.Load(Project);
         ConfigureProjectTree();
+        TaskCards.LoadProject(Project);
 
         if (result.Changed)
             Inspector.LogInformation("Đã sinh lại Generated/IO.g.cs.");

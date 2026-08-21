@@ -176,6 +176,8 @@ public sealed class IpcServer : IAsyncDisposable
                 CommandType.SubscribeTags => SubscribeTags(request),
                 CommandType.UnsubscribeTags => UnsubscribeTags(request),
                 CommandType.GetDeviceStates => Ok(request, _host.GetDeviceStates()),
+                CommandType.TestDeviceConnection => await TestDeviceConnectionAsync(request, ct).ConfigureAwait(false),
+                CommandType.WriteTag => WriteTag(request),
                 CommandType.ForceTag => ForceTag(request),
                 CommandType.GetForceList => Ok(request, new ForceListResponse(_host.GetForces().Select(f => new ForceInfo(f.Key, ProtocolJson.Serialize(f.Value))).ToList())),
                 _ => IpcResponse.Failure(request.RequestId, $"Lệnh '{request.Type}' chưa hỗ trợ.")
@@ -222,6 +224,29 @@ public sealed class IpcServer : IAsyncDisposable
         return result.Ok
             ? Ok(request, result)
             : IpcResponse.Failure(request.RequestId, FormatError(result.Error, result.ErrorCode));
+    }
+
+    private async Task<IpcResponse> TestDeviceConnectionAsync(IpcRequest request, CancellationToken ct)
+    {
+        var test = ProtocolJson.Deserialize<TestConnectionRequest>(request.PayloadJson);
+
+        if (test?.Device is null)
+            return IpcResponse.Failure(request.RequestId, "TestDeviceConnection thiếu payload.");
+
+        // Kết quả test luôn nằm trong payload — lỗi thiết bị không phải lỗi IPC.
+        return Ok(request, await _host.TestDeviceConnectionAsync(test, ct).ConfigureAwait(false));
+    }
+
+    private IpcResponse WriteTag(IpcRequest request)
+    {
+        var write = ProtocolJson.Deserialize<WriteTagRequest>(request.PayloadJson);
+
+        if (write is null)
+            return IpcResponse.Failure(request.RequestId, "WriteTag thiếu payload.");
+
+        var result = _host.WriteTag(write);
+
+        return result.Ok ? Ok(request, result) : IpcResponse.Failure(request.RequestId, result.Error ?? "Ghi tag thất bại.");
     }
 
     private static string FormatError(string? error, string? code) =>

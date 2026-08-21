@@ -13,27 +13,29 @@ public sealed record DriverDescriptor(
 
 public static class DriverCatalog
 {
+    // Khóa setting phải khớp CHÍNH XÁC những gì từng adapter đọc trong FromSpec —
+    // adapter là nguồn sự thật, không được đổi chiều ngược lại.
     private static readonly IReadOnlyList<DriverDescriptor> Descriptors = new[]
     {
         new DriverDescriptor("Simulation", "Simulation", "Deterministic in-memory driver", "Sim_0", Array.Empty<DriverSetting>()),
         new DriverDescriptor("Modbus", "Modbus TCP/RTU", "Modbus device", "40001", new[]
         {
-            new DriverSetting("host", "Host", "127.0.0.1"), new DriverSetting("port", "Port", "502"),
-            new DriverSetting("unitId", "Unit ID", "1"), new DriverSetting("mode", "Mode", "TCP")
+            new DriverSetting("ip", "IP Address", "127.0.0.1"), new DriverSetting("port", "Port", "502"),
+            new DriverSetting("slaveId", "Slave ID", "1")
         }),
         new DriverDescriptor("Delta.PLC", "Delta PLC", "Delta DVP PLC", "D100", new[]
         {
-            new DriverSetting("host", "Host", "127.0.0.1"), new DriverSetting("port", "Port", "502"),
-            new DriverSetting("station", "Station", "1")
+            new DriverSetting("ip", "IP Address", "192.168.1.5"), new DriverSetting("port", "Port", "502"),
+            new DriverSetting("slaveId", "Station", "1")
         }),
         new DriverDescriptor("Omron", "Omron PLC", "Omron FINS/HostLink PLC", "CIO100", new[]
         {
-            new DriverSetting("host", "Host", "127.0.0.1"), new DriverSetting("port", "Port", "9600"),
-            new DriverSetting("node", "Node", "0")
+            new DriverSetting("ip", "IP Address", "192.168.1.10"), new DriverSetting("port", "Port", "9600")
         }),
         new DriverDescriptor("FactoryIO", "Factory I/O", "Factory I/O Modbus adapter", "Input_0", new[]
         {
-            new DriverSetting("host", "Host", "127.0.0.1"), new DriverSetting("port", "Port", "502")
+            new DriverSetting("ip", "IP Address", "127.0.0.1"), new DriverSetting("port", "Port", "502"),
+            new DriverSetting("slaveId", "Slave ID", "1")
         })
     };
 

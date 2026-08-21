@@ -46,7 +46,9 @@ public enum CommandType
     UnsubscribeTags,
     ForceTag,
     GetForceList,
-    GetDeviceStates
+    GetDeviceStates,
+    TestDeviceConnection,
+    WriteTag
 }
 
 public record IpcRequest(string RequestId, CommandType Type, string? PayloadJson);
@@ -107,6 +109,22 @@ public record TagValueBatch(List<TagValueUpdate> Updates);
 public record DeviceStateInfo(string DriverId, string State, string? LastError);
 
 public record DeviceStatesResponse(List<DeviceStateInfo> Devices);
+
+/// <summary>
+/// Thử kết nối một thiết bị <b>riêng lẻ</b> — Runtime dựng driver tạm từ spec, nối rồi ngắt ngay,
+/// không đụng vào bộ driver đang chạy. Dùng cho nút Test Connection ở Device Configuration.
+/// </summary>
+public record TestConnectionRequest(DeviceSpec Device);
+
+public record TestConnectionResponse(bool Ok, string? Error);
+
+/// <summary>
+/// Ghi MỘT lần vào tag từ Watch Table (phase-10) — khác <see cref="ForceTagRequest"/> ở chỗ
+/// Force giữ giá trị liên tục, còn ghi thường logic có thể ghi đè ở chu kỳ sau.
+/// </summary>
+public record WriteTagRequest(string TagName, string ValueJson);
+
+public record WriteTagResponse(bool Ok, string? Error);
 
 public record FaultNotification(string Message, string? StackTrace, long OccurredAtMs);
 

@@ -22,6 +22,8 @@
 
     <Window.Resources>
         <converters:ResourceKeyToBrushConverter x:Key="BrushFromKey" />
+        <converters:InverseBoolConverter x:Key="InverseBool" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
         <DataTemplate x:Key="LogEntryTemplate">
             <StackPanel Orientation="Horizontal" Margin="4,1">
@@ -62,6 +64,8 @@
                     <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                         <StackPanel Orientation="Horizontal" Margin="4,3">
                             <TextBlock Text="{Binding Title}" Style="{StaticResource LabelText}" />
+                            <TextBlock Text="{Binding StatusGlyph}"
+                                       Foreground="{Binding StatusColorKey, Converter={StaticResource BrushFromKey}}" />
                         </StackPanel>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
@@ -103,8 +107,11 @@
         <DataTemplate DataType="{x:Type vm:TaskCardsViewModel}">
             <ScrollViewer Margin="8" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
-                    <TextBlock Text="Instructions" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,8" />
-                    <ItemsControl ItemsSource="{Binding Instructions}">
+                    <!-- Task 12.4 — card Instructions chỉ hiện khi document active là code editor -->
+                    <TextBlock Text="Instructions" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,8"
+                               Visibility="{Binding ShowInstructions, Converter={StaticResource BoolToVisibility}}" />
+                    <ItemsControl ItemsSource="{Binding Instructions}" Margin="0,0,0,16"
+                                  Visibility="{Binding ShowInstructions, Converter={StaticResource BoolToVisibility}}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Button Content="{Binding Name}"
@@ -115,12 +122,32 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+
+                    <!-- Task 12.2 — Device Tags: tag đã khai theo device, ● đã map / ○ chưa -->
+                    <TextBlock Text="Device Tags" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,8" />
+                    <ItemsControl ItemsSource="{Binding DeviceTags}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button ToolTip="Kéo hoặc double-click để chèn tham chiếu IO.TenTag vào code editor"
+                                        Command="{Binding DataContext.InsertDeviceTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource FlatButton}" HorizontalContentAlignment="Left">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding MapGlyph}" Margin="0,0,6,0"
+                                                   Foreground="{DynamicResource SuccessColor}" />
+                                        <TextBlock Text="{Binding Display}" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </ScrollViewer>
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:CodeEditorViewModel}">
             <roslynpad:RoslynCodeEditor behaviors:RoslynCodeEditorBehaviors.EnableRoslyn="True"
+                                        behaviors:RoslynCodeEditorBehaviors.EnableOverlay="True"
                                         FontFamily="Consolas"
                                         FontSize="13"
                                         ShowLineNumbers="True"
@@ -180,13 +207,28 @@
                     <Button Content="+ Add Device" Style="{StaticResource FlatButton}" Command="{Binding AddDeviceCommand}" />
                     <Button Content="+ Add Simulation" Style="{StaticResource FlatButton}" Command="{Binding AddSimulationCommand}" />
                     <Button Content="Delete" Style="{StaticResource FlatButton}" Command="{Binding DeleteSelectedCommand}" />
+                    <Button Content="Test Connection" Style="{StaticResource FlatButton}" Margin="12,0,0,0"
+                            Command="{Binding TestConnectionCommand}"
+                            IsEnabled="{Binding IsTestingConnection, Converter={StaticResource InverseBool}}" />
                 </StackPanel>
-                <DataGrid ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
+                <DataGrid ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
                           AutoGenerateColumns="False" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Name" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="180" />
                         <DataGridTextColumn Header="Driver" Binding="{Binding DriverType}" Width="160" IsReadOnly="True" />
-                        <DataGridTextColumn Header="Settings" Binding="{Binding Settings.Count, StringFormat={}{0} settings}" Width="160" IsReadOnly="True" />
+                        <DataGridTextColumn Header="Settings" Binding="{Binding SettingsSummary}" Width="120" IsReadOnly="True" />
+                        <DataGridTemplateColumn Header="Status" Width="110">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Ellipse Width="9" Height="9" VerticalAlignment="Center"
+                                                 Fill="{Binding StatusColorKey, Converter={StaticResource BrushFromKey}}" />
+                                        <TextBlock Text="{Binding StatusText}" Margin="6,0,0,0" VerticalAlignment="Center"
+                                                   ToolTip="{Binding StatusDetail}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
                 <DataGrid DockPanel.Dock="Bottom" ItemsSource="{Binding Settings}" AutoGenerateColumns="False" Height="130" Margin="0,8,0,0" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}">
@@ -202,13 +244,61 @@
             <DockPanel Margin="6">
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
                     <Button Content="Monitor" Style="{StaticResource FlatButton}" Command="{Binding ToggleMonitoringCommand}" />
-                    <Button Content="Add tag" Style="{StaticResource FlatButton}" Command="{Binding AddTagCommand}" />
+                    <ComboBox Width="200" Margin="6,0,0,0"
+                              ItemsSource="{Binding AvailableTags}"
+                              SelectedItem="{Binding SelectedTagName}"
+                              ToolTip="Chọn tag để thêm vào bảng watch" />
+                    <Button Content="+ Add" Style="{StaticResource FlatButton}" Command="{Binding AddSelectedTagCommand}" />
+                    <Button Content="Remove" Style="{StaticResource FlatButton}" Command="{Binding RemoveSelectedCommand}"
+                            CommandParameter="{Binding SelectedRow, Mode=OneWay}" Margin="6,0,0,0" />
                 </StackPanel>
-                <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}">
+                <DataGrid ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                          AutoGenerateColumns="False" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}"
+                          EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background" Value="Transparent" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsFlashing}" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource WarningColor}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsStale}" Value="True">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="Opacity" Value="0.55" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Tag" Binding="{Binding Name}" IsReadOnly="True" Width="220" />
-                        <DataGridTextColumn Header="Value" Binding="{Binding ValueText}" IsReadOnly="True" Width="160" />
-                        <DataGridTextColumn Header="Updated" Binding="{Binding UpdatedAt}" IsReadOnly="True" Width="220" />
+                        <DataGridTextColumn Header="Tag" Binding="{Binding Name}" IsReadOnly="True" Width="180" />
+                        <DataGridTextColumn Header="Type" Binding="{Binding DataType}" IsReadOnly="True" Width="70" />
+                        <DataGridTemplateColumn Header="Value" Width="130">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="⚠️" Visibility="{Binding IsStale, Converter={StaticResource BoolToVisibility}}"
+                                                   ToolTip="Mất kết nối — giữ giá trị cuối cùng" Margin="0,0,4,0" />
+                                        <TextBlock Text="{Binding ValueText}"
+                                                   Foreground="{Binding ValueBrushKey, Converter={StaticResource BrushFromKey}}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Updated" Binding="{Binding UpdatedAt, StringFormat='HH:mm:ss.fff'}" IsReadOnly="True" Width="110" />
+                        <DataGridTemplateColumn Header="Modify" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                                ToolTip="{Binding ModifyToolTip}">
+                                        <TextBox Width="90" Text="{Binding ModifyText, UpdateSourceTrigger=PropertyChanged}"
+                                                 IsEnabled="{Binding CanModify}" />
+                                        <Button Content="Apply" Margin="4,0,0,0"
+                                                Command="{Binding DataContext.ModifyValueCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </DockPanel>
@@ -218,13 +308,21 @@
             <DockPanel Margin="6">
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
                     <TextBlock Text="{Binding Banner}" Foreground="{DynamicResource DangerColor}" FontWeight="Bold" VerticalAlignment="Center" />
+                    <ComboBox Width="170" Margin="12,0,0,0"
+                              ItemsSource="{Binding AvailableTags}"
+                              SelectedItem="{Binding SelectedTagName}"
+                              ToolTip="Tag cần force" />
+                    <TextBox Width="90" Text="{Binding NewValueText, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="Giá trị force (true/false, số...)" />
+                    <Button Content="Force" Style="{StaticResource AccentButton}" Command="{Binding ApplyForceCommand}"
+                            ToolTip="Ghi đè giá trị tag liên tục — phải qua xác nhận an toàn" />
                     <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" Margin="12,0,0,0" />
-                    <Button Content="CLEAR ALL FORCES" Style="{StaticResource AccentButton}" Command="{Binding ClearAllCommand}" Margin="6,0,0,0" />
+                    <Button Content="⛔ CLEAR ALL FORCES" Style="{StaticResource AccentButton}" Command="{Binding ClearAllCommand}" Margin="6,0,0,0" />
                 </StackPanel>
                 <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Forced tag" Binding="{Binding TagName}" IsReadOnly="True" Width="240" />
-                        <DataGridTextColumn Header="Force value" Binding="{Binding ValueText}" IsReadOnly="True" Width="180" />
+                        <DataGridTextColumn Header="🔒 Tag" Binding="{Binding TagName}" IsReadOnly="True" Width="240" />
+                        <DataGridTextColumn Header="Force value" Binding="{Binding ValueText}" IsReadOnly="True" Width="140" />
                         <DataGridTemplateColumn Header="" Width="100">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate><Button Content="Clear" Command="{Binding DataContext.ClearCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" /></DataTemplate>
@@ -315,6 +413,7 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <Border Grid.Column="0" Padding="8,2" Margin="0,0,10,0"
@@ -331,7 +430,16 @@
                            Foreground="{DynamicResource DangerColor}"
                            TextTrimming="CharacterEllipsis" />
 
-                <TextBlock Grid.Column="3" Style="{StaticResource MutedText}" FontSize="11">
+                <!-- Task 11.4 — force đang bật thì KHÔNG được phép bỏ sót -->
+                <Border Grid.Column="3" Padding="8,2" Margin="0,0,10,0"
+                        Background="{DynamicResource DangerColor}"
+                        Visibility="{Binding DataContext.HasActiveForces, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}"
+                        ToolTip="Force ghi đè tín hiệu thật. Mở Force Table để gỡ.">
+                    <TextBlock Text="{Binding DataContext.ForceBanner, RelativeSource={RelativeSource AncestorType=Window}}"
+                               Foreground="White" FontWeight="Bold" FontSize="11" />
+                </Border>
+
+                <TextBlock Grid.Column="4" Style="{StaticResource MutedText}" FontSize="11">
                     <Run Text="{Binding AutoStartIndicator, Mode=OneWay}" />
                     <Run Text=" · Project: " />
                     <Run Text="{Binding ProjectName, Mode=OneWay}" />

@@ -69,6 +69,30 @@ public class UserPrompt : IUserPrompt
     public bool Confirm(string message, string title) =>
         MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 
+    public bool ConfirmForceSafety(string tagName, string dataTypeDescription, string valueText)
+    {
+        var dialog = new ForceSafetyWindow(tagName, dataTypeDescription, valueText)
+            { Owner = Application.Current?.MainWindow };
+        return dialog.ShowDialog() == true;
+    }
+
+    public CloseWithForcesChoice? AskCloseWithForces(int forceCount)
+    {
+        var result = MessageBox.Show(
+            $"{forceCount} tag vẫn đang bị force và sẽ TIẾP TỤC bị force sau khi đóng Studio.\n\n" +
+            "Xoá force trước khi đóng?",
+            "Còn tag đang bị force",
+            MessageBoxButton.YesNoCancel,
+            MessageBoxImage.Warning);
+
+        return result switch
+        {
+            MessageBoxResult.Yes => CloseWithForcesChoice.ClearForcesAndClose,
+            MessageBoxResult.No => CloseWithForcesChoice.KeepForcesAndClose,
+            _ => CloseWithForcesChoice.Cancel
+        };
+    }
+
     public void ShowError(string message, string title) =>
         MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
 
@@ -122,6 +146,72 @@ internal sealed class TextPromptWindow : Window
             Orientation = Orientation.Horizontal,
             HorizontalAlignment = HorizontalAlignment.Right,
             Children = { ok, cancel }
+        };
+    }
+
+    internal static UIElement CreateButtons2(Button primary, Button secondary)
+    {
+        var panel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right
+        };
+        panel.Children.Add(primary);
+        panel.Children.Add(secondary);
+        return panel;
+    }
+}
+
+/// <summary>
+/// Cảnh báo an toàn khi tạo force (phase-11 Task 11.5). Nút Force chỉ bật khi đã tick
+/// checkbox xác nhận — KHÔNG có tuỳ chọn "đừng hỏi lại". An toàn thắng tiện lợi.
+/// </summary>
+internal sealed class ForceSafetyWindow : Window
+{
+    private readonly CheckBox _acknowledge;
+
+    public ForceSafetyWindow(string tagName, string dataTypeDescription, string valueText)
+    {
+        Title = "⚠️ CẢNH BÁO AN TOÀN";
+        Width = 480;
+        Height = 280;
+        WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        ResizeMode = ResizeMode.NoResize;
+
+        var forceButton = new Button { Content = "Force", Width = 90, Margin = new Thickness(0, 0, 8, 0), IsEnabled = false };
+
+        _acknowledge = new CheckBox
+        {
+            Content = "Tôi xác nhận khu vực máy đã an toàn",
+            Margin = new Thickness(0, 12, 0, 0)
+        };
+        _acknowledge.Checked += (_, _) => forceButton.IsEnabled = true;
+        _acknowledge.Unchecked += (_, _) => forceButton.IsEnabled = false;
+
+        forceButton.Click += (_, _) => DialogResult = true;
+
+        var cancel = new Button { Content = "Huỷ", Width = 80, IsCancel = true };
+
+        var warning = new TextBlock
+        {
+            Text = $"Force \"{tagName}\" = {valueText} ({dataTypeDescription}) sẽ ghi đè logic chương trình " +
+                   "và điều khiển TRỰC TIẾP thiết bị vật lý.\n\nĐảm bảo khu vực máy an toàn trước khi tiếp tục.",
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 4, 0, 8)
+        };
+
+        var header = new TextBlock
+        {
+            Text = "⚠️ CẢNH BÁO AN TOÀN",
+            FontWeight = FontWeights.Bold,
+            FontSize = 15,
+            Foreground = System.Windows.Media.Brushes.Firebrick
+        };
+
+        Content = new StackPanel
+        {
+            Margin = new Thickness(18),
+            Children = { header, warning, _acknowledge, TextPromptWindow.CreateButtons2(forceButton, cancel) }
         };
     }
 }
