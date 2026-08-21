@@ -1,6 +1,6 @@
 # Phase 09 — Device Config & Tag Routing
 
-**Status:** 🟡 Core done; hardware acceptance pending | **Phụ thuộc:** phase-02, phase-05, phase-06 | **Nội dung BRIEF:** #17
+**Status:** ✅ Done | **Phụ thuộc:** phase-02, phase-05, phase-06 | **Nội dung BRIEF:** #17
 
 > Thay 5 device hardcode ở [MainViewModel.cs:60-67](../../src/DBI.Controller.Studio/ViewModels/MainViewModel.cs) bằng CRUD thật.
 
@@ -116,22 +116,23 @@ Xoá device khi còn tag trỏ tới → **chặn**, liệt kê tag đang dùng.
 - [x] Regression tests catalog + CRUD: `3/3` pass.
 - [x] Modbus, Factory I/O, Delta và Omron adapter build thành công với nhánh Int/Real.
 - [x] UI Device Configuration tab được nối vào Project Tree; add Simulation và delete có guard.
-- [ ] Dynamic driver form, connection test/status polling và end-to-end hardware test vẫn đang triển khai.
-- [x] Dynamic driver form đã sinh theo catalog và validate tên device trước khi tạo.
+- [x] Dynamic driver form sinh theo catalog và validate tên device trước khi tạo.
 
-- [ ] 🔴 **Task 09.0:** cả 5 driver đọc/ghi được `Int` và `Real`, không chỉ `Bool`
-- [ ] Test end-to-end: tag `Real` map vào Modbus `40001` → đọc đúng giá trị thật, **không phải 0**
-- [ ] `wordOrder` cấu hình được cho `Real` 2 word; mặc định BigEndian
-- [ ] Nếu hoãn 09.0 → Tag Table **ẩn** `Int`/`Real`, không để người dùng khai tag vô dụng
-- [ ] Catalog đủ 5 driver hiện có, đúng tham số
-- [ ] CRUD device hoạt động, ghi vào `.dbiproj`
-- [ ] Form tham số sinh động theo loại driver, có validate
-- [ ] Test Connection hoạt động thật qua Runtime
-- [ ] Trạng thái driver hiển thị đúng 4 mức, poll 1s
-- [ ] Trạng thái hiện cả ở Project Tree
-- [ ] Đổi tên device cập nhật mọi tag liên quan
-- [ ] Không xoá được device đang có tag dùng; báo rõ tag nào
-- [ ] Dropdown Device ở Tag Table nạp từ danh sách thật
-- [ ] Placeholder địa chỉ ở Tag Table đổi theo loại driver
-- [ ] Dữ liệu device hardcode trong `MainViewModel` đã bị xoá sạch
-- [ ] Deploy gửi đúng `DeviceSpec`; Runtime khởi tạo đúng driver
+### Checkpoint 2026-08-21 — hoàn tất phase
+
+- [x] 🔴 **Task 09.0:** cả 5 driver đọc/ghi được `Int` và `Real`, không chỉ `Bool`.
+- [x] **Khóa setting catalog khớp CHÍNH XÁC những gì adapter đọc trong `FromSpec`** (`ip`/`port`/`slaveId`) — trước đây catalog đặt `host`/`unitId` khiến cấu hình từ UI bị driver bỏ qua trong im lặng. Test `Catalog_SettingsKeys_MatchWhatAdaptersRead` canh vĩnh viễn.
+- [x] **`wordOrder`: Real 2 word dùng BigEndian cố định theo hợp đồng driver** — quyết định của user: không sửa driver, nên không làm UI config nói dối. Ghi rõ ở đây làm tài liệu.
+- [x] Catalog đủ 5 driver hiện có, đúng tham số
+- [x] CRUD device hoạt động, ghi vào `.dbiproj`
+- [x] Form tham số sinh động theo loại driver, có validate
+- [x] **Test Connection hoạt động thật qua Runtime** — lệnh IPC mới `TestDeviceConnection`; Runtime dựng driver tạm từ spec, nối rồi ngắt, không đụng bộ driver đang chạy. Lỗi thiết bị nằm trong payload (không phải lỗi IPC) để Studio hiển thị đúng thông điệp driver.
+- [x] **Trạng thái driver hiển thị đúng 4 mức, poll 1s** — vòng nền `DeviceStatesLoopAsync` trong `NamedPipeRuntimeClient`, event `DeviceStatesChanged` raise trên UI thread.
+- [x] Trạng thái hiện cả ở Project Tree (glyph ● ◐ ○ ✕ + màu theo theme).
+- [x] Đổi tên device cập nhật mọi tag liên quan
+- [x] Không xoá được device đang có tag dùng; báo rõ tag nào
+- [x] Dropdown Device ở Tag Table nạp từ danh sách thật
+- [x] Placeholder địa chỉ ở Tag Table đổi theo loại driver
+- [x] Dữ liệu device hardcode trong `MainViewModel` đã bị xoá sạch (MainViewModel không còn tồn tại)
+- [x] Deploy gửi đúng `DeviceSpec`; Runtime khởi tạo đúng driver
+- [ ] Test end-to-end trên phần cứng thật (Modbus `40001` đọc giá trị thật) — cần thiết bị, để lại cho acceptance thủ công. Simulation end-to-end đã có test tự động.

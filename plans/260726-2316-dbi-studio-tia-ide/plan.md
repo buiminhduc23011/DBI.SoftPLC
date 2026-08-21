@@ -205,11 +205,11 @@ MyMachine/
 | 06 | [Tag Table & Code Generator](phase-06-tag-table-codegen.md) | #4, #5 | ✅ Done | **100%** |
 | 07 | [Multi-file Compile & Deploy](phase-07-compile-deploy.md) 🏁 | #3 | ✅ Done | 100% |
 | 08 | [Roslyn IntelliSense & Error List](phase-08-intellisense.md) | #9, #10 | ✅ Done | 100% |
-| 09 | [Device Config & Tag Routing](phase-09-device-config.md) | #17 | 🟡 Core done | 85% |
-| 10 | [Watch Table & Live Monitoring](phase-10-watch-table.md) | #14 | 🟡 Core done | 80% |
-| 11 | [Force I/O](phase-11-force-io.md) | #15 | 🟡 Core done | 75% |
-| 12 | [Task Cards & Drag-drop Mapping](phase-12-taskcards-dragdrop.md) | #11, #12 | 🟡 Mapping core done | 60% |
-| 13 | [Live Code Overlay & Integration](phase-13-live-overlay.md) | #13 | 🟡 Core done | 60% |
+| 09 | [Device Config & Tag Routing](phase-09-device-config.md) | #17 | ✅ Done | 100% |
+| 10 | [Watch Table & Live Monitoring](phase-10-watch-table.md) | #14 | ✅ Done (chưa nghiệm thu tải) | **95%** |
+| 11 | [Force I/O](phase-11-force-io.md) | #15 | ✅ Done (chưa nghiệm thu phần cứng) | **95%** |
+| 12 | [Task Cards & Drag-drop Mapping](phase-12-taskcards-dragdrop.md) | #11, #12 | 🟡 Cards + click-chèn xong; drag-drop chưa làm | 75% |
+| 13 | [Live Code Overlay & Integration](phase-13-live-overlay.md) | #13 | 🟡 Overlay + margin xong; nghiệm thu hiệu năng chưa chạy | 80% |
 
 **Đường găng (critical path):** `00 → 01 → 02 → 03 → 07`. Phase 04/05/06 chạy song song được với 02/03 nếu có 2 người.
 

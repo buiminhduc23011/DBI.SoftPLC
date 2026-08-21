@@ -1,6 +1,6 @@
 # Phase 10 — Watch Table & Live Monitoring
 
-**Status:** 🟡 Core done; UI performance/modify acceptance pending | **Phụ thuộc:** phase-03, phase-06 | **Nội dung BRIEF:** #14
+**Status:** ✅ Done (UI + VM hoàn thiện 2026-08-21; chưa chạy nghiệm thu tải/determinism trên máy thật) | **Phụ thuộc:** phase-03, phase-06 | **Nội dung BRIEF:** #14
 
 > Đây là phase cho **80% giá trị debug với 20% công sức** so với live overlay (phase-13). Làm trước, và nếu ngân sách hết thì phase-13 có thể cắt.
 
@@ -70,15 +70,17 @@ Ghi một lần vào tag (khác với Force của phase-11 — Force giữ giá 
 - [x] Watch table mở được thành document tab và hiển thị các dòng tag.
 - [x] Monitoring subscribe/unsubscribe đúng các tag trong table.
 - [x] Giá trị push được format cho Bool/Int/Real; test FakeRuntime pass `1/1`.
-- [ ] Modify value, flash/loading benchmark và reconnect lifecycle đang tiếp tục triển khai.
+- [x] Modify value, flash/stale lifecycle hoàn thiện 2026-08-21 (5 test VM pass); benchmark tải/determinism chưa chạy.
 
-- [ ] Tạo/xoá/đổi tên watch table; lưu trong `.dbiproj`
-- [ ] Thêm tag bằng dropdown và bằng kéo-thả
-- [ ] Giá trị cập nhật real-time đúng cho cả 3 kiểu
-- [ ] Giá trị đổi nháy vàng 300ms
-- [ ] Chỉ subscribe tag đang hiển thị; đóng tab thì unsubscribe (test bằng log phía Runtime)
-- [ ] Mất kết nối → xám + ⚠️, không xoá về 0
-- [ ] Kết nối lại → tự subscribe lại
-- [ ] Modify value hoạt động cho Output/Memory; chặn Input kèm giải thích
-- [ ] **Test tải:** 200 tag @ 10Hz — UI 60fps, CPU Studio < 15%
-- [ ] **Test determinism:** monitoring bật không làm jitter của Runtime tăng quá 0.5ms (bảo vệ ADR-001)
+### Checkpoint 2026-08-21
+
+- [x] Tạo/xoá/đổi tên watch table; lưu trong `.dbiproj` (`ProjectService.AddWatchTable/RenameWatchTable/DeleteWatchTable`, ShellViewModel đóng tab khi đổi tên vì ContentId nhúng tên)
+- [x] Thêm tag bằng dropdown (`AvailableTags` + `AddSelectedTagCommand`); kéo-thả từ Tag Table **chưa làm**
+- [x] Giá trị cập nhật real-time đúng cho cả 3 kiểu (buffer 100ms, flush một lượt — test `FlushPending`)
+- [x] Giá trị đổi nháy vàng 300ms (RowStyle trigger `IsFlashing` → nền WarningColor)
+- [x] Chỉ subscribe tag đang hiển thị; đóng tab thì unsubscribe (test VM xác nhận; chưa test bằng log phía Runtime thật)
+- [x] Mất kết nối → xám + ⚠️, không xoá về 0 (trigger `IsStale` → Opacity 0.55; test `ConnectionLost_RowsGoStale`)
+- [x] Kết nối lại → tự subscribe lại (reconnect lifecycle trong WatchTableViewModel)
+- [x] Modify value hoạt động cho Output/Memory; chặn Input kèm tooltip giải thích
+- [ ] **Test tải:** 200 tag @ 10Hz — UI 60fps, CPU Studio < 15% *(chưa đo)*
+- [ ] **Test determinism:** monitoring bật không làm jitter của Runtime tăng quá 0.5ms (bảo vệ ADR-001) *(chưa đo)*

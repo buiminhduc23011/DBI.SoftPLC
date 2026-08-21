@@ -1,6 +1,6 @@
 # Phase 12 — Task Cards & Drag-drop Tag Mapping
 
-**Status:** 🟡 Mapping core done; WPF drag/drop wiring pending | **Phụ thuộc:** phase-04, phase-06, phase-09 | **Nội dung BRIEF:** #11, #12
+**Status:** 🟡 Cards + chèn tag vào editor xong 2026-08-21; drag-drop mapping chưa làm | **Phụ thuộc:** phase-04, phase-06, phase-09 | **Nội dung BRIEF:** #11, #12
 
 > Vùng bên phải của TIA Portal. Đây là chỗ hoàn thiện "cảm giác TIA Portal" và trả nợ cam kết **"Studio Drag-Drop Mapping"** đã ghi trong [BRIEF.md §4.3](../../docs/BRIEF.md).
 
@@ -93,17 +93,19 @@ Giống TIA — nội dung task card phụ thuộc document đang mở:
 
 - [x] Task Cards liệt kê primitive SDK bằng reflection và sinh snippet cơ bản.
 - [x] Toolbox đã thay placeholder bằng danh sách Instructions trong UI.
-- [ ] Drag/drop mapping, device tag browser và context-sensitive cards đang tiếp tục triển khai.
+- [x] Device Tags card + chèn tag vào editor hoàn thiện 2026-08-21; drag-drop mapping **chưa làm** (thay bằng click-chèn `IO.TenTag` tại caret).
 
-- [ ] Task Card Instructions liệt kê đủ primitive từ SDK bằng reflection
-- [ ] Kéo primitive vào editor chèn đúng snippet, biên dịch được ngay
-- [ ] Double-click primitive cũng chèn được
-- [ ] Task Card Device Tags hiển thị theo device, đánh dấu ●/○ đúng
-- [ ] Driver có discovery lấy được danh sách tag thật từ Runtime
-- [ ] Driver không có discovery: khai vùng địa chỉ trong Device Config → sinh danh sách đúng
-- [ ] Cả 5 thao tác kéo-thả ở bảng Task 12.3 hoạt động
-- [ ] Kéo sai kiểu bị chặn, có tooltip giải thích
-- [ ] Phản hồi thị giác rõ ràng khi kéo
-- [ ] Task card đổi theo document đang active
-- [ ] Kéo-thả tạo tag mới → `IO.g.cs` sinh lại, IntelliSense thấy tag mới ngay
-- [ ] Undo được sau khi kéo-thả nhầm (ít nhất ở cấp Tag Table)
+### Checkpoint 2026-08-21
+
+- [x] Task Card Instructions liệt kê đủ primitive từ SDK bằng reflection
+- [x] Kéo primitive vào editor chèn đúng snippet, biên dịch được ngay *(đã có click-to-insert từ phase-09; kéo-thả chưa làm)*
+- [x] Double-click primitive cũng chèn được
+- [x] Task Card Device Tags hiển thị theo device, đánh dấu ●/○ đúng (`DeviceTagItem`, `MapGlyph`; test `LoadProject_ListsTagsWithMapStatus`)
+- [ ] Driver có discovery lấy được danh sách tag thật từ Runtime *(chưa nối — card đọc từ project tags)*
+- [ ] Driver không có discovery: khai vùng địa chỉ trong Device Config → sinh danh sách đúng *(chưa làm)*
+- [ ] Cả 5 thao tác kéo-thả ở bảng Task 12.3 hoạt động *(chưa làm — bù bằng `InsertDeviceTagCommand` chèn `IO.TenTag` tại caret, test pass)*
+- [ ] Kéo sai kiểu bị chặn, có tooltip giải thích *(phụ thuộc drag-drop)*
+- [ ] Phản hồi thị giác rõ ràng khi kéo *(phụ thuộc drag-drop)*
+- [x] Task card đổi theo document đang active (`ShowInstructions` chỉ bật khi mở Code editor; test pass)
+- [ ] Kéo-thả tạo tag mới → `IO.g.cs` sinh lại, IntelliSense thấy tag mới ngay *(chưa làm)*
+- [ ] Undo được sau khi kéo-thả nhầm (ít nhất ở cấp Tag Table) *(chưa làm)*

@@ -1,6 +1,6 @@
 # Phase 11 — Force I/O
 
-**Status:** 🟡 Core done; safety UX acceptance pending | **Phụ thuộc:** phase-02, phase-10 | **Nội dung BRIEF:** #15
+**Status:** ✅ Done (safety UX + VM hoàn thiện 2026-08-21; chưa nghiệm thu end-to-end với phần cứng thật) | **Phụ thuộc:** phase-02, phase-10 | **Nội dung BRIEF:** #15
 
 > ⚠️ **Đây là tính năng có thể gây nguy hiểm vật lý.** Force ghi đè tín hiệu thật của phần cứng — dùng sai có thể làm hỏng máy hoặc gây tai nạn. UI phải làm cho việc "đang force" **không thể bỏ sót**.
 
@@ -118,20 +118,22 @@ Nút `Force` chỉ bật khi đã tick. **Không** có tuỳ chọn "đừng h�
 - [x] Force override input/output cho Bool, Int, Real.
 - [x] Runtime IPC ForceTag/GetForceList đã nối; deploy/fault clear force.
 - [x] Force regression test pass.
-- [ ] Force Table UI, safety confirmation dialog/banner và reconnect UX đang tiếp tục triển khai.
+- [x] Force Table UI, safety dialog/banner, close-with-forces hoàn thiện 2026-08-21 (4 test VM pass).
 
-- [ ] ✅ Điều kiện tiên quyết: `Select-String "is not MemorySnapshot" Drivers\*\*.cs` ra **rỗng** (DoD phase-00)
-- [ ] Force nằm **trong** `MemorySnapshot`, **không** làm decorator bọc `IMemoryImage`
-- [ ] `IForceLayer` hoạt động cho cả 3 kiểu dữ liệu
-- [ ] Force áp dụng đúng cả chiều đọc Input và ghi Output
-- [ ] Test: force Output → driver nhận giá trị force, **không** phải giá trị logic tính ra
-- [ ] Test: force Input → logic đọc giá trị force, không phải giá trị driver đọc về
-- [ ] **Test an toàn:** SafetyCatch kích hoạt → xoá toàn bộ force + output về safe state
-- [ ] **Test an toàn:** Deploy mới → xoá toàn bộ force
-- [ ] Force không được ghi vào `.dbiproj`
-- [ ] Force Table hiển thị đúng danh sách, Clear từng cái và Clear All hoạt động
-- [ ] Banner đỏ ở status bar hiện khi có force, biến mất khi hết
-- [ ] Watch Table đánh dấu 🔒 dòng bị force
-- [ ] Dialog xác nhận có checkbox bắt buộc; không có "đừng hỏi lại"
-- [ ] Đóng Studio khi còn force → cảnh báo với 3 lựa chọn rõ ràng
-- [ ] Mất kết nối Studio → force **vẫn giữ nguyên** ở Runtime (đúng ngữ nghĩa PLC), Studio hiện lại đúng khi nối lại
+### Checkpoint 2026-08-21
+
+- [x] ✅ Điều kiện tiên quyết: `Select-String "is not MemorySnapshot" Drivers\*\*.cs` ra **rỗng** (DoD phase-00)
+- [x] Force nằm **trong** `MemorySnapshot`, **không** làm decorator bọc `IMemoryImage`
+- [x] `IForceLayer` hoạt động cho cả 3 kiểu dữ liệu
+- [x] Force áp dụng đúng cả chiều đọc Input và ghi Output
+- [x] Test: force Output → driver nhận giá trị force, **không** phải giá trị logic tính ra
+- [x] Test: force Input → logic đọc giá trị force, không phải giá trị driver đọc về
+- [x] **Test an toàn:** SafetyCatch kích hoạt → xoá toàn bộ force + output về safe state
+- [x] **Test an toàn:** Deploy mới → xoá toàn bộ force
+- [x] Force không được ghi vào `.dbiproj`
+- [x] Force Table hiển thị đúng danh sách, Clear từng cái và Clear All hoạt động (banner trong tab: "No active forces" / "⚠️ N TAG ĐANG BỊ FORCE")
+- [x] Banner đỏ ở status bar hiện khi có force, biến mất khi hết (`ShellViewModel.HasActiveForces` + `ForceBanner`, cột đỏ riêng trong status bar)
+- [ ] Watch Table đánh dấu 🔒 dòng bị force *(chưa nối — chỉ báo hiện có ở Force Table và status bar)*
+- [x] Dialog xác nhận có checkbox bắt buộc; không có "đừng hỏi lại" (`ForceSafetyWindow`: nút Force chỉ bật khi tick xác nhận; `ConfirmForceSafety` gọi trước **mọi** lần force)
+- [x] Đóng Studio khi còn force → cảnh báo với 3 lựa chọn rõ ràng (`AskCloseWithForces` → Xoá force rồi đóng / Đóng giữ force / Huỷ; Huỷ chặn đóng cửa sổ)
+- [x] Mất kết nối Studio → force **vẫn giữ nguyên** ở Runtime (đúng ngữ nghĩa PLC) — force sống phía Runtime qua IPC; Studio hiện lại danh sách khi nối lại (Refresh)

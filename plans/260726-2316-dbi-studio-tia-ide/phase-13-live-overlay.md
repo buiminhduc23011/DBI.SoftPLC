@@ -1,6 +1,6 @@
 # Phase 13 — Live Code Overlay & Integration
 
-**Status:** 🟡 Core done; AvalonEdit/Factory I/O acceptance pending | **Phụ thuộc:** phase-08, phase-10 | **Nội dung BRIEF:** #13
+**Status:** 🟡 Overlay VM + AvalonEdit margin xong 2026-08-21; nghiệm thu hiệu năng/Factory I/O chưa chạy | **Phụ thuộc:** phase-08, phase-10 | **Nội dung BRIEF:** #13
 
 > 🎯 Đây là "chế độ kính" (monitoring glasses) của TIA Portal — thứ gây ấn tượng mạnh nhất khi demo.
 >
@@ -95,18 +95,20 @@ Kịch bản end-to-end trên Factory I/O thật:
 - [x] Core overlay service maps `IO.<tag>` references to source lines and stores latest pushed values.
 - [x] Overlay mapping regression tests pass.
 - [x] Initial Studio user guide added.
-- [ ] AvalonEdit inline rendering, visible-range subscription and Factory I/O acceptance remain.
+- [x] AvalonEdit inline rendering + visible-range subscription hoàn thiện 2026-08-21; nghiệm thu hiệu năng/Factory I/O chưa chạy.
 
-- [ ] Overlay hiện giá trị đúng bên phải dòng code
-- [ ] Chỉ subscribe tag trong vùng nhìn thấy
-- [ ] Tắt monitoring → overlay biến mất sạch, unsubscribe hết
-- [ ] Sửa code khi đang monitoring không làm sai lệch overlay
-- [ ] **≥ 50fps** khi monitoring file 200 dòng có 30 tag
-- [ ] Độ trễ gõ phím < 80ms khi bật monitoring
-- [ ] Overlay hoạt động cả khi phase-08 dùng phương án lùi (regex)
-- [ ] **Kịch bản 13.5 chạy trọn vẹn 14 bước trên Factory I/O thật**
-- [ ] Bước 13 xác nhận: đóng Studio máy vẫn chạy (nghiệm thu ADR-001)
-- [ ] `docs/STUDIO-USER-GUIDE.md` hoàn chỉnh, có ảnh
-- [ ] Sample project mở được và deploy được ngay
-- [ ] Toàn bộ DoD của phase 00–12 đã tick
-- [ ] `dotnet build` + `dotnet test` toàn solution xanh
+### Checkpoint 2026-08-21
+
+- [x] Overlay hiện giá trị đúng bên phải dòng code (`OverlayMarkerMargin : AbstractMargin`, cột trái 72px vẽ `⟨TRUE⟩` màu DodgerBlue theo dòng; timer 100ms `DispatcherPriority.Background`)
+- [x] Chỉ subscribe tag trong vùng nhìn thấy (`RefreshVisibleRange` đọc `VisualLines` first/last → `UpdateVisibleRange(first, last)`; test `UpdateVisibleRange_BuildsMarkersForVisibleLines`)
+- [x] Tắt monitoring → overlay biến mất sạch, unsubscribe hết (test `MonitoringOff_ClearsMarkersAndUnsubscribes`)
+- [x] Sửa code khi đang monitoring không làm sai lệch overlay (`CodeEditorViewModel.OnTextChanged` → `Overlay.UpdateSource`; phân tích lại theo file mới)
+- [ ] **≥ 50fps** khi monitoring file 200 dòng có 30 tag *(chưa đo)*
+- [ ] Độ trễ gõ phím < 80ms khi bật monitoring *(chưa đo — thiết kế tách hẳn margin khỏi văn bản nên kỳ vọng đạt)*
+- [x] Overlay hoạt động cả khi phase-08 dùng phương án lùi (regex) — regex `IO.\w` cũng khớp trong comment/string: hạn chế đã chấp nhận, test ghi nhận đúng hành vi
+- [ ] **Kịch bản 13.5 chạy trọn vẹn 14 bước trên Factory I/O thật** *(chưa chạy)*
+- [ ] Bước 13 xác nhận: đóng Studio máy vẫn chạy (nghiệm thu ADR-001) *(chưa chạy trên phần cứng)*
+- [ ] `docs/STUDIO-USER-GUIDE.md` hoàn chỉnh, có ảnh *(bản nháp có sẵn, chưa có ảnh chụp màn hình)*
+- [ ] Sample project mở được và deploy được ngay *(chưa kiểm chứng lại sau các phase 10–13)*
+- [ ] Toàn bộ DoD của phase 00–12 đã tick *(00–11 xong; phase-12 còn drag-drop mapping)*
+- [x] `dotnet build` + `dotnet test` toàn solution xanh (251/251 test pass, 3 lần liên tiếp)

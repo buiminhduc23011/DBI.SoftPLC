@@ -2,16 +2,16 @@
   "working_on": {
     "feature": "DBI.Studio — TIA Portal-style IDE",
     "current_plan_path": "plans/260726-2316-dbi-studio-tia-ide/",
-    "current_phase": "phase-04",
-    "task": "AvalonDock Shell & MVVM — 4 vùng dock, theme ResourceDictionary, DI",
-    "status": "coding"
+    "current_phase": "phase-10 → phase-13 (hoàn thiện sau MVP)",
+    "task": "Hoàn thiện phase 10–13: Watch Table CRUD/modify/flash/stale, Force safety UX, Device Tags card + chèn tag vào editor, Live overlay AvalonEdit",
+    "status": "done — build + test xanh 251/251 (3 lần liên tiếp), docs đã cập nhật"
   },
   "pending_tasks": [
-    "phase-04 — AvalonDock Shell & MVVM",
-    "phase-05 — Project Tree & Block Templates",
-    "phase-06 — Tag Table & Code Generator",
-    "phase-07 — Multi-file Compile & Deploy (ranh giới MVP)",
-    "phase-08 → phase-13"
+    "phase-12 còn lại: drag-drop mapping thật (5 thao tác bảng Task 12.3), discovery tag từ Runtime cho driver có discovery, sinh danh sách vùng địa chỉ cho driver không có",
+    "Nghiệm thu tải: watch 200 tag @ 10Hz UI 60fps; overlay ≥50fps, gõ phím <80ms; jitter Runtime <0.5ms khi monitoring bật",
+    "Kịch bản end-to-end 13.5 trên Factory I/O thật (14 bước, gồm đóng Studio máy vẫn chạy)",
+    "docs/STUDIO-USER-GUIDE.md bổ sung ảnh chụp màn hình; kiểm chứng lại sample project mở/deploy được",
+    "Watch Table đánh dấu 🔒 dòng bị force (chỉ báo phase-11 còn thiếu duy nhất)"
   ],
   "errors_encountered": [],
   "skipped_tests": [],
@@ -30,16 +30,18 @@
     "phase-02: TagRoute/DeviceSpec/TagDataType đặt ở Core, không phải Protocol — IDriver cần chúng trong chữ ký, bắt Core tham chiếu Protocol là lộn ngược tầng.",
     "phase-02: ProtocolJson PHẢI camelCase. Client dò requestId trên JsonDocument để phân biệt response với push, phép dò đó phân biệt hoa/thường.",
     "phase-02: thêm HighResolutionTimerScope (timeBeginPeriod 1ms). Không có nó jitter ~6ms vì timer Windows mặc định ~15.6ms.",
-    "phase-02: Directory.Build.props sửa net8.0 → net10.0 cho khớp thực tế. Không có cross-targeting nào cả.",
-    "phase-03: client marshal event bằng SynchronizationContext bắt lúc khởi tạo, không dùng Dispatcher — để tầng lõi không kéo WPF vào mà vẫn test được."
+    "phase-03: client marshal event bằng SynchronizationContext bắt lúc khởi tạo, không dùng Dispatcher — để tầng lõi không kéo WPF vào mà vẫn test được.",
+    "phase-10: WatchTableViewModel tự giữ event Notice riêng thay vì phụ thuộc ProjectService.Notice (API đó không tồn tại). FlushPending public để test deterministic, không phụ thuộc timer.",
+    "phase-11: luồng force AN TOÀN KHÔNG THOẢ HIỆP — IUserPrompt.ConfirmForceSafety gọi trước MỌI lần force; dialog checkbox bắt buộc, KHÔNG có 'đừng hỏi lại'; đóng Studio khi còn force hỏi 3 lựa chọn (xoá rồi đóng / giữ force / huỷ); force sống phía Runtime nên mất kết nối Studio không mất force.",
+    "phase-12: bù drag-drop chưa làm bằng click-chèn InsertDeviceTagCommand chèn IO.TenTag tại caret; TaskCards.ShowInstructions chỉ bật khi document active là Code editor.",
+    "phase-13: overlay vẽ bằng OverlayMarkerMargin : AbstractMargin gắn TextArea.LeftMargins (KHÔNG phải TextView), OnRender vẽ ⟨giá trị⟩ theo dòng trong VisualLines — tách hẳn khỏi văn bản nên gõ phím không chậm. Throttle 100ms DispatcherTimer Background = ≤10Hz. Regex IO.\\w cũng khớp comment/string — hạn chế chấp nhận của phương án lùi."
   ],
   "known_gaps": [
     "B-6: 4 driver phần cứng (Modbus/FactoryIO/Delta/Omron) vẫn chỉ đọc/ghi bool. Nhưng HẾT im lặng: gặp tag Int/Real thì ghi LastError rõ ràng. Task 09.0 xử lý. SimulationDriver đã đủ 3 kiểu.",
     "Ràng buộc mô hình input double-buffer: driver PHẢI ghi đủ mọi tag nó quản lý mỗi chu kỳ, vì buffer ghi sau khi hoán đổi chứa dữ liệu của 2 chu kỳ trước.",
-    "Force I/O (CommandType.ForceTag) mới có chỗ trong contract, Runtime trả 'chưa hỗ trợ'. phase-11 làm thật.",
-    "Tag chưa từng được ghi thì không có trong SnapshotAll nên không được push. Watch Table phase-10 cần lấy danh sách tag từ TagRoutingTable, không phải từ snapshot.",
-    "MainViewModel hiện vẫn là shell demo cũ, mới nối tạm vào FakeRuntimeClient. phase-04 dựng lại.",
-    "Chưa quyết: nhiều tab editor thì mỗi tab một RoslynWorkspace hay dùng chung qua CreatingDocument."
+    "Chưa đo hiệu năng: watch 200 tag @10Hz, overlay ≥50fps/<80ms gõ phím, jitter Runtime khi monitoring bật — thiết kế có buffer/throttle nhưng chưa có số nghiệm thu.",
+    "Phase-12 drag-drop mapping thật chưa làm (đang bù bằng click-chèn); discovery device-tag từ Runtime và sinh danh sách vùng địa chỉ cũng chưa nối.",
+    "Watch Table chưa đánh dấu 🔒 dòng bị force; STUDIO-USER-GUIDE.md chưa có ảnh; kịch bản 13.5 trên Factory I/O thật chưa chạy."
   ],
-  "updated_at": "2026-07-27T02:30:00+07:00"
+  "updated_at": "2026-08-21T00:00:00+07:00"
 }
