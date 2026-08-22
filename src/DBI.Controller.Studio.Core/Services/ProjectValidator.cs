@@ -57,16 +57,10 @@ public static class ProjectValidator
 
         foreach (var tag in project.AllTags())
         {
-            if (!IsValidCSharpIdentifier(tag.Name))
+            if (string.IsNullOrWhiteSpace(tag.Name) || !IsValidTagName(tag.Name))
             {
                 issues.Add(new ValidationIssue(IssueSeverity.Error,
-                    $"Tên tag '{tag.Name}' không hợp lệ. Tên tag phải bắt đầu bằng chữ cái hoặc '_', " +
-                    "và chỉ chứa chữ, số, '_'.", tag.Name));
-            }
-            else if (ReservedKeywords.Contains(tag.Name))
-            {
-                issues.Add(new ValidationIssue(IssueSeverity.Error,
-                    $"'{tag.Name}' là từ khoá C#, không dùng làm tên tag được.", tag.Name));
+                    $"Tên tag '{tag.Name}' không hợp lệ. Tên tag không được để trống hoặc chứa ký tự đặc biệt.", tag.Name));
             }
 
             if (!seen.Add(tag.Name))
@@ -113,6 +107,12 @@ public static class ProjectValidator
     /// Identifier C# hợp lệ: ký tự đầu là chữ cái hoặc '_', các ký tự sau là chữ/số/'_'.
     /// Dùng phân loại Unicode giống đặc tả C# để tên tag tiếng Việt có dấu vẫn dùng được.
     /// </summary>
+    public static bool IsValidTagName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return false;
+        return !name.Any(c => c == '"' || c == '\n' || c == '\r' || c == '\t' || c == '\\');
+    }
+
     public static bool IsValidCSharpIdentifier(string? name)
     {
         if (string.IsNullOrEmpty(name)) return false;

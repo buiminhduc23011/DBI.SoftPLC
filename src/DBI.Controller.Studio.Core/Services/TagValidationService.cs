@@ -30,12 +30,8 @@ public static class TagValidationService
 
         if (string.IsNullOrWhiteSpace(tag.Name))
             nameErrors.Add("Tên tag không được để trống.");
-        else if (tag.Name.Contains(' '))
-            nameErrors.Add($"Tên tag '{tag.Name}' chứa khoảng trắng (hãy dùng '{tag.Name.Replace(' ', '_')}' thay thế).");
-        else if (!ProjectValidator.IsValidCSharpIdentifier(tag.Name))
-            nameErrors.Add($"Tên tag '{tag.Name}' không hợp lệ. Tên phải bắt đầu bằng chữ cái hoặc '_' và không chứa ký tự đặc biệt.");
-        else if (IsReservedKeyword(tag.Name))
-            nameErrors.Add($"'{tag.Name}' là từ khoá C#, không dùng làm tên tag được.");
+        else if (!ProjectValidator.IsValidTagName(tag.Name))
+            nameErrors.Add($"Tên tag '{tag.Name}' chứa ký tự không hợp lệ.");
 
         if (project.AllTags().Count(t => t.Name.Equals(tag.Name, StringComparison.OrdinalIgnoreCase)) > 1)
             nameErrors.Add($"Đã có tag tên '{tag.Name}'.");

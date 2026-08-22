@@ -617,6 +617,8 @@
         <Setter Property="RowHeight" Value="26" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Validation.ErrorTemplate" Value="{x:Null}" />
+        <Setter Property="CellStyle" Value="{StaticResource {x:Type DataGridCell}}" />
+        <Setter Property="RowStyle" Value="{StaticResource {x:Type DataGridRow}}" />
     </Style>
 
     <!-- ── Cây thư mục dự án (TreeView) ────────────────────────────────────── -->
