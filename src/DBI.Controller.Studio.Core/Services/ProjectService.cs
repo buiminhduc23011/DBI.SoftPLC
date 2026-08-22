@@ -290,11 +290,11 @@ public class ProjectService
             Comment = request.Comment.Trim()
         };
 
-        Directory.CreateDirectory(Path.GetDirectoryName(absolutePath)!);
-        File.WriteAllText(absolutePath, BlockTemplates.For(block.Kind, block.Name));
-
         Current.Blocks.Add(block);
         Current.IsDirty = true;
+
+        Directory.CreateDirectory(Path.GetDirectoryName(absolutePath)!);
+        File.WriteAllText(absolutePath, BlockTemplates.For(block.Kind, block.Name));
 
         return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
     }
@@ -320,10 +320,15 @@ public class ProjectService
                 $"Tệp '{newRelativePath}' đã tồn tại. Không thể đổi tên khối thành '{newName}'.");
         }
 
+        string oldName = block.Name;
+        block.Name = newName.Trim();
+        block.FileName = newRelativePath;
+        Current.IsDirty = true;
+
         if (File.Exists(oldPath))
         {
             string text = File.ReadAllText(oldPath);
-            File.WriteAllText(oldPath, RenameClass(text, block.Name, newName.Trim()));
+            File.WriteAllText(oldPath, RenameClass(text, oldName, newName.Trim()));
 
             if (!string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase))
             {
@@ -331,10 +336,6 @@ public class ProjectService
                 File.Move(oldPath, newPath);
             }
         }
-
-        block.Name = newName.Trim();
-        block.FileName = newRelativePath;
-        Current.IsDirty = true;
 
         return new ProjectLoadResult(Current, Array.Empty<ValidationIssue>());
     }

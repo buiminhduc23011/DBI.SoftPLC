@@ -68,34 +68,55 @@ public partial class InspectorViewModel : PaneViewModelBase
     public void LogInformation(string message, IssueSeverity severity = IssueSeverity.Warning) =>
         Append(Information, new LogEntry(severity, message, DateTimeOffset.Now));
 
+    private readonly object _logLock = new();
+
     public void LogInformation(IEnumerable<ValidationIssue> issues)
     {
-        foreach (var issue in issues)
-            Append(Information, new LogEntry(issue.Severity, issue.Message, DateTimeOffset.Now));
-    }
-
-    public void LogDiagnostic(string message, IssueSeverity severity = IssueSeverity.Warning) =>
-        Append(Diagnostics, new LogEntry(severity, message, DateTimeOffset.Now));
-
-    public void SetCodeDiagnostics(IEnumerable<CompileDiagnostic> diagnostics)
-    {
-        Diagnostics.Clear();
-        foreach (var diagnostic in diagnostics)
+        lock (_logLock)
         {
-            var severity = diagnostic.Severity switch
-            {
-                CompileDiagnosticSeverity.Error => IssueSeverity.Error,
-                CompileDiagnosticSeverity.Warning => IssueSeverity.Warning,
-                _ => IssueSeverity.Warning
-            };
-            Append(Diagnostics, new LogEntry(
-                severity,
-                $"[{diagnostic.Id}] {diagnostic.Message} ({diagnostic.FilePath}:{diagnostic.Line}:{diagnostic.Column})",
-                DateTimeOffset.Now));
+            foreach (var issue in issues)
+                AppendInternal(Information, new LogEntry(issue.Severity, issue.Message, DateTimeOffset.Now));
         }
     }
 
-    private static void Append(ObservableCollection<LogEntry> target, LogEntry entry)
+    public void LogDiagnostic(string message, IssueSeverity severity = IssueSeverity.Warning)
+    {
+        lock (_logLock)
+        {
+            AppendInternal(Diagnostics, new LogEntry(severity, message, DateTimeOffset.Now));
+        }
+    }
+
+    public void SetCodeDiagnostics(IEnumerable<CompileDiagnostic> diagnostics)
+    {
+        lock (_logLock)
+        {
+            Diagnostics.Clear();
+            foreach (var diagnostic in diagnostics)
+            {
+                var severity = diagnostic.Severity switch
+                {
+                    CompileDiagnosticSeverity.Error => IssueSeverity.Error,
+                    CompileDiagnosticSeverity.Warning => IssueSeverity.Warning,
+                    _ => IssueSeverity.Warning
+                };
+                AppendInternal(Diagnostics, new LogEntry(
+                    severity,
+                    $"[{diagnostic.Id}] {diagnostic.Message} ({diagnostic.FilePath}:{diagnostic.Line}:{diagnostic.Column})",
+                    DateTimeOffset.Now));
+            }
+        }
+    }
+
+    private void Append(ObservableCollection<LogEntry> target, LogEntry entry)
+    {
+        lock (_logLock)
+        {
+            AppendInternal(target, entry);
+        }
+    }
+
+    private static void AppendInternal(ObservableCollection<LogEntry> target, LogEntry entry)
     {
         target.Add(entry);
 
@@ -103,8 +124,14 @@ public partial class InspectorViewModel : PaneViewModelBase
     }
 
     [RelayCommand]
-    private void ClearInformation() => Information.Clear();
+    private void ClearInformation()
+    {
+        lock (_logLock) { Information.Clear(); }
+    }
 
     [RelayCommand]
-    private void ClearDiagnostics() => Diagnostics.Clear();
+    private void ClearDiagnostics()
+    {
+        lock (_logLock) { Diagnostics.Clear(); }
+    }
 }

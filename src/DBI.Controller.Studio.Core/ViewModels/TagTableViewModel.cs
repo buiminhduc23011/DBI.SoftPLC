@@ -159,6 +159,13 @@ public sealed partial class TagTableViewModel : DocumentViewModelBase
     public IReadOnlyList<TagDataType> DataTypes { get; } = Enum.GetValues<TagDataType>();
     public IReadOnlyList<TagDirection> Directions { get; } = Enum.GetValues<TagDirection>();
 
+    public void RefreshAvailableDevices()
+    {
+        AvailableDevices.Clear();
+        foreach (var device in _project.Devices)
+            AvailableDevices.Add(device.Name);
+    }
+
     [ObservableProperty]
     private TagRowViewModel? _selectedRow;
 
@@ -170,11 +177,23 @@ public sealed partial class TagTableViewModel : DocumentViewModelBase
     [RelayCommand]
     private void AddRow()
     {
+        string baseName = "NewTag";
+        string candidate = baseName;
+        int index = 1;
+        var existingNames = _project.AllTags().Select(t => t.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        while (existingNames.Contains(candidate))
+        {
+            candidate = $"{baseName}_{index++}";
+        }
+
+        string defaultDevice = _project.Devices.FirstOrDefault()?.Name ?? string.Empty;
+
         var tag = new Tag
         {
-            Name = "NewTag",
+            Name = candidate,
             DataType = TagDataType.Bool,
-            Direction = TagDirection.Input
+            Direction = TagDirection.Input,
+            Device = defaultDevice
         };
 
         _table.Tags.Add(tag);

@@ -1,50 +1,49 @@
 <!--
-    Bảng màu Dark theo Visual Studio. Cùng bộ key với Light.xaml — đổi theme là swap
+    Bảng màu Dark theo Visual Studio 2022. Cùng bộ key với Light.xaml — đổi theme là swap
     MergedDictionaries, thiếu một key nào thì chỗ đó sẽ trống trơn lúc runtime (test canh:
     ThemeDictionaryParityTests). Mọi brush dùng qua {DynamicResource}, KHÔNG {Binding}.
 -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <SolidColorBrush x:Key="WindowBg"      Color="#1F1F1F" />
+    <SolidColorBrush x:Key="WindowBg"      Color="#1E1E1E" />
     <SolidColorBrush x:Key="CardBg"        Color="#252526" />
     <SolidColorBrush x:Key="HeaderBg"      Color="#2D2D30" />
-    <SolidColorBrush x:Key="TextPrimary"   Color="#F1F1F1" />
-    <SolidColorBrush x:Key="TextSecondary" Color="#A0A0A0" />
-    <SolidColorBrush x:Key="BorderColor"   Color="#3F3F46" />
-    <SolidColorBrush x:Key="AccentColor"   Color="#0F6CBD" />
+    <SolidColorBrush x:Key="TextPrimary"   Color="#FFFFFF" />
+    <SolidColorBrush x:Key="TextSecondary" Color="#CCCCCC" />
+    <SolidColorBrush x:Key="BorderColor"   Color="#3E3E42" />
+    <SolidColorBrush x:Key="AccentColor"   Color="#007ACC" />
 
-    <!-- Màu trạng thái máy — sáng hơn bản Light một chút để đủ tương phản trên nền tối. -->
-    <SolidColorBrush x:Key="SuccessColor"  Color="#16A34A" />
-    <SolidColorBrush x:Key="DangerColor"   Color="#E5484D" />
-    <SolidColorBrush x:Key="WarningColor"  Color="#D4A017" />
-    <SolidColorBrush x:Key="IdleColor"     Color="#808080" />
-    <!-- Alias của IdleColor: 3 VM (ProjectTree/DeviceConfig/WatchTable) đã tham chiếu tên này
-         từ phase trước nhưng key từng không tồn tại → glyph tra ra Transparent vô hình. -->
-    <SolidColorBrush x:Key="MutedColor"    Color="#808080" />
+    <!-- Màu trạng thái máy — sáng nét tương phản cao trên nền tối. -->
+    <SolidColorBrush x:Key="SuccessColor"  Color="#4EC9B0" />
+    <SolidColorBrush x:Key="DangerColor"   Color="#F85149" />
+    <SolidColorBrush x:Key="WarningColor"  Color="#E5C07B" />
+    <SolidColorBrush x:Key="IdleColor"     Color="#A0A0A0" />
+    <!-- Alias của IdleColor: 3 VM (ProjectTree/DeviceConfig/WatchTable) đã tham chiếu tên này. -->
+    <SolidColorBrush x:Key="MutedColor"    Color="#A0A0A0" />
 
     <SolidColorBrush x:Key="SelectionBg"   Color="#094771" />
-    <SolidColorBrush x:Key="HoverBg"       Color="#3E3E40" />
-    <SolidColorBrush x:Key="DisabledText"  Color="#656565" />
+    <SolidColorBrush x:Key="HoverBg"       Color="#3E3E42" />
+    <SolidColorBrush x:Key="DisabledText"  Color="#7A7A7A" />
 
     <!-- Ô nhập focus viền xanh VS; scrollbar/tooltip/menu con bám bảng VS dark. -->
     <SolidColorBrush x:Key="InputBorderFocus"    Color="#007ACC" />
     <SolidColorBrush x:Key="ScrollbarBg"         Color="#252526" />
-    <SolidColorBrush x:Key="ScrollbarThumb"      Color="#424242" />
-    <SolidColorBrush x:Key="ScrollbarThumbHover" Color="#686868" />
-    <SolidColorBrush x:Key="TooltipBg"           Color="#1B1B1A" />
-    <SolidColorBrush x:Key="TooltipFg"           Color="#F1F1F1" />
+    <SolidColorBrush x:Key="ScrollbarThumb"      Color="#4E4E52" />
+    <SolidColorBrush x:Key="ScrollbarThumbHover" Color="#6E6E72" />
+    <SolidColorBrush x:Key="TooltipBg"           Color="#252526" />
+    <SolidColorBrush x:Key="TooltipFg"           Color="#FFFFFF" />
     <SolidColorBrush x:Key="TooltipBorder"       Color="#454545" />
     <SolidColorBrush x:Key="MenuHoverBg"         Color="#3E3E40" />
-    <SolidColorBrush x:Key="SubMenuBg"           Color="#1F1F1F" />
+    <SolidColorBrush x:Key="SubMenuBg"           Color="#1E1E1E" />
     <SolidColorBrush x:Key="SubMenuBorder"       Color="#454545" />
 
-    <!-- Nền dòng watch đang bị force: đỏ nhạt trong suốt trên nền tối (đã thay #33C72C3B cứng). -->
-    <SolidColorBrush x:Key="ForceRowBg"          Color="#33C72C3B" />
+    <!-- Nền dòng watch đang bị force: đỏ nhạt trong suốt trên nền tối. -->
+    <SolidColorBrush x:Key="ForceRowBg"          Color="#44C72C3B" />
     <!-- Marker ⟨giá trị⟩ live overlay cuối dòng code. -->
     <SolidColorBrush x:Key="OverlayMarkerBrush"  Color="#3794FF" />
-    <!-- Viền drop-target khi kéo tag từ Toolbox (đã thay #005A9E cứng). -->
-    <SolidColorBrush x:Key="TextOnAccent"          Color="#FFFFFF" />
-    <SolidColorBrush x:Key="DropHighlightBrush"  Color="#005A9E" />
+    <!-- Viền drop-target khi kéo tag từ Toolbox. -->
+    <SolidColorBrush x:Key="TextOnAccent"        Color="#FFFFFF" />
+    <SolidColorBrush x:Key="DropHighlightBrush"  Color="#007ACC" />
 
 </ResourceDictionary>

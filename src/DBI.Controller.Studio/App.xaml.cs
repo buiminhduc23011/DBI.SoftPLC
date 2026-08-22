@@ -23,6 +23,14 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        DispatcherUnhandledException += (_, args) =>
+        {
+            MessageBox.Show(args.Exception.ToString(), "Studio Startup Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            args.Handled = true;
+        };
+
+        ShutdownMode = ShutdownMode.OnMainWindowClose;
+
         // Client tạo TRÊN UI thread: nó bắt SynchronizationContext ngay lúc khởi tạo, nhờ đó mọi
         // event tự về đúng thread và ViewModel không phải tự Dispatcher.BeginInvoke.
         IRuntimeClient runtime = e.Args.Contains(FakeRuntimeSwitch, StringComparer.OrdinalIgnoreCase)

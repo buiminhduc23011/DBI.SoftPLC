@@ -9,18 +9,28 @@
         xmlns:behaviors="clr-namespace:DBI.Controller.Studio.Behaviors"
         xmlns:converters="clr-namespace:DBI.Controller.Studio.Converters"
         xmlns:services="clr-namespace:DBI.Controller.Studio.Services"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         xmlns:local="clr-namespace:DBI.Controller.Studio"
         Title="DBI.Studio - Soft PLC Engineering"
         Height="850" Width="1360"
         Icon="pack://application:,,,/icon.ico"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource WindowBg}"
-        Foreground="{DynamicResource TextPrimary}">
+        Foreground="{DynamicResource TextPrimary}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        RenderOptions.ClearTypeHint="Enabled"
+        RenderOptions.BitmapScalingMode="HighQuality"
+        FontFamily="Segoe UI"
+        FontSize="13">
 
     <Window.InputBindings>
+        <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewProjectCommand}" />
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenProjectCommand}" />
         <KeyBinding Key="B" Modifiers="Control+Shift" Command="{Binding CompileCommand}" />
         <KeyBinding Key="F5" Command="{Binding DeployCommand}" />
-        <!-- Nhãn phím tắt trên UI phải thật: Ctrl+S = Save all (tooltip nút toolbar), Ctrl+T = Search Toolbox. -->
         <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveAllCommand}" />
         <KeyBinding Key="T" Modifiers="Control" Command="{x:Static local:MainWindow.FocusToolboxFilter}" />
     </Window.InputBindings>
@@ -40,65 +50,141 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
         <DataTemplate x:Key="LogEntryTemplate">
-            <StackPanel Orientation="Horizontal" Margin="4,1">
-                <TextBlock Text="{Binding TimeText}" Style="{StaticResource MonospaceText}"
-                           FontSize="11" Foreground="{DynamicResource TextSecondary}" Margin="0,0,8,0" />
-                <TextBlock Text="{Binding Message}" Style="{StaticResource LabelText}" FontSize="11"
-                           TextWrapping="Wrap">
-                    <TextBlock.Foreground>
-                        <MultiBinding Converter="{StaticResource ThemeBrush}">
-                            <Binding Path="BrushKey" />
-                            <Binding Path="Version" Source="{x:Static services:ThemeVersion.Instance}" />
-                        </MultiBinding>
-                    </TextBlock.Foreground>
-                </TextBlock>
-            </StackPanel>
+            <Border Padding="6,3" Margin="0,1" SnapsToDevicePixels="True">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding TimeText}" Style="{StaticResource MonospaceText}"
+                               FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,0,10,0" VerticalAlignment="Top" />
+                    <TextBlock Grid.Column="1" Text="{Binding Message}" Style="{StaticResource LabelText}" FontSize="12.5"
+                               TextWrapping="Wrap" VerticalAlignment="Top">
+                        <TextBlock.Foreground>
+                            <MultiBinding Converter="{StaticResource ThemeBrush}">
+                                <Binding Path="BrushKey" />
+                                <Binding Path="Version" Source="{x:Static services:ThemeVersion.Instance}" />
+                            </MultiBinding>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                </Grid>
+            </Border>
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:ProjectTreeViewModel}">
-            <TreeView ItemsSource="{Binding Roots}"
-                      behaviors:ProjectTreeBehaviors.SelectedNode="{Binding SelectedNode, Mode=TwoWay}"
-                      behaviors:ProjectTreeBehaviors.ActivateTarget="{Binding}">
-                <TreeView.ItemContainerStyle>
-                    <!-- BasedOn implicit style để giữ template theme (expander/selection) —
-                         style local chỉ thêm binding VM, không thay thế template. -->
-                    <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
-                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
-                        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
-                        <Setter Property="ContextMenu">
-                            <Setter.Value>
-                                <ContextMenu ItemsSource="{Binding ContextMenuItems}">
-                                    <ContextMenu.ItemContainerStyle>
-                                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
-                                            <Setter Property="Header" Value="{Binding Title}" />
-                                            <Setter Property="Command" Value="{Binding Command}" />
-                                            <Setter Property="CommandParameter" Value="{Binding Parameter}" />
-                                            <Setter Property="IsEnabled" Value="{Binding IsEnabled}" />
+            <Grid>
+                <!-- Trạng thái khi chưa mở project -->
+                <Border Background="{DynamicResource CardBg}" Padding="16"
+                        Visibility="{Binding Roots.Count, RelativeSource={RelativeSource AncestorType=ContentPresenter}, Converter={StaticResource EmptyStringToVisibility}, FallbackValue=Collapsed}">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <iconPacks:PackIconCodicons Kind="FolderLibrary" Width="44" Height="44"
+                                                   Foreground="{DynamicResource AccentColor}" HorizontalAlignment="Center" Margin="0,0,0,12" />
+                        <TextBlock Text="Chưa mở dự án" FontWeight="SemiBold" FontSize="13.5"
+                                   Foreground="{DynamicResource TextPrimary}" HorizontalAlignment="Center" Margin="0,0,0,6" />
+                        <TextBlock Text="Tạo mới hoặc mở dự án để bắt đầu lập trình SoftPLC" TextWrapping="Wrap"
+                                   TextAlignment="Center" Style="{StaticResource MutedText}" FontSize="12" Margin="0,0,0,14" />
+                        <Button Content="Tạo dự án mới (Ctrl+N)" Style="{StaticResource AccentButton}"
+                                Command="{Binding DataContext.NewProjectCommand, RelativeSource={RelativeSource AncestorType=Window}}" Margin="0,0,0,8" />
+                        <Button Content="Mở dự án (Ctrl+O)" Style="{StaticResource FlatButton}"
+                                Command="{Binding DataContext.OpenProjectCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Cây thư mục dự án -->
+                <TreeView ItemsSource="{Binding Roots}"
+                          behaviors:ProjectTreeBehaviors.SelectedNode="{Binding SelectedNode, Mode=TwoWay}"
+                          behaviors:ProjectTreeBehaviors.ActivateTarget="{Binding}">
+                    <TreeView.ItemContainerStyle>
+                        <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+                            <Setter Property="ContextMenu">
+                                <Setter.Value>
+                                    <ContextMenu ItemsSource="{Binding ContextMenuItems}">
+                                        <ContextMenu.ItemContainerStyle>
+                                            <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                                <Setter Property="Header" Value="{Binding Title}" />
+                                                <Setter Property="Command" Value="{Binding Command}" />
+                                                <Setter Property="CommandParameter" Value="{Binding Parameter}" />
+                                                <Setter Property="IsEnabled" Value="{Binding IsEnabled}" />
+                                            </Style>
+                                        </ContextMenu.ItemContainerStyle>
+                                    </ContextMenu>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </TreeView.ItemContainerStyle>
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal" Margin="2,2">
+                                <!-- Codicons Icon theo Kind -->
+                                <iconPacks:PackIconCodicons Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center">
+                                    <iconPacks:PackIconCodicons.Style>
+                                        <Style TargetType="iconPacks:PackIconCodicons">
+                                            <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
+                                            <Setter Property="Kind" Value="File" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Kind}" Value="Root">
+                                                    <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
+                                                    <Setter Property="Kind" Value="FolderLibrary" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Kind}" Value="Folder">
+                                                    <Setter Property="Foreground" Value="{DynamicResource WarningColor}" />
+                                                    <Setter Property="Kind" Value="Folder" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Kind}" Value="Block">
+                                                    <Setter Property="Foreground" Value="{DynamicResource SuccessColor}" />
+                                                    <Setter Property="Kind" Value="Code" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Kind}" Value="TagTable">
+                                                    <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
+                                                    <Setter Property="Kind" Value="Table" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Kind}" Value="DeviceConfiguration">
+                                                    <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
+                                                    <Setter Property="Kind" Value="CircuitBoard" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Kind}" Value="Device">
+                                                    <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
+                                                    <Setter Property="Kind" Value="CircuitBoard" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Kind}" Value="OnlineDiagnostics">
+                                                    <Setter Property="Foreground" Value="{DynamicResource SuccessColor}" />
+                                                    <Setter Property="Kind" Value="Pulse" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Kind}" Value="GeneratedFile">
+                                                    <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+                                                    <Setter Property="Kind" Value="FileCode" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Kind}" Value="WatchTable">
+                                                    <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
+                                                    <Setter Property="Kind" Value="Eye" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Kind}" Value="ForceTable">
+                                                    <Setter Property="Foreground" Value="{DynamicResource DangerColor}" />
+                                                    <Setter Property="Kind" Value="Lock" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
                                         </Style>
-                                    </ContextMenu.ItemContainerStyle>
-                                </ContextMenu>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </TreeView.ItemContainerStyle>
-                <TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                        <StackPanel Orientation="Horizontal" Margin="4,3">
-                            <TextBlock Text="{Binding Title}" Style="{StaticResource LabelText}" />
-                            <!-- MultiBinding với ThemeVersion: đổi theme live thì glyph tra lại brush mới -->
-                            <TextBlock Text="{Binding StatusGlyph}">
-                                <TextBlock.Foreground>
-                                    <MultiBinding Converter="{StaticResource ThemeBrush}">
-                                        <Binding Path="StatusColorKey" />
-                                        <Binding Path="Version" Source="{x:Static services:ThemeVersion.Instance}" />
-                                    </MultiBinding>
-                                </TextBlock.Foreground>
-                            </TextBlock>
-                        </StackPanel>
-                    </HierarchicalDataTemplate>
-                </TreeView.ItemTemplate>
-            </TreeView>
+                                    </iconPacks:PackIconCodicons.Style>
+                                </iconPacks:PackIconCodicons>
+
+                                <TextBlock Text="{Binding Title}" Style="{StaticResource LabelText}" FontSize="13" />
+
+                                <TextBlock Text="{Binding StatusGlyph}" FontSize="12" Margin="6,0,0,0">
+                                    <TextBlock.Foreground>
+                                        <MultiBinding Converter="{StaticResource ThemeBrush}">
+                                            <Binding Path="StatusColorKey" />
+                                            <Binding Path="Version" Source="{x:Static services:ThemeVersion.Instance}" />
+                                        </MultiBinding>
+                                    </TextBlock.Foreground>
+                                </TextBlock>
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+            </Grid>
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:InspectorViewModel}">
@@ -114,18 +200,32 @@
                 </TabItem>
                 <TabItem Header="Information">
                     <DockPanel>
-                        <Button DockPanel.Dock="Top" Content="Clear log" HorizontalAlignment="Left"
-                                Margin="6" Style="{StaticResource FlatButton}"
-                                Command="{Binding ClearInformationCommand}" />
+                        <Border DockPanel.Dock="Top" Background="{DynamicResource HeaderBg}" Padding="6,4"
+                                BorderThickness="0,0,0,1" BorderBrush="{DynamicResource BorderColor}">
+                            <Button Style="{StaticResource FlatButton}" HorizontalAlignment="Left"
+                                    Command="{Binding ClearInformationCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <iconPacks:PackIconCodicons Kind="Trash" Foreground="{DynamicResource TextSecondary}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Clear log" Style="{StaticResource LabelText}" FontSize="12.5" />
+                                </StackPanel>
+                            </Button>
+                        </Border>
                         <ListBox ItemsSource="{Binding Information}" Background="{DynamicResource CardBg}"
                                  BorderThickness="0" ItemTemplate="{StaticResource LogEntryTemplate}" />
                     </DockPanel>
                 </TabItem>
                 <TabItem Header="Diagnostics">
                     <DockPanel>
-                        <Button DockPanel.Dock="Top" Content="Clear log" HorizontalAlignment="Left"
-                                Margin="6" Style="{StaticResource FlatButton}"
-                                Command="{Binding ClearDiagnosticsCommand}" />
+                        <Border DockPanel.Dock="Top" Background="{DynamicResource HeaderBg}" Padding="6,4"
+                                BorderThickness="0,0,0,1" BorderBrush="{DynamicResource BorderColor}">
+                            <Button Style="{StaticResource FlatButton}" HorizontalAlignment="Left"
+                                    Command="{Binding ClearDiagnosticsCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <iconPacks:PackIconCodicons Kind="Trash" Foreground="{DynamicResource TextSecondary}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Clear log" Style="{StaticResource LabelText}" FontSize="12.5" />
+                                </StackPanel>
+                            </Button>
+                        </Border>
                         <ListBox ItemsSource="{Binding Diagnostics}" Background="{DynamicResource CardBg}"
                                  BorderThickness="0" ItemTemplate="{StaticResource LogEntryTemplate}" />
                     </DockPanel>
@@ -134,7 +234,6 @@
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:TaskCardsViewModel}">
-            <!-- Toolbox kiểu Visual Studio: ô lọc trên đầu, mục xếp nhóm sập/mở được. -->
             <DockPanel Background="{DynamicResource CardBg}">
                 <Border DockPanel.Dock="Top" Padding="8,8,8,4">
                     <Grid>
@@ -142,18 +241,18 @@
                                  Style="{StaticResource SearchBox}"
                                  Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
                                  ToolTip="Lọc theo tên tag hoặc device" />
-                        <TextBlock Text="Search Toolbox (Ctrl+T)" Margin="1,1,0,0"
-                                   Style="{StaticResource MutedText}" FontSize="12"
-                                   IsHitTestVisible="False"
+                        <TextBlock Text="Search Toolbox (Ctrl+T)" Margin="10,0,0,0"
+                                   Style="{StaticResource MutedText}" FontSize="12.5"
+                                   IsHitTestVisible="False" VerticalAlignment="Center"
                                    Visibility="{Binding FilterText, Converter={StaticResource EmptyStringToVisibility}}" />
                     </Grid>
                 </Border>
-                <Border DockPanel.Dock="Top" Padding="10,0,8,6">
-                    <TextBlock Text="{Binding FilterSummary}" Style="{StaticResource MutedText}" FontSize="11" />
+                <Border DockPanel.Dock="Top" Padding="10,0,10,6">
+                    <TextBlock Text="{Binding FilterSummary}" Style="{StaticResource MutedText}" FontSize="12" />
                 </Border>
 
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding Groups}" Margin="4,0,4,8">
+                    <ItemsControl ItemsSource="{Binding Groups}" Margin="2,0,2,6">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:ToolboxGroup}">
                                 <Expander IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
@@ -161,9 +260,9 @@
                                     <Expander.Header>
                                         <Grid Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Expander}}">
                                             <TextBlock Text="{Binding Title}" Style="{StaticResource SectionHeader}"
-                                                       FontWeight="SemiBold" FontSize="11" Margin="0" />
+                                                       FontWeight="Bold" FontSize="12.5" Margin="0" />
                                             <TextBlock HorizontalAlignment="Right" Style="{StaticResource MutedText}"
-                                                       FontSize="11" Margin="0" Text="{Binding Items.Count}" />
+                                                       FontSize="12" Margin="0,0,20,0" Text="{Binding Items.Count}" />
                                         </Grid>
                                     </Expander.Header>
                                     <ItemsControl ItemsSource="{Binding Items}">
@@ -171,13 +270,13 @@
                                             <DataTemplate DataType="{x:Type vm:TaskCardItem}">
                                                 <Button Command="{Binding DataContext.InsertInstructionCommand, RelativeSource={RelativeSource AncestorType=ItemsControl, AncestorLevel=2}}"
                                                         CommandParameter="{Binding}"
-                                                        ToolTip="Click để chèn snippet tại caret — double-click chỉ chèn một lần"
+                                                        ToolTip="Click để chèn snippet tại con trỏ"
                                                         behaviors:SingleClickCommandBehavior.Enabled="True"
                                                         Style="{StaticResource ToolboxItemButton}">
                                                     <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="&#xE943;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                                                   Foreground="{DynamicResource AccentColor}" Margin="0,0,8,0" VerticalAlignment="Center" />
-                                                        <TextBlock Text="{Binding Name}" Style="{StaticResource LabelText}" FontSize="12" />
+                                                        <iconPacks:PackIconCodicons Kind="SymbolMethod" Foreground="{DynamicResource SuccessColor}"
+                                                                                   Width="14" Height="14" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding Name}" Style="{StaticResource LabelText}" FontSize="12.5" />
                                                     </StackPanel>
                                                 </Button>
                                             </DataTemplate>
@@ -186,7 +285,7 @@
                                                         behaviors:SingleClickCommandBehavior.Enabled="True"
                                                         Command="{Binding DataContext.InsertDeviceTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl, AncestorLevel=2}}"
                                                         CommandParameter="{Binding}"
-                                                        ToolTip="Kéo vào Tag Table / Watch Table / code editor — double-click chỉ chèn một lần IO.TenTag"
+                                                        ToolTip="Kéo vào Tag Table / Watch Table / code editor"
                                                         Style="{StaticResource ToolboxItemButton}">
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
@@ -194,8 +293,8 @@
                                                             <ColumnDefinition Width="*" />
                                                             <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
-                                                        <TextBlock Grid.Column="0" Text="{Binding MapGlyph}" Margin="0,0,7,0"
-                                                                   FontSize="10" VerticalAlignment="Center">
+                                                        <TextBlock Grid.Column="0" Text="{Binding MapGlyph}" Margin="0,0,8,0"
+                                                                   FontSize="11" VerticalAlignment="Center">
                                                             <TextBlock.Foreground>
                                                                 <MultiBinding Converter="{StaticResource ThemeBrush}">
                                                                     <Binding Path="IsMapped">
@@ -208,9 +307,9 @@
                                                             </TextBlock.Foreground>
                                                         </TextBlock>
                                                         <TextBlock Grid.Column="1" Text="{Binding Name}" Style="{StaticResource LabelText}"
-                                                                   FontSize="12" TextTrimming="CharacterEllipsis" />
+                                                                   FontSize="12.5" TextTrimming="CharacterEllipsis" />
                                                         <TextBlock Grid.Column="2" Text="{Binding Address}" Style="{StaticResource MonospaceText}"
-                                                                   FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0"
+                                                                   FontSize="12" VerticalAlignment="Center" Margin="8,0,0,0"
                                                                    Foreground="{DynamicResource TextSecondary}" />
                                                     </Grid>
                                                 </Button>
@@ -226,13 +325,12 @@
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:CodeEditorViewModel}">
-            <!-- Task 12.3 — drop target: kéo tag từ Toolbox vào editor chèn IO.TenTag tại caret -->
-            <Border BorderThickness="2" BorderBrush="Transparent"
+            <Border BorderThickness="0" BorderBrush="Transparent"
                     behaviors:TagDragDropBehaviors.DropTarget="True">
                 <roslynpad:RoslynCodeEditor behaviors:RoslynCodeEditorBehaviors.EnableRoslyn="True"
                                             behaviors:RoslynCodeEditorBehaviors.EnableOverlay="True"
-                                            FontFamily="Consolas"
-                                            FontSize="13"
+                                            FontFamily="Cascadia Code,Consolas"
+                                            FontSize="14"
                                             ShowLineNumbers="True"
                                             Background="{DynamicResource CardBg}"
                                             Foreground="{DynamicResource TextPrimary}" />
@@ -240,47 +338,111 @@
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:TagTableViewModel}">
-            <DockPanel Margin="6">
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-                    <Button Content="+ Add" Style="{StaticResource FlatButton}"
-                            Command="{Binding AddRowCommand}" />
-                    <Button Content="Delete" Style="{StaticResource FlatButton}"
-                            Command="{Binding DeleteRowCommand}" />
-                </StackPanel>
+            <DockPanel Margin="0">
+                <Border DockPanel.Dock="Top" Background="{DynamicResource HeaderBg}"
+                        BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Padding="8,4">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Style="{StaticResource FlatButton}" Command="{Binding AddRowCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconCodicons Kind="Add" Foreground="{DynamicResource SuccessColor}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Add Tag" Style="{StaticResource LabelText}" FontSize="12.5" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource FlatButton}" Command="{Binding DeleteRowCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconCodicons Kind="Trash" Foreground="{DynamicResource DangerColor}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Delete" Style="{StaticResource LabelText}" FontSize="12.5" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
 
-                <!-- Task 12.3 — drop target: kéo device tag từ Toolbox vào đây để map -->
-                <Border BorderThickness="2" BorderBrush="Transparent"
+                <Border BorderThickness="0" BorderBrush="Transparent"
                         behaviors:TagDragDropBehaviors.DropTarget="True">
                     <DataGrid ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
-                              Style="{StaticResource FlatDataGrid}" AutoGenerateColumns="False"
-                              CanUserAddRows="False">
+                              Style="{StaticResource FlatDataGrid}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Name" Width="180">
-                                <DataGridTextColumn.Binding>
-                                    <Binding Path="Name" UpdateSourceTrigger="PropertyChanged"
-                                             ValidatesOnNotifyDataErrors="True" />
-                                </DataGridTextColumn.Binding>
-                            </DataGridTextColumn>
-                            <DataGridComboBoxColumn Header="Type" Width="90"
-                                                    SelectedItemBinding="{Binding DataType, UpdateSourceTrigger=PropertyChanged}"
-                                                    ItemsSource="{Binding DataContext.DataTypes, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
-                            <DataGridComboBoxColumn Header="Direction" Width="110"
-                                                    SelectedItemBinding="{Binding Direction, UpdateSourceTrigger=PropertyChanged}"
-                                                    ItemsSource="{Binding DataContext.Directions, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
-                            <DataGridComboBoxColumn Header="Device" Width="160"
-                                                    SelectedItemBinding="{Binding Device, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
-                                                    ItemsSource="{Binding DataContext.AvailableDevices, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
-                            <DataGridTextColumn Header="Address" Width="140">
-                                <DataGridTextColumn.Binding>
-                                    <Binding Path="Address" UpdateSourceTrigger="PropertyChanged"
-                                             ValidatesOnNotifyDataErrors="True" />
-                                </DataGridTextColumn.Binding>
-                            </DataGridTextColumn>
-                            <DataGridTextColumn Header="Comment" Width="*">
-                                <DataGridTextColumn.Binding>
-                                    <Binding Path="Comment" UpdateSourceTrigger="PropertyChanged" />
-                                </DataGridTextColumn.Binding>
-                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="Name" Width="180">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}" FontWeight="Medium" VerticalAlignment="Center" Margin="8,0" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Type" Width="110">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding DataType}" VerticalAlignment="Center" Margin="8,0" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding DataContext.DataTypes, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                  SelectedItem="{Binding DataType, UpdateSourceTrigger=PropertyChanged}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Direction" Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Direction}" VerticalAlignment="Center" Margin="8,0" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding DataContext.Directions, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                  SelectedItem="{Binding Direction, UpdateSourceTrigger=PropertyChanged}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Device" Width="170">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Device}" VerticalAlignment="Center" Margin="8,0" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding DataContext.AvailableDevices, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                  SelectedItem="{Binding Device, UpdateSourceTrigger=PropertyChanged}"
+                                                  IsEditable="True" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Address" Width="150">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Address}" Style="{StaticResource MonospaceText}" VerticalAlignment="Center" Margin="8,0" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MonospaceTextBox}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Comment" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Comment}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="8,0" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>
@@ -288,133 +450,203 @@
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:DeviceConfigurationViewModel}">
-            <DockPanel Margin="6">
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-                    <ComboBox Width="170" ItemsSource="{Binding DriverCatalog}" SelectedItem="{Binding SelectedDriver}" DisplayMemberPath="DisplayName" Margin="0,0,6,0" />
-                    <TextBox Width="150" Text="{Binding NewDeviceName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,6,0" />
-                    <Button Content="+ Add Device" Style="{StaticResource FlatButton}" Command="{Binding AddDeviceCommand}" />
-                    <Button Content="+ Add Simulation" Style="{StaticResource FlatButton}" Command="{Binding AddSimulationCommand}" />
-                    <Button Content="Delete" Style="{StaticResource FlatButton}" Command="{Binding DeleteSelectedCommand}" />
-                    <Button Content="Test Connection" Style="{StaticResource FlatButton}" Margin="12,0,0,0"
-                            Command="{Binding TestConnectionCommand}"
-                            IsEnabled="{Binding IsTestingConnection, Converter={StaticResource InverseBool}}" />
-                </StackPanel>
-                <DataGrid ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
-                          AutoGenerateColumns="False" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Name" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="180" />
-                        <DataGridTextColumn Header="Driver" Binding="{Binding DriverType}" Width="160" IsReadOnly="True" />
-                        <DataGridTextColumn Header="Settings" Binding="{Binding SettingsSummary}" Width="120" IsReadOnly="True" />
-                        <DataGridTemplateColumn Header="Status" Width="110">
-                            <DataGridTemplateColumn.CellTemplate>
+            <DockPanel Margin="0">
+                <Border DockPanel.Dock="Top" Background="{DynamicResource HeaderBg}"
+                        BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Padding="8,4">
+                    <StackPanel Orientation="Horizontal">
+                        <ComboBox Width="180" ItemsSource="{Binding DriverCatalog}" SelectedItem="{Binding SelectedDriver}"
+                                  Margin="0,0,6,0">
+                            <ComboBox.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Ellipse Width="9" Height="9" VerticalAlignment="Center">
-                                            <Ellipse.Fill>
-                                                <MultiBinding Converter="{StaticResource ThemeBrush}">
-                                                    <Binding Path="StatusColorKey" />
-                                                    <Binding Path="Version" Source="{x:Static services:ThemeVersion.Instance}" />
-                                                </MultiBinding>
-                                            </Ellipse.Fill>
-                                        </Ellipse>
-                                        <TextBlock Text="{Binding StatusText}" Margin="6,0,0,0" VerticalAlignment="Center"
-                                                   ToolTip="{Binding StatusDetail}" />
-                                    </StackPanel>
+                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
                                 </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-                <DataGrid DockPanel.Dock="Bottom" ItemsSource="{Binding Settings}" AutoGenerateColumns="False" Height="130" Margin="0,8,0,0" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Setting" Binding="{Binding Label}" IsReadOnly="True" Width="180" />
-                        <DataGridTextColumn Header="Value" Binding="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Width="*" />
-                    </DataGrid.Columns>
-                </DataGrid>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBox Width="140" Text="{Binding NewDeviceName, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0,0,6,0" />
+                        <Button Style="{StaticResource FlatButton}" Command="{Binding AddDeviceCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconCodicons Kind="Add" Foreground="{DynamicResource SuccessColor}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Add Device" Style="{StaticResource LabelText}" FontSize="12.5" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource FlatButton}" Command="{Binding AddSimulationCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconCodicons Kind="CircuitBoard" Foreground="{DynamicResource AccentColor}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Add Sim" Style="{StaticResource LabelText}" FontSize="12.5" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource FlatButton}" Command="{Binding DeleteSelectedCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconCodicons Kind="Trash" Foreground="{DynamicResource DangerColor}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Delete" Style="{StaticResource LabelText}" FontSize="12.5" />
+                            </StackPanel>
+                        </Button>
+                        <Rectangle Width="1" Height="18" Margin="8,0" Fill="{DynamicResource BorderColor}" />
+                        <Button Style="{StaticResource FlatButton}" Command="{Binding TestConnectionCommand}"
+                                IsEnabled="{Binding IsTestingConnection, Converter={StaticResource InverseBool}}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconCodicons Kind="Plug" Foreground="{DynamicResource AccentColor}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Test Connection" Style="{StaticResource LabelText}" FontSize="12.5" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="3" />
+                        <RowDefinition Height="140" />
+                    </Grid.RowDefinitions>
+
+                    <DataGrid Grid.Row="0" ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                              AutoGenerateColumns="False" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="180" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Driver" Binding="{Binding DriverType}" Width="160" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Settings" Binding="{Binding SettingsSummary}" Width="150" IsReadOnly="True" />
+                            <DataGridTemplateColumn Header="Status" Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0">
+                                            <Ellipse Width="9" Height="9" VerticalAlignment="Center">
+                                                <Ellipse.Fill>
+                                                    <MultiBinding Converter="{StaticResource ThemeBrush}">
+                                                        <Binding Path="StatusColorKey" />
+                                                        <Binding Path="Version" Source="{x:Static services:ThemeVersion.Instance}" />
+                                                    </MultiBinding>
+                                                </Ellipse.Fill>
+                                            </Ellipse>
+                                            <TextBlock Text="{Binding StatusText}" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                       ToolTip="{Binding StatusDetail}" FontSize="12.5" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <GridSplitter Grid.Row="1" Height="3" HorizontalAlignment="Stretch" Background="{DynamicResource BorderColor}" />
+
+                    <DockPanel Grid.Row="2" Background="{DynamicResource CardBg}">
+                        <Border DockPanel.Dock="Top" Background="{DynamicResource HeaderBg}" Padding="8,4"
+                                BorderThickness="0,0,0,1" BorderBrush="{DynamicResource BorderColor}">
+                            <TextBlock Text="Device Settings" Style="{StaticResource SectionHeader}" Margin="0" />
+                        </Border>
+                        <DataGrid ItemsSource="{Binding Settings}" AutoGenerateColumns="False" CanUserAddRows="False"
+                                  Style="{StaticResource FlatDataGrid}" BorderThickness="0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Setting" Binding="{Binding Label}" IsReadOnly="True" Width="180" />
+                                <DataGridTextColumn Header="Value" Binding="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </Grid>
             </DockPanel>
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:WatchTableViewModel}">
-            <DockPanel Margin="6">
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-                    <Button Content="Monitor" Style="{StaticResource FlatButton}" Command="{Binding ToggleMonitoringCommand}" />
-                    <ComboBox Width="200" Margin="6,0,0,0"
-                              ItemsSource="{Binding AvailableTags}"
-                              SelectedItem="{Binding SelectedTagName}"
-                              ToolTip="Chọn tag để thêm vào bảng watch" />
-                    <Button Content="+ Add" Style="{StaticResource FlatButton}" Command="{Binding AddSelectedTagCommand}" />
-                    <Button Content="Remove" Style="{StaticResource FlatButton}" Command="{Binding RemoveSelectedCommand}"
-                            CommandParameter="{Binding SelectedRow, Mode=OneWay}" Margin="6,0,0,0" />
-                </StackPanel>
-                <!-- Task 12.3 — drop target: kéo device tag đã map từ Toolbox vào đây để watch -->
-                <Border BorderThickness="2" BorderBrush="Transparent"
+            <DockPanel Margin="0">
+                <Border DockPanel.Dock="Top" Background="{DynamicResource HeaderBg}"
+                        BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Padding="8,4">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Style="{StaticResource FlatButton}" Command="{Binding ToggleMonitoringCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconCodicons Kind="Eye" Foreground="{DynamicResource AccentColor}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Monitor" Style="{StaticResource LabelText}" FontSize="12.5" />
+                            </StackPanel>
+                        </Button>
+                        <ComboBox Width="180" Margin="6,0"
+                                  ItemsSource="{Binding AvailableTags}"
+                                  SelectedItem="{Binding SelectedTagName}"
+                                  ToolTip="Chọn tag để thêm vào bảng watch" />
+                        <Button Style="{StaticResource FlatButton}" Command="{Binding AddSelectedTagCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconCodicons Kind="Add" Foreground="{DynamicResource SuccessColor}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Add" Style="{StaticResource LabelText}" FontSize="12.5" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource FlatButton}" Command="{Binding RemoveSelectedCommand}"
+                                CommandParameter="{Binding SelectedRow, Mode=OneWay}" Margin="6,0">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconCodicons Kind="Trash" Foreground="{DynamicResource DangerColor}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Remove" Style="{StaticResource LabelText}" FontSize="12.5" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <Border BorderThickness="0" BorderBrush="Transparent"
                         behaviors:TagDragDropBehaviors.DropTarget="True">
                     <DataGrid ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
                               AutoGenerateColumns="False" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}"
                               EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True">
-                    <DataGrid.RowStyle>
-                        <Style TargetType="DataGridRow">
-                            <Setter Property="Background" Value="Transparent" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsFlashing}" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource WarningColor}" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding IsForced}" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource ForceRowBg}" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding IsStale}" Value="True">
-                                    <Setter Property="Background" Value="Transparent" />
-                                    <Setter Property="Opacity" Value="0.55" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </DataGrid.RowStyle>
-                    <DataGrid.Columns>
-                        <DataGridTemplateColumn Header="Tag" Width="180">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="🔒" Visibility="{Binding IsForced, Converter={StaticResource BoolToVisibility}}"
-                                                   ToolTip="{Binding ForcedToolTip}" Margin="0,0,4,0" />
-                                        <TextBlock Text="{Binding Name}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="Type" Binding="{Binding DataType}" IsReadOnly="True" Width="70" />
-                        <DataGridTemplateColumn Header="Value" Width="130">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="⚠️" Visibility="{Binding IsStale, Converter={StaticResource BoolToVisibility}}"
-                                                   ToolTip="Mất kết nối — giữ giá trị cuối cùng" Margin="0,0,4,0" />
-                                        <TextBlock Text="{Binding ValueText}">
-                                            <TextBlock.Foreground>
-                                                <MultiBinding Converter="{StaticResource ThemeBrush}">
-                                                    <Binding Path="ValueBrushKey" />
-                                                    <Binding Path="Version" Source="{x:Static services:ThemeVersion.Instance}" />
-                                                </MultiBinding>
-                                            </TextBlock.Foreground>
-                                        </TextBlock>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="Updated" Binding="{Binding UpdatedAt, StringFormat='HH:mm:ss.fff'}" IsReadOnly="True" Width="110" />
-                        <DataGridTemplateColumn Header="Modify" Width="*">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
-                                                ToolTip="{Binding ModifyToolTip}">
-                                        <TextBox Width="90" Text="{Binding ModifyText, UpdateSourceTrigger=PropertyChanged}"
-                                                 IsEnabled="{Binding CanModify}" />
-                                        <Button Content="Apply" Margin="4,0,0,0"
-                                                Command="{Binding DataContext.ModifyValueCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                CommandParameter="{Binding}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsFlashing}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource WarningColor}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsForced}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource ForceRowBg}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsStale}" Value="True">
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="Opacity" Value="0.55" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Tag" Width="180">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0">
+                                            <iconPacks:PackIconCodicons Kind="Lock" Foreground="{DynamicResource DangerColor}"
+                                                                       Width="13" Height="13" Margin="0,0,6,0"
+                                                                       Visibility="{Binding IsForced, Converter={StaticResource BoolToVisibility}}"
+                                                                       ToolTip="{Binding ForcedToolTip}" />
+                                            <TextBlock Text="{Binding Name}" FontWeight="Medium" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Type" Binding="{Binding DataType}" IsReadOnly="True" Width="90" />
+                            <DataGridTemplateColumn Header="Value" Width="140">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0">
+                                            <TextBlock Text="⚠️" Visibility="{Binding IsStale, Converter={StaticResource BoolToVisibility}}"
+                                                       ToolTip="Mất kết nối — giữ giá trị cuối cùng" Margin="0,0,6,0" />
+                                            <TextBlock Text="{Binding ValueText}" Style="{StaticResource MonospaceText}">
+                                                <TextBlock.Foreground>
+                                                    <MultiBinding Converter="{StaticResource ThemeBrush}">
+                                                        <Binding Path="ValueBrushKey" />
+                                                        <Binding Path="Version" Source="{x:Static services:ThemeVersion.Instance}" />
+                                                    </MultiBinding>
+                                                </TextBlock.Foreground>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Updated" Binding="{Binding UpdatedAt, StringFormat='HH:mm:ss.fff'}" IsReadOnly="True" Width="120" />
+                            <DataGridTemplateColumn Header="Modify" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0"
+                                                     ToolTip="{Binding ModifyToolTip}">
+                                            <TextBox Width="90" Text="{Binding ModifyText, UpdateSourceTrigger=PropertyChanged}"
+                                                     IsEnabled="{Binding CanModify}" Style="{StaticResource MonospaceTextBox}" />
+                                            <Button Content="Apply" Margin="6,0,0,0" Style="{StaticResource FlatButton}"
+                                                    Command="{Binding DataContext.ModifyValueCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>
@@ -422,27 +654,50 @@
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:ForceTableViewModel}">
-            <DockPanel Margin="6">
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
-                    <TextBlock Text="{Binding Banner}" Foreground="{DynamicResource DangerColor}" FontWeight="Bold" VerticalAlignment="Center" />
-                    <ComboBox Width="170" Margin="12,0,0,0"
-                              ItemsSource="{Binding AvailableTags}"
-                              SelectedItem="{Binding SelectedTagName}"
-                              ToolTip="Tag cần force" />
-                    <TextBox Width="90" Text="{Binding NewValueText, UpdateSourceTrigger=PropertyChanged}"
-                             ToolTip="Giá trị force (true/false, số...)" />
-                    <Button Content="Force" Style="{StaticResource AccentButton}" Command="{Binding ApplyForceCommand}"
-                            ToolTip="Ghi đè giá trị tag liên tục — phải qua xác nhận an toàn" />
-                    <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" Margin="12,0,0,0" />
-                    <Button Content="⛔ CLEAR ALL FORCES" Style="{StaticResource AccentButton}" Command="{Binding ClearAllCommand}" Margin="6,0,0,0" />
-                </StackPanel>
+            <DockPanel Margin="0">
+                <Border DockPanel.Dock="Top" Background="{DynamicResource HeaderBg}"
+                        BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Padding="8,4">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Banner}" Foreground="{DynamicResource DangerColor}" FontWeight="Bold" VerticalAlignment="Center" Margin="4,0,12,0" />
+                        <ComboBox Width="170" Margin="0,0,6,0"
+                                  ItemsSource="{Binding AvailableTags}"
+                                  SelectedItem="{Binding SelectedTagName}"
+                                  ToolTip="Tag cần force" />
+                        <TextBox Width="90" Text="{Binding NewValueText, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0,0,6,0" ToolTip="Giá trị force (true/false, số...)" />
+                        <Button Style="{StaticResource AccentButton}" Command="{Binding ApplyForceCommand}"
+                                ToolTip="Ghi đè giá trị tag liên tục — phải qua xác nhận an toàn">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconCodicons Kind="Lock" Foreground="{DynamicResource TextOnAccent}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Force" FontSize="12.5" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" Margin="6,0">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconCodicons Kind="Sync" Foreground="{DynamicResource AccentColor}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Refresh" Style="{StaticResource LabelText}" FontSize="12.5" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource FlatButton}" Foreground="{DynamicResource DangerColor}"
+                                Command="{Binding ClearAllCommand}" Margin="6,0">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconCodicons Kind="Trash" Foreground="{DynamicResource DangerColor}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Clear All" Style="{StaticResource LabelText}" FontSize="12.5" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
                 <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" Style="{StaticResource FlatDataGrid}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="🔒 Tag" Binding="{Binding TagName}" IsReadOnly="True" Width="240" />
+                        <DataGridTextColumn Header="Tag" Binding="{Binding TagName}" IsReadOnly="True" Width="220" />
                         <DataGridTextColumn Header="Force value" Binding="{Binding ValueText}" IsReadOnly="True" Width="140" />
                         <DataGridTemplateColumn Header="" Width="100">
                             <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate><Button Content="Clear" Command="{Binding DataContext.ClearCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" /></DataTemplate>
+                                <DataTemplate>
+                                    <Button Content="Clear" Style="{StaticResource FlatButton}"
+                                            Command="{Binding DataContext.ClearCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding}" />
+                                </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
                     </DataGrid.Columns>
@@ -451,14 +706,14 @@
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:GeneratedCodeViewModel}">
-            <DockPanel Margin="6">
-                <Border DockPanel.Dock="Top" Background="{DynamicResource WarningColor}" Padding="8" Margin="0,0,0,8">
-                    <TextBlock Text="{Binding BannerMessage}" Foreground="{DynamicResource TextOnAccent}" TextWrapping="Wrap" />
+            <DockPanel Margin="0">
+                <Border DockPanel.Dock="Top" Background="{DynamicResource WarningColor}" Padding="8,5" Margin="0">
+                    <TextBlock Text="{Binding BannerMessage}" Foreground="{DynamicResource TextOnAccent}" TextWrapping="Wrap" FontSize="12.5" />
                 </Border>
                 <avalonedit:TextEditor IsReadOnly="True"
                                        SyntaxHighlighting="C#"
-                                       FontFamily="Consolas"
-                                       FontSize="13"
+                                       FontFamily="Cascadia Code,Consolas"
+                                       FontSize="14"
                                        ShowLineNumbers="True"
                                        Background="{DynamicResource CardBg}"
                                        Foreground="{DynamicResource TextPrimary}"
@@ -468,83 +723,142 @@
     </Window.Resources>
 
     <DockPanel>
-        <Menu DockPanel.Dock="Top">
-            <MenuItem Header="_File">
-                <MenuItem Header="New project..." Command="{Binding NewProjectCommand}" />
-                <MenuItem Header="Open project..." Command="{Binding OpenProjectCommand}" />
-                <Separator />
-                <MenuItem Header="Save all" Command="{Binding SaveAllCommand}" />
-                <MenuItem Header="Close project" Command="{Binding CloseProjectCommand}" />
-            </MenuItem>
-            <MenuItem Header="_Online">
-                <MenuItem Header="Build" Command="{Binding CompileCommand}" IsEnabled="{Binding CanCompile}" />
-                <MenuItem Header="Deploy to Runtime" Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" />
-                <Separator />
-                <MenuItem Header="Start" Command="{Binding StartRuntimeCommand}" IsEnabled="{Binding CanStart}" />
-                <MenuItem Header="Stop" Command="{Binding StopRuntimeCommand}" IsEnabled="{Binding CanStop}" />
-                <MenuItem Header="Reset" Command="{Binding ResetRuntimeCommand}" IsEnabled="{Binding CanReset}" />
-            </MenuItem>
-            <MenuItem Header="_View">
-                <MenuItem Header="{Binding ThemeToggleText}" Command="{Binding ToggleThemeCommand}" />
-                <Separator />
-                <MenuItem Header="Reset layout" Command="{Binding ResetLayoutCommand}" />
-            </MenuItem>
-        </Menu>
-
-        <!-- Toolbar kiểu Visual Studio: nút chỉ icon vuông nhỏ, nhãn nằm trong tooltip,
-             nhóm lệnh ngăn bằng vạch mảnh. Deploy giữ màu accent để nổi bật. -->
+        <!-- Top App Chrome: Menu Bar + Command ToolBar -->
         <Border DockPanel.Dock="Top" Background="{DynamicResource HeaderBg}"
-                BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Padding="6,3">
-            <StackPanel Orientation="Horizontal">
-                <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding NewProjectCommand}"
-                        Content="&#xE8A5;" ToolTip="New project" />
-                <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding OpenProjectCommand}"
-                        Content="&#xE8E5;" ToolTip="Open project" />
-                <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding SaveAllCommand}"
-                        Content="&#xE74E;" ToolTip="Save all (Ctrl+S)" />
-                <Rectangle Width="1" Height="18" Margin="6,0" Fill="{DynamicResource BorderColor}" />
-                <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding CompileCommand}"
-                        IsEnabled="{Binding CanCompile}" Content="&#xE943;" ToolTip="Build (Ctrl+Shift+B)" />
-                <Button Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}"
-                        ToolTip="Deploy to Runtime (F5)" Padding="7"
-                        Background="{DynamicResource AccentColor}" Foreground="{DynamicResource TextOnAccent}"
-                        FontFamily="Segoe MDL2 Assets" FontSize="15" Cursor="Hand"
-                        MinWidth="30" MinHeight="30" Margin="1,0">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="Root" Background="{TemplateBinding Background}"
-                                    CornerRadius="4" SnapsToDevicePixels="True">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                  Margin="{TemplateBinding Padding}" />
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Root" Property="Opacity" Value="0.85" />
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True">
-                                    <Setter TargetName="Root" Property="Opacity" Value="0.7" />
-                                </Trigger>
-                                <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Opacity" Value="0.35" />
-                                    <Setter Property="Cursor" Value="Arrow" />
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Button.Template>
-                    <TextBlock Text="&#xE898;" />
-                </Button>
-                <Rectangle Width="1" Height="18" Margin="6,0" Fill="{DynamicResource BorderColor}" />
-                <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding StartRuntimeCommand}"
-                        IsEnabled="{Binding CanStart}" Content="&#xE768;" ToolTip="Start Runtime" />
-                <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding StopRuntimeCommand}"
-                        IsEnabled="{Binding CanStop}" Content="&#xE71A;" ToolTip="Stop Runtime" />
-                <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding ResetRuntimeCommand}"
-                        IsEnabled="{Binding CanReset}" Content="&#xE72C;" ToolTip="Reset Runtime" />
+                BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1">
+            <StackPanel>
+                <!-- Main Menu Bar + Top Right Theme Switcher -->
+                <Grid Background="Transparent">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Menu Grid.Column="0" Background="Transparent" Padding="4,2">
+                        <MenuItem Header="_File">
+                            <MenuItem Header="New project..." Command="{Binding NewProjectCommand}" InputGestureText="Ctrl+N">
+                                <MenuItem.Icon>
+                                    <iconPacks:PackIconCodicons Kind="NewFile" Foreground="{DynamicResource AccentColor}" Width="15" Height="15" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Open project..." Command="{Binding OpenProjectCommand}" InputGestureText="Ctrl+O">
+                                <MenuItem.Icon>
+                                    <iconPacks:PackIconCodicons Kind="FolderOpened" Foreground="{DynamicResource WarningColor}" Width="15" Height="15" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator />
+                            <MenuItem Header="Save all" Command="{Binding SaveAllCommand}" InputGestureText="Ctrl+S">
+                                <MenuItem.Icon>
+                                    <iconPacks:PackIconCodicons Kind="SaveAll" Foreground="{DynamicResource AccentColor}" Width="15" Height="15" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Close project" Command="{Binding CloseProjectCommand}">
+                                <MenuItem.Icon>
+                                    <iconPacks:PackIconCodicons Kind="Close" Foreground="{DynamicResource TextSecondary}" Width="14" Height="14" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </MenuItem>
+
+                        <MenuItem Header="_Online">
+                            <MenuItem Header="Build" Command="{Binding CompileCommand}" IsEnabled="{Binding CanCompile}" InputGestureText="Ctrl+Shift+B">
+                                <MenuItem.Icon>
+                                    <iconPacks:PackIconCodicons Kind="Tools" Foreground="{DynamicResource AccentColor}" Width="15" Height="15" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Deploy to Runtime" Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" InputGestureText="F5">
+                                <MenuItem.Icon>
+                                    <iconPacks:PackIconCodicons Kind="Play" Foreground="{DynamicResource SuccessColor}" Width="15" Height="15" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator />
+                            <MenuItem Header="Start Runtime" Command="{Binding StartRuntimeCommand}" IsEnabled="{Binding CanStart}">
+                                <MenuItem.Icon>
+                                    <iconPacks:PackIconCodicons Kind="Play" Foreground="{DynamicResource SuccessColor}" Width="15" Height="15" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Stop Runtime" Command="{Binding StopRuntimeCommand}" IsEnabled="{Binding CanStop}">
+                                <MenuItem.Icon>
+                                    <iconPacks:PackIconCodicons Kind="DebugStop" Foreground="{DynamicResource DangerColor}" Width="15" Height="15" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Reset Runtime" Command="{Binding ResetRuntimeCommand}" IsEnabled="{Binding CanReset}">
+                                <MenuItem.Icon>
+                                    <iconPacks:PackIconCodicons Kind="DebugRestart" Foreground="{DynamicResource AccentColor}" Width="15" Height="15" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </MenuItem>
+
+                        <MenuItem Header="_View">
+                            <MenuItem Header="{Binding ThemeToggleText}" Command="{Binding ToggleThemeCommand}">
+                                <MenuItem.Icon>
+                                    <iconPacks:PackIconCodicons Kind="ColorMode" Foreground="{DynamicResource AccentColor}" Width="15" Height="15" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator />
+                            <MenuItem Header="Reset layout" Command="{Binding ResetLayoutCommand}">
+                                <MenuItem.Icon>
+                                    <iconPacks:PackIconCodicons Kind="Layout" Foreground="{DynamicResource TextSecondary}" Width="15" Height="15" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </MenuItem>
+                    </Menu>
+
+                    <!-- Nút chuyển đổi Theme góc phải trên thanh Menu -->
+                    <Button Grid.Column="1" Style="{StaticResource FlatButton}" Command="{Binding ToggleThemeCommand}"
+                            ToolTip="Chuyển đổi giao diện Sáng / Tối" Margin="0,2,8,2" Padding="8,2" Height="24">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconCodicons Kind="ColorMode" Foreground="{DynamicResource AccentColor}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding ThemeToggleText}" FontSize="12" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
+                <!-- Toolbar kiểu Visual Studio 2022 -->
+                <Border BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,1,0,0" Padding="8,4">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding NewProjectCommand}" ToolTip="New Project (Ctrl+N)">
+                            <iconPacks:PackIconCodicons Kind="NewFile" Foreground="{DynamicResource AccentColor}" Width="16" Height="16" />
+                        </Button>
+                        <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding OpenProjectCommand}" ToolTip="Open Project (Ctrl+O)">
+                            <iconPacks:PackIconCodicons Kind="FolderOpened" Foreground="{DynamicResource WarningColor}" Width="16" Height="16" />
+                        </Button>
+                        <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding SaveAllCommand}" ToolTip="Save All (Ctrl+S)">
+                            <iconPacks:PackIconCodicons Kind="SaveAll" Foreground="{DynamicResource AccentColor}" Width="16" Height="16" />
+                        </Button>
+
+                        <Rectangle Width="1" Height="18" Margin="8,0" Fill="{DynamicResource BorderColor}" />
+
+                        <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding CompileCommand}" IsEnabled="{Binding CanCompile}" ToolTip="Build Project (Ctrl+Shift+B)">
+                            <iconPacks:PackIconCodicons Kind="Tools" Foreground="{DynamicResource AccentColor}" Width="16" Height="16" />
+                        </Button>
+
+                        <!-- Deploy / Primary Run button kiểu VS 2022 -->
+                        <Button Style="{StaticResource VSPrimaryRunButton}" Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" ToolTip="Deploy to Runtime (F5)">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconCodicons Kind="Play" Foreground="{DynamicResource SuccessColor}" Width="14" Height="14" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Deploy" FontWeight="Bold" FontSize="12.5" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Rectangle Width="1" Height="18" Margin="8,0" Fill="{DynamicResource BorderColor}" />
+
+                        <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding StartRuntimeCommand}" IsEnabled="{Binding CanStart}" ToolTip="Start Runtime">
+                            <iconPacks:PackIconCodicons Kind="Play" Foreground="{DynamicResource SuccessColor}" Width="16" Height="16" />
+                        </Button>
+                        <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding StopRuntimeCommand}" IsEnabled="{Binding CanStop}" ToolTip="Stop Runtime">
+                            <iconPacks:PackIconCodicons Kind="DebugStop" Foreground="{DynamicResource DangerColor}" Width="16" Height="16" />
+                        </Button>
+                        <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding ResetRuntimeCommand}" IsEnabled="{Binding CanReset}" ToolTip="Reset Runtime">
+                            <iconPacks:PackIconCodicons Kind="DebugRestart" Foreground="{DynamicResource AccentColor}" Width="16" Height="16" />
+                        </Button>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </Border>
 
+        <!-- Status Bar kiểu Visual Studio 2022 -->
         <Border DockPanel.Dock="Bottom" Background="{DynamicResource HeaderBg}"
-                BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,2,0,0" Padding="8,4">
+                BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,1,0,0" Padding="8,4">
             <Grid DataContext="{Binding StatusBar}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -554,7 +868,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0" Padding="8,2" Margin="0,0,10,0">
+                <Border Grid.Column="0" Padding="10,3" Margin="0,0,10,0" CornerRadius="2">
                     <Border.Background>
                         <MultiBinding Converter="{StaticResource ThemeBrush}">
                             <Binding Path="StateBrushKey" />
@@ -562,34 +876,40 @@
                         </MultiBinding>
                     </Border.Background>
                     <TextBlock Text="{Binding StateLabel}" Foreground="{DynamicResource TextOnAccent}"
-                               FontWeight="SemiBold" FontSize="11" />
+                               FontWeight="Bold" FontSize="12" />
                 </Border>
 
-                <TextBlock Grid.Column="1" Text="{Binding MetricsSummary}"
-                           Style="{StaticResource MonospaceText}" FontSize="11" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Rectangle Width="1" Height="16" Margin="4,0,10,0" Fill="{DynamicResource BorderColor}" />
+                    <TextBlock Text="{Binding MetricsSummary}"
+                               Style="{StaticResource MonospaceText}" FontSize="12.5" VerticalAlignment="Center" />
+                </StackPanel>
 
-                <TextBlock Grid.Column="2" Text="{Binding FaultMessage}" Margin="16,0"
-                           Style="{StaticResource LabelText}" FontSize="11"
+                <TextBlock Grid.Column="2" Text="{Binding FaultMessage}" Margin="12,0"
+                           Style="{StaticResource LabelText}" FontSize="12.5"
                            Foreground="{DynamicResource DangerColor}"
-                           TextTrimming="CharacterEllipsis" />
+                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
 
-                <!-- Task 11.4 — force đang bật thì KHÔNG được phép bỏ sót -->
-                <Border Grid.Column="3" Padding="8,2" Margin="0,0,10,0"
+                <Border Grid.Column="3" Padding="8,3" Margin="0,0,10,0" CornerRadius="2"
                         Background="{DynamicResource DangerColor}"
                         Visibility="{Binding DataContext.HasActiveForces, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}"
                         ToolTip="Force ghi đè tín hiệu thật. Mở Force Table để gỡ.">
                     <TextBlock Text="{Binding DataContext.ForceBanner, RelativeSource={RelativeSource AncestorType=Window}}"
-                               Foreground="{DynamicResource TextOnAccent}" FontWeight="Bold" FontSize="11" />
+                               Foreground="{DynamicResource TextOnAccent}" FontWeight="Bold" FontSize="12" />
                 </Border>
 
-                <TextBlock Grid.Column="4" Style="{StaticResource MutedText}" FontSize="11">
-                    <Run Text="{Binding AutoStartIndicator, Mode=OneWay}" />
-                    <Run Text=" · Project: " />
-                    <Run Text="{Binding ProjectName, Mode=OneWay}" />
-                </TextBlock>
+                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Rectangle Width="1" Height="16" Margin="4,0,10,0" Fill="{DynamicResource BorderColor}" />
+                    <TextBlock Style="{StaticResource MutedText}" FontSize="12.5" VerticalAlignment="Center">
+                        <Run Text="{Binding AutoStartIndicator, Mode=OneWay}" />
+                        <Run Text=" · Project: " />
+                        <Run Text="{Binding ProjectName, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
             </Grid>
         </Border>
 
+        <!-- Trung tâm làm việc với AvalonDock -->
         <avalondock:DockingManager x:Name="Docking"
                                    DocumentsSource="{Binding Editors.Documents}"
                                    ActiveContent="{Binding Editors.ActiveDocument, Mode=TwoWay}">
@@ -602,9 +922,9 @@
 
             <avalondock:LayoutRoot>
                 <avalondock:LayoutPanel Orientation="Horizontal">
-                    <avalondock:LayoutAnchorablePaneGroup DockWidth="260">
+                    <avalondock:LayoutAnchorablePaneGroup DockWidth="280">
                         <avalondock:LayoutAnchorablePane>
-                            <avalondock:LayoutAnchorable x:Name="ProjectPane" Title="Project"
+                            <avalondock:LayoutAnchorable x:Name="ProjectPane" Title="PROJECT EXPLORER"
                                                          ContentId="ProjectTree"
                                                          CanClose="False" />
                         </avalondock:LayoutAnchorablePane>
@@ -615,18 +935,18 @@
                             <avalondock:LayoutDocumentPane />
                         </avalondock:LayoutDocumentPaneGroup>
 
-                        <avalondock:LayoutAnchorablePaneGroup DockHeight="180">
+                        <avalondock:LayoutAnchorablePaneGroup DockHeight="200">
                             <avalondock:LayoutAnchorablePane>
-                                <avalondock:LayoutAnchorable x:Name="InspectorPane" Title="Inspector"
+                                <avalondock:LayoutAnchorable x:Name="InspectorPane" Title="INSPECTOR &amp; DIAGNOSTICS"
                                                              ContentId="Inspector"
                                                              CanClose="False" />
                             </avalondock:LayoutAnchorablePane>
                         </avalondock:LayoutAnchorablePaneGroup>
                     </avalondock:LayoutPanel>
 
-                    <avalondock:LayoutAnchorablePaneGroup DockWidth="240">
+                    <avalondock:LayoutAnchorablePaneGroup DockWidth="260">
                         <avalondock:LayoutAnchorablePane>
-                            <avalondock:LayoutAnchorable x:Name="ToolboxPane" Title="Toolbox"
+                            <avalondock:LayoutAnchorable x:Name="ToolboxPane" Title="TOOLBOX"
                                                          ContentId="TaskCards"
                                                          CanClose="False" />
                         </avalondock:LayoutAnchorablePane>

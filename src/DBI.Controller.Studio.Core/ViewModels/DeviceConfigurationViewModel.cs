@@ -78,6 +78,7 @@ public partial class DeviceConfigurationViewModel : DocumentViewModelBase, IDisp
         _prompt = prompt;
 
         Refresh();
+        _selectedDriver = DriverCatalogService.FirstOrDefault();
         _runtime.DeviceStatesChanged += OnDeviceStatesChanged;
     }
 
