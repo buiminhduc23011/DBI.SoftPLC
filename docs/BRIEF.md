@@ -1,139 +1,116 @@
-# 💡 BRIEF: DBI.Controller (Soft PLC Runtime in C#/.NET)
+# 💡 BRIEF: Đại tu UI DBI.Studio — chuẩn Visual Studio
 
-**Ngày tạo:** 2026-07-23  
-**Dự án:** DBI.Controller / DBI.SoftPLC  
-**Trạng thái:** Draft / Brainstorm Completed  
-
----
-
-## 1. VẤN ĐỀ CẦN GIẢI QUYẾT
-
-Lập trình PLC truyền thống (dùng Ladder Logic, Structured Text trên Siemens TIA Portal, Mitsubishi GX Works, Beckhoff TwinCAT):
-- **Phụ thuộc chặt vào địa chỉ phần cứng:** Code dính liền với địa chỉ I/O (`M100`, `Q0.0`, `DB20.DBX0.0`, `IW50`). Khi đổi PLC hoặc thiết bị phải sửa toàn bộ code.
-- **Thiếu sinh thái phần mềm hiện đại:** Không hỗ trợ Unit Testing chuẩn, không có Dependency Injection (DI), không có Hot Reload, không tích hợp dễ dàng với CI/CD, Git hay Logging/Diagnostics chuẩn phần mềm.
-- **Đường cong học tập cao:** Khó thu hút các kỹ sư phần mềm C#/.NET tham gia vào lĩnh vực tự động hóa công nghiệp (OT/Automation).
+Created: 2026-08-21
+Nguồn: /awf-brainstorm — khảo sát code thật, build baseline xanh (0 warning/0 error).
 
 ---
 
-## 2. GIẢI PHÁP ĐỀ XUẤT
+## 1. Vấn đề
 
-**DBI.Controller** - Một **Soft PLC Runtime** viết bằng C#/.NET, đóng vai trò như một **Automation Runtime** chạy trên PC/Edge Device.
+DBI.Studio đã đủ tính năng (phase 00–13) nhưng lớp giao diện tụt lại so với phần lõi:
 
-- **Triết lý Decoupling:** 
-  $$\text{Logic} \longrightarrow \text{IO Object (Abstract)} \longrightarrow \text{Runtime} \longrightarrow \text{Driver} \longrightarrow \text{Device}$$
-- Logic điều khiển hoàn toàn độc lập với Driver & Device. Người dùng viết logic với Object C# thuần (`IO.StartButton`, `IO.Conveyor`).
-- Runtime chịu trách nhiệm toàn bộ hạ tầng: Scan Engine, Memory Mapping, Driver Loading, Threading, Diagnostics, Logging, Safety Catch.
-- Lấy cảm hứng từ **ASP.NET Core Host**: Runtime đóng vai trò Host quản lý vòng đời ứng dụng; Logic người dùng biên dịch ra DLL độc lập; Driver là các Plugin cắm rút linh hoạt.
+1. **Toolbox "không dùng được"** — người dùng click/double-click/kéo tag vào code editor
+   và **không thấy gì xảy ra trên editor**, dù log báo "Inserted…".
+2. **Theme chưa đồng bộ** — trong Dark mode vẫn có control bật lên trắng lóa kiểu WinForms.
+3. **Chưa hiện đại** — title bar trắng hệ điều hành, cây project không icon, dialog lỗi
+   kiểu MessageBox hệ thống.
 
----
+## 2. Nguyên nhân gốc (đã xác minh bằng đọc code)
 
-## 3. ĐỐI TƯỢNG SỬ DỤNG
+### Bug nhóm Toolbox — 3 bug thật, không phải cảm tính
 
-- **Kỹ sư Tự Động Hóa / OT Engineer:** Muốn sử dụng C# để viết các thuật toán điều khiển phức tạp, xử lý dữ liệu, tích hợp hệ thống nhanh chóng.
-- **Kỹ sư Phần Mềm / Software Engineer:** Có thể lập trình điều khiển máy móc mà không cần học các ngôn ngữ PLC cổ điển.
-- **Nhà tích hợp hệ thống (System Integrator):** Cần kết nối máy móc với Factory I/O, PLC, OPC UA, Modbus, AGV, Camera, Robot trên cùng một nền tảng C# thống nhất.
+| # | Bug | Bằng chứng |
+|---|-----|-----------|
+| T-1 | **Luồng dữ liệu editor một chiều.** ViewModel đổi `Text` nhưng không có gì đẩy ngược vào `RoslynCodeEditor` — chữ chỉ đổi trong bộ nhớ, lần gõ phím sau đè mất. Người dùng thấy log "Inserted…" nhưng editor không hiện gì. | `InsertAtCaret` ghi VM ([CodeEditorViewModel.cs:57](../src/DBI.Controller.Studio.Core/ViewModels/CodeEditorViewModel.cs)); `RoslynCodeEditorBehaviors.OnTextChanged` chỉ sync editor→VM ([RoslynCodeEditorBehaviors.cs:237](../src/DBI.Controller.Studio/Behaviors/RoslynCodeEditorBehaviors.cs#L237)) |
+| T-2 | **Con trỏ không bao giờ được cập nhật.** `CaretLine`/`CaretColumn` mặc định 1/1, không có chỗ nào gán lại từ editor thật → mọi lần chèn nhắm đầu dòng 1. Kèm sai cộng cột với snippet nhiều dòng (`CaretColumn += snippet.Length`). | [CodeEditorViewModel.cs:42-66](../src/DBI.Controller.Studio.Core/ViewModels/CodeEditorViewModel.cs) |
+| T-3 | **Phím tắt quảng cáo nhưng không tồn tại.** Ô lọc ghi "Search Toolbox (Ctrl+T)", nút Save ghi "(Ctrl+S)" — app chỉ bind Ctrl+Shift+B và F5. | [MainWindow.xaml:18-21](../src/DBI.Controller.Studio/MainWindow.xaml), [MainWindow.xaml:118](../src/DBI.Controller.Studio/MainWindow.xaml) |
 
----
+Kéo-thả vào Tag Table / Watch Table hoạt động bình thường (đi đường nghiệp vụ riêng qua
+`TagDragDropBehaviors.ResolveHandler`) — hỏng nằm ở nhánh code editor.
 
-## 4. NGHIÊN CỨU THỊ TRƯỜNG & ĐIỂM KHÁC BIỆT
+### Nhóm Theme
 
-### Đối thủ & Sản phẩm tương đương:
-| Nền tảng | Điểm mạnh | Điểm yếu |
-| :--- | :--- | :--- |
-| **TwinCAT 3 / CODESYS** | Real-time cứng tốt, tiêu chuẩn công nghiệp | Đắt đỏ, đóng kín, ngôn ngữ IEC 61131-3 cổ điển, Unit Test kém |
-| **Node-RED** | Trực quan, nhiều node tích hợp | Dựa trên Event-driven JavaScript, không phù hợp cho Deterministic Scan Cycle |
-| **DotNetPLC / Custom C# Scripts** | Dùng C# | Thường là script đơn lẻ, thiếu Memory Image, thiếu Driver Abstraction & Dynamic Mapping |
+- **Control chưa style**: ComboBox + dropdown, ContextMenu + submenu MenuItem, ScrollBar,
+  ToolTip, TreeView expander arrow → dùng template mặc định của Windows, trắng lóa trong Dark.
+- **Màu cứng ngoài bảng theme**: nền đỏ dòng force `#33C72C3B` (MainWindow.xaml:318),
+  marker overlay `Brushes.DodgerBlue` (RoslynCodeEditorBehaviors.cs:310), viền drop `#005A9E`
+  (TagDragDropBehaviors). Đổi Light sẽ sai tông.
+- **Bộ token mỏng** (13 màu) so với chuẩn VS — thiếu disabled, hover input, tab-active,
+  splitter… nên style phải chữa lửa bằng opacity.
+- **Lệch nội bộ**: thiết kế gốc "flat, không bo góc" nhưng style mới bo 3–4px tuỳ nơi;
+  comment App.xaml nói "nạp Light mặc định" trong khi thực tế nạp Dark.
 
-### Điểm khác biệt độc đáo của DBI.Controller:
-1. **Pure C# / .NET 8+ Native:** Tận dụng tối đa hiệu năng của .NET hiện đại.
-2. **True Decoupled Architecture:** Logic C# hoàn toàn không chứa địa chỉ IP, địa chỉ Coil/Register hay NodeId.
-3. **Studio Drag-Drop Mapping:** Cấu hình liên kết giữa Tag phần cứng và Variable C# bằng Studio trực quan mà không cần sửa/recompile code logic.
-4. **Dev Experience Đỉnh Cao:** Full Unit Test Support, Dependency Injection, Hot Reload (không ngắt Runtime), Logging & Diagnostics chuyên nghiệp.
+### Nhóm Hiện đại hoá
 
----
+- Title bar trắng HĐH (VS dùng title bar tối tuỳ biến).
+- Cây project không icon theo loại node (OB/FC/FB/DB/device).
+- Lỗi báo bằng MessageBox hệ thống thay vì dialog cùng tông.
 
-## 5. PHÂN CHIA NĂNG LỰC & TÍNH NĂNG (FEATURE SCOPE)
+## 3. Người dùng
 
-### 🚀 MVP (Giai đoạn 1 - Bắt buộc có):
-- [ ] **DBI.Controller.SDK:**
-  - Base class `ControllerProgram` (`OnStart`, `Execute`, `OnStop`).
-  - Core Automation Primitives: Timers (`Ton`, `Tof`, `Tp`), Counters (`CTU`, `CTD`), Edge Detection (`RisingEdge`, `FallingEdge`).
-  - Abstract IO Object Model.
-- [ ] **DBI.Controller.Runtime:**
-  - High-precision Scan Engine (Scan cycle 20ms).
-  - Double/Triple Buffering Memory Image (`InputImage` -> `Logic` -> `OutputImage`).
-  - Assembly Load Engine (`AssemblyLoadContext`) hỗ trợ nạp User DLL linh hoạt.
-  - Driver Manager & Safety Exception Catching (Dừng an toàn khi DLL crash).
-- [ ] **Drivers (MVP - Dựa trên DBI.Drivers):**
-  - **Quy tắc bắt buộc:** 100% Protocol Drivers phải sử dụng core communication client từ **`DBI.Drivers`** (`C:\Users\ducbu\Documents\GitHub\DBI.Drivers`). Nếu cần giao thức mới, core client phải được viết trong `DBI.Drivers` trước.
-  - `SimulationDriver`: Giả lập Input/Output trong bộ nhớ để test logic mà không cần phần cứng.
-  - `ModbusDriver`: Adapter bọc `DBI.Drivers.Modbus` (Modbus TCP/RTU/ASCII).
-  - `DeltaPlcDriver`: Adapter bọc `DBI.Drivers.Delta.PLC` (Delta PLC D/M/X/Y/S/C/T).
-  - `OmronPlcDriver`: Adapter bọc `DBI.Drivers.Omron` (Omron FINS / HostLink).
-  - `FactoryIODriver`: Adapter bọc `DBI.Drivers.Modbus` kết nối giả lập 3D máy móc Factory I/O.
-- [ ] **Samples & Testing:**
-  - Demo Băng tải (Conveyor), Sorting System trên Factory I/O.
-  - Unit Test Suite mẫu bằng xUnit.
+Kỹ sư tự động hoá công nghiệp — quen Visual Studio và TIA Portal. Họ đánh giá độ tin cậy
+của tool **bằng chất lượng IDE**: control lệch tông = tool amateur = không dám chạy máy thật.
 
-### 🎁 Phase 2 (Cải tiến & Nâng cao):
-- [ ] **DBI.Controller.Studio (Desktop App - WPF/Avalonia hoặc Web App):**
-  - Cấu hình danh sách Devices & Drivers.
-  - Drag-drop Tag Mapping giữa Device Tag và `IO` Property.
-  - Live Diagnostics (Scan time display, Memory usage, Driver Status).
-  - Force I/O (Bật/tắt cưỡng bức I/O để debug).
-- [ ] **Hot Reload:**
-  - Tự động bù DLL mới biên dịch, Swap Assembly không cần Restart Runtime.
-- [ ] **Drivers mở rộng:**
-  - `OpcUaDriver` (Client OPC UA).
-  - `SiemensDriver` (S7 Protocol cho S7-1200/1500).
+## 4. Market Research
 
-### 💭 Backlog (Tương lai):
-- [ ] Support Linux RT-PREEMPT kernel cho High-Determinism Real-time.
-- [ ] MQTT Driver cho IoT Cloud connectivity.
-- [ ] Source Generator cho Compile-time Strongly-typed `IO` Generator.
+Không cần nghiên cứu thị trường ngoài — chuẩn tham chiếu là chính Visual Studio:
+- **Dark**: editor `#1E1E1E`, chrome `#2D2D30`, selection `#094771`, accent xanh VS blue.
+- **Light**: editor `#F5F5F5`, chrome `#EEEEF2`, selection `#007ACC`.
+- Bộ token đầy đủ của VS gồm ~40 key; DBI.Studio đang có 13.
 
----
+## 5. Features
 
-## 6. CẤU TRÚC SOLUTION ĐỀ XUẤT
+### 🚀 MVP — Phase A: Sửa hỏng (bug thật)
 
-```
-DBI.Controller
-├── src
-│   ├── DBI.Controller.Core           # Interfaces, Memory Image, Abstractions
-│   ├── DBI.Controller.SDK            # ControllerProgram, Timers, Edge, StateMachine
-│   ├── DBI.Controller.Runtime        # Scan Engine, Scheduler, Host, Safety Catch
-│   ├── DBI.Controller.Studio         # UI App cấu hình Devices & Drag-Drop Mapping
-│   ├── DBI.Controller.Diagnostics    # Logging, Scan Time metrics, Performance Counters
-│   └── DBI.Controller.Testing        # Mock Drivers & Testing utilities
-├── Drivers
-│   ├── DBI.Controller.Driver.Simulation
-│   ├── DBI.Controller.Driver.Modbus
-│   ├── DBI.Controller.Driver.FactoryIO
-│   ├── DBI.Controller.Driver.OpcUa
-│   └── DBI.Controller.Driver.Siemens
-├── Samples
-│   ├── Sample.Conveyor
-│   ├── Sample.Sorting
-│   └── Sample.Palletizer
-└── docs
-    └── BRIEF.md
-```
+1. **T-1**: Sync hai chiều VM→editor cho `RoslynCodeEditor`. Khi VM đổi Text phải render lại
+   trong editor mà không mất vị trí con trỏ, không bắn vòng lặp TextChanged, không phá
+   IntelliSense (Roslyn document phải cập nhật theo).
+2. **T-2**: Đẩy vị trí caret thật từ editor lên VM mỗi khi caret di chuyển; sửa phép tính
+   chèn với snippet nhiều dòng (chèn xong đặt caret cuối đoạn chèn).
+3. **T-3**: Thêm KeyBinding Ctrl+T (focus ô lọc Toolbox) và Ctrl+S (Save all); hoặc bỏ nhãn
+   phím tắt nếu không làm — không được quảng cáo phím chết.
 
----
+### 🚀 MVP — Phase B: Hệ token Visual Studio đầy đủ
 
-## 7. ƯỚC TÍNH SƠ BỘ & RỦI RO KỸ THUẬT
+4. Mở rộng token từ 13 → ~35-40 key theo bảng màu VS thật (cả Light lẫn Dark): thêm
+   disabled fg/bg, hover/pressed, input border/focus, tab active/inactive, splitter,
+   scrollbar, tooltip bg/fg, menu hover, status bar…
+5. Style nốt các control còn mặc định: ComboBox (+dropdown), ContextMenu/MenuItem submenu,
+   ScrollBar/ScrollViewer, ToolTip, TreeViewItem expander, CheckBox/RadioButton nếu dùng.
+6. Thay toàn bộ màu cứng bằng token mới (force row, overlay marker, drop highlight).
+7. Chốt một phong cách bo góc duy nhất (đề xuất: 2px đồng nhất, bỏ các chỗ 3-4px).
 
-- **Độ phức tạp:** Trung bình - Khá.
-- **Rủi ro kỹ thuật:**
-  1. **Determinism trên Windows:** Windows không phải OS Real-Time. 
-     * *Giải pháp:* Dùng Win32 High Resolution Timers + Thread Priority Highest + Async Worker I/O để tránh làm nghẽn Scan Engine.
-  2. **Memory Leak khi Hot Reload:** 
-     * *Giải pháp:* Sử dụng collectible `AssemblyLoadContext` và giải phóng triệt để reference cũ.
-  3. **Thread Safety trên Memory Image:** 
-     * *Giải pháp:* Cơ chế Memory Snapshot Lock-free (Interlocked Swap) tại đầu và cuối Scan Cycle.
+### 🎁 Phase C: Hiện đại hoá vỏ
 
----
+8. Title bar tối tuỳ biến (WindowChrome) — icon app + tên project + nút min/max/close
+   theo theme.
+9. Icon cây project theo loại node (giấy MDL2 có sẵn trong repo).
+10. Dialog xác nhận force/thoát dùng chung tông theme thay MessageBox hệ thống.
 
-## 8. BƯỚC TIẾP THEO
+### 💭 Backlog (ghi nhận, chưa hẹn kỳ)
 
-- Chạy lệnh **`/plan`** để tiến hành thiết kế chi tiết kiến trúc lớp (Class Diagram, Sequence Diagram), xây dựng PRD chi tiết và phân chia các task code cụ thể.
+- Nút chuyển 3 chế độ Light/Dark/Theo-Windows.
+- Animation chuyển theme mượt (fade brush).
+- High-DPI rà soát riêng màn hình scale 150%.
+
+## 6. Complexity & Risks
+
+| Việc | Độ khó | Rủi ro |
+|------|--------|--------|
+| T-1 sync hai chiều RoslynCodeEditor | 🔴 Hard | Phải cập nhật cả Roslyn document (IntelliSense) khi set text từ ngoài; chống loop TextChanged; giữ caret. Spike ngắn trước khi làm. |
+| T-2 caret tracking | 🟢 Easy | Gắn event `TextArea.Caret.PositionChanged`, marshal về VM. |
+| T-3 keybinding | 🟢 Easy | Focus ô lọc cần `FocusManager`; Ctrl+S xung đột mặc định WPF? — kiểm tra. |
+| Token mở rộng | 🟡 Medium | Cơ học nhưng phải quét hết XAML thay brush; test cả 2 theme. |
+| Style ComboBox/ContextMenu/ScrollBar | 🟡 Medium | Template WPF dài, dễ sót trigger; copy mẫu chuẩn rồi tinh gọn. |
+| Title bar tuỳ biến | 🟡 Medium | WindowChrome + xử lý maximize padding, snap, double-click; AvalonDock phải sống chung. |
+| ⚠️ Không được phá | — | Chu kỳ scan 20ms, IPC camelCase, force-safety flow, ADR-001. UI-only change nhưng build phải giữ 0 warning. |
+
+## 7. Next → /awf-plan
+
+Đầu vào cho plan:
+- Phase A (bug) → phase file riêng, DoD: chèn snippet/tag hiện ngay trên editor đúng vị trí
+  con trỏ; Ctrl+T/Ctrl+S hoạt động.
+- Phase B (token) → phase file riêng, DoD: quét XAML không còn hex ngoài Themes/*.xaml;
+  cả 2 theme chụp màn hình đối chiếu.
+- Phase C (vỏ) → phase file riêng, DoD: title bar tối cả 2 theme, icon cây project.
+- Giữ nguyên mọi logic Runtime/IPC/Safety — chỉ đụng Studio + Studio.Core (phần VM).

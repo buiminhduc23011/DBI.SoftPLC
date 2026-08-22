@@ -376,7 +376,9 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
 }
 
 /// <summary>
-/// Bảng thẻ tác vụ bên phải. Đổi nội dung theo document đang active (Task 12.4):
+/// Bảng thẻ tác vụ bên phải, kiểu Solution Explorer của Visual Studio:
+/// ô lọc trên đầu, mục xếp theo nhóm có tiêu đề bấm để đóng/mở.
+/// Đổi nội dung theo document đang active (Task 12.4):
 /// code editor → Instructions · Device Tags; bảng khác → chỉ Device Tags.
 /// </summary>
 public partial class TaskCardsViewModel : PaneViewModelBase
@@ -388,6 +390,7 @@ public partial class TaskCardsViewModel : PaneViewModelBase
             .OrderBy(t => t.Name)
             .Select(t => new TaskCardItem(t.Name, SnippetFor(t.Name)))
             .ToList();
+        RefreshFiltered();
     }
 
     public IReadOnlyList<TaskCardItem> Instructions { get; }
@@ -395,9 +398,23 @@ public partial class TaskCardsViewModel : PaneViewModelBase
     /// <summary>Tag của project theo device — nguồn cho card Device Tags (Task 12.2).</summary>
     public IReadOnlyList<DeviceTagItem> DeviceTags { get; private set; } = Array.Empty<DeviceTagItem>();
 
+    /// <summary>Nhóm hiển thị sau khi lọc — mỗi nhóm một device, sập mở được như vùng Toolbox VS.</summary>
+    public IReadOnlyList<ToolboxGroup> Groups { get; private set; } = Array.Empty<ToolboxGroup>();
+
+    /// <summary>Từ khoá lọc — khớp không phân biệt hoa/thường trên tên tag và device.</summary>
+    [ObservableProperty]
+    private string _filterText = "";
+
+    /// <summary>Số tag đang hiện / tổng số — dòng trạng thái nhỏ dưới ô lọc kiểu VS.</summary>
+    public string FilterSummary => Groups.Count == 0
+        ? "Không có mục nào khớp"
+        : $"{Groups.Sum(g => g.Items.Count)} of {DeviceTags.Count + Instructions.Count} items";
+
     /// <summary>Document đang active là code editor không — quyết định card nào hiện.</summary>
     [ObservableProperty]
     private bool _showInstructions = true;
+
+    partial void OnFilterTextChanged(string value) => RefreshFiltered();
 
     /// <summary>Kéo/thả/double-click một tag từ Toolbox.</summary>
     public event EventHandler<TaskCardItem>? SnippetRequested;
@@ -430,6 +447,35 @@ public partial class TaskCardsViewModel : PaneViewModelBase
                     IsMapped: !string.IsNullOrWhiteSpace(t.Device) && t.Direction != Models.TagDirection.Memory && !string.IsNullOrWhiteSpace(t.Address)))
                 .ToList();
         OnPropertyChanged(nameof(DeviceTags));
+        RefreshFiltered();
+    }
+
+    /// <summary>Xếp lại nhóm theo từ khoá lọc: Instructions đứng đầu, sau đó là từng device.</summary>
+    private void RefreshFiltered()
+    {
+        var filter = FilterText.Trim();
+        var groups = new List<ToolboxGroup>();
+
+        if (ShowInstructions)
+        {
+            groups.Add(new ToolboxGroup("Instructions", filter.Length == 0
+                ? Instructions
+                : Instructions.Where(i => i.Name.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList()));
+        }
+
+        foreach (var group in DeviceTags
+                     .Where(t => filter.Length == 0 ||
+                                 t.Name.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                                 t.Device.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                     .GroupBy(t => string.IsNullOrEmpty(t.Device) ? "(unassigned)" : t.Device)
+                     .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            groups.Add(new ToolboxGroup(group.Key, group.ToList()));
+        }
+
+        Groups = groups;
+        OnPropertyChanged(nameof(Groups));
+        OnPropertyChanged(nameof(FilterSummary));
     }
 
     private static string SnippetFor(string name) => name switch
@@ -457,3 +503,21 @@ public sealed record DeviceTagItem(
 }
 
 public sealed record TaskCardItem(string Name, string Snippet);
+
+/// <summary>
+/// Một nhóm mục trong Toolbox kiểu VS: tiêu đề bấm để sập/mở, đếm số mục ở lề phải.
+/// </summary>
+public partial class ToolboxGroup : ObservableObject
+{
+    public ToolboxGroup(string title, IReadOnlyList<object> items)
+    {
+        Title = title;
+        Items = items;
+    }
+
+    public string Title { get; }
+    public IReadOnlyList<object> Items { get; }
+
+    [ObservableProperty]
+    private bool _isExpanded = true;
+}

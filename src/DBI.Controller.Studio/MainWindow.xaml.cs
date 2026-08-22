@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using DBI.Controller.Studio.Core.ViewModels;
 using DBI.Controller.Studio.Services;
@@ -9,6 +10,9 @@ namespace DBI.Controller.Studio;
 
 public partial class MainWindow : Window
 {
+    /// <summary>Ctrl+T — hiện pane Toolbox (nếu đang ẩn) rồi focus ô lọc. View-layer command: không qua VM.</summary>
+    public static readonly RoutedCommand FocusToolboxFilter = new(nameof(FocusToolboxFilter), typeof(MainWindow));
+
     private readonly ShellViewModel _shell;
 
     public MainWindow(ShellViewModel shell)
@@ -27,6 +31,34 @@ public partial class MainWindow : Window
         _shell.AttachLayout(new DockLayoutService(Docking, _shell.ResolveContent));
         Docking.Loaded += (_, _) => NormalizeDockChrome();
     }
+
+    /// <summary>
+    /// Ctrl+T: <c>ToolboxPane.Show()</c> khi hidden/auto-hidden (KHÔNG đụng
+    /// <c>Docking.ActiveContent</c> — nó two-way bind Editors.ActiveDocument), tìm ô lọc trong
+    /// visual tree từ Docking, defer focus nếu template chưa render xong.
+    /// </summary>
+    private void OnFocusToolboxFilter(object sender, ExecutedRoutedEventArgs e)
+    {
+        if (ToolboxPane.IsHidden || ToolboxPane.IsAutoHidden) ToolboxPane.Show();
+
+        FocusToolboxFilterBox();
+    }
+
+    private void FocusToolboxFilterBox()
+    {
+        var filterBox = Descendants(Docking).OfType<TextBox>().FirstOrDefault(t => t.Name == "ToolboxFilterBox");
+        if (filterBox is null)
+        {
+            // Template của pane chưa render xong (vừa Show) — thử lại ở priority Loaded.
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(FocusToolboxFilterBox));
+            return;
+        }
+
+        filterBox.Focus();
+        filterBox.SelectAll();
+    }
+
+    private void OnFocusToolboxFilterCanExecute(object sender, CanExecuteRoutedEventArgs e) => e.CanExecute = true;
 
     private void NormalizeDockChrome()
     {

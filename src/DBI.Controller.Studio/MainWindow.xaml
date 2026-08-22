@@ -8,6 +8,7 @@
         xmlns:vm="clr-namespace:DBI.Controller.Studio.Core.ViewModels;assembly=DBI.Controller.Studio.Core"
         xmlns:behaviors="clr-namespace:DBI.Controller.Studio.Behaviors"
         xmlns:converters="clr-namespace:DBI.Controller.Studio.Converters"
+        xmlns:local="clr-namespace:DBI.Controller.Studio"
         Title="DBI.Studio - Soft PLC Engineering"
         Height="850" Width="1360"
         Icon="pack://application:,,,/icon.ico"
@@ -18,11 +19,22 @@
     <Window.InputBindings>
         <KeyBinding Key="B" Modifiers="Control+Shift" Command="{Binding CompileCommand}" />
         <KeyBinding Key="F5" Command="{Binding DeployCommand}" />
+        <!-- Nhãn phím tắt trên UI phải thật: Ctrl+S = Save all (tooltip nút toolbar), Ctrl+T = Search Toolbox. -->
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveAllCommand}" />
+        <KeyBinding Key="T" Modifiers="Control" Command="{x:Static local:MainWindow.FocusToolboxFilter}" />
     </Window.InputBindings>
+
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static local:MainWindow.FocusToolboxFilter}"
+                        Executed="OnFocusToolboxFilter"
+                        CanExecute="OnFocusToolboxFilterCanExecute" />
+    </Window.CommandBindings>
 
     <Window.Resources>
         <converters:ResourceKeyToBrushConverter x:Key="BrushFromKey" />
         <converters:InverseBoolConverter x:Key="InverseBool" />
+        <converters:EmptyStringToVisibilityConverter x:Key="EmptyStringToVisibility" />
+        <converters:MappedToBrushConverter x:Key="MapGlyphBrush" />
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
         <DataTemplate x:Key="LogEntryTemplate">
@@ -105,45 +117,85 @@
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:TaskCardsViewModel}">
-            <ScrollViewer Margin="8" VerticalScrollBarVisibility="Auto">
-                <StackPanel>
-                    <!-- Task 12.4 — card Instructions chỉ hiện khi document active là code editor -->
-                    <TextBlock Text="Instructions" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,8"
-                               Visibility="{Binding ShowInstructions, Converter={StaticResource BoolToVisibility}}" />
-                    <ItemsControl ItemsSource="{Binding Instructions}" Margin="0,0,0,16"
-                                  Visibility="{Binding ShowInstructions, Converter={StaticResource BoolToVisibility}}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Content="{Binding Name}"
-                                        ToolTip="Click to insert snippet"
-                                        Command="{Binding DataContext.InsertInstructionCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                        CommandParameter="{Binding}"
-                                        Style="{StaticResource FlatButton}" HorizontalContentAlignment="Left" />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+            <!-- Toolbox kiểu Visual Studio: ô lọc trên đầu, mục xếp nhóm sập/mở được. -->
+            <DockPanel Background="{DynamicResource CardBg}">
+                <Border DockPanel.Dock="Top" Padding="8,8,8,4">
+                    <Grid>
+                        <TextBox x:Name="ToolboxFilterBox"
+                                 Style="{StaticResource SearchBox}"
+                                 Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="Lọc theo tên tag hoặc device" />
+                        <TextBlock Text="Search Toolbox (Ctrl+T)" Margin="1,1,0,0"
+                                   Style="{StaticResource MutedText}" FontSize="12"
+                                   IsHitTestVisible="False"
+                                   Visibility="{Binding FilterText, Converter={StaticResource EmptyStringToVisibility}}" />
+                    </Grid>
+                </Border>
+                <Border DockPanel.Dock="Top" Padding="10,0,8,6">
+                    <TextBlock Text="{Binding FilterSummary}" Style="{StaticResource MutedText}" FontSize="11" />
+                </Border>
 
-                    <!-- Task 12.2 — Device Tags: tag đã khai theo device, ● đã map / ○ chưa -->
-                    <TextBlock Text="Device Tags" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,8" />
-                    <ItemsControl ItemsSource="{Binding DeviceTags}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Groups}" Margin="4,0,4,8">
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button ToolTip="Kéo vào Tag Table / Watch Table / code editor, hoặc double-click để chèn tham chiếu IO.TenTag"
-                                        behaviors:TagDragDropBehaviors.DragSource="True"
-                                        Command="{Binding DataContext.InsertDeviceTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                        CommandParameter="{Binding}"
-                                        Style="{StaticResource FlatButton}" HorizontalContentAlignment="Left">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding MapGlyph}" Margin="0,0,6,0"
-                                                   Foreground="{DynamicResource SuccessColor}" />
-                                        <TextBlock Text="{Binding Display}" />
-                                    </StackPanel>
-                                </Button>
+                            <DataTemplate DataType="{x:Type vm:ToolboxGroup}">
+                                <Expander IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
+                                          Style="{StaticResource ToolboxGroupExpander}">
+                                    <Expander.Header>
+                                        <Grid Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Expander}}">
+                                            <TextBlock Text="{Binding Title}" Style="{StaticResource SectionHeader}"
+                                                       FontWeight="SemiBold" FontSize="11" Margin="0" />
+                                            <TextBlock HorizontalAlignment="Right" Style="{StaticResource MutedText}"
+                                                       FontSize="11" Margin="0" Text="{Binding Items.Count}" />
+                                        </Grid>
+                                    </Expander.Header>
+                                    <ItemsControl ItemsSource="{Binding Items}">
+                                        <ItemsControl.Resources>
+                                            <DataTemplate DataType="{x:Type vm:TaskCardItem}">
+                                                <Button Command="{Binding DataContext.InsertInstructionCommand, RelativeSource={RelativeSource AncestorType=ItemsControl, AncestorLevel=2}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="Click để chèn snippet tại caret — double-click chỉ chèn một lần"
+                                                        behaviors:SingleClickCommandBehavior.Enabled="True"
+                                                        Style="{StaticResource ToolboxItemButton}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE943;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                                                   Foreground="{DynamicResource AccentColor}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding Name}" Style="{StaticResource LabelText}" FontSize="12" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                            <DataTemplate DataType="{x:Type vm:DeviceTagItem}">
+                                                <Button behaviors:TagDragDropBehaviors.DragSource="True"
+                                                        behaviors:SingleClickCommandBehavior.Enabled="True"
+                                                        Command="{Binding DataContext.InsertDeviceTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl, AncestorLevel=2}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="Kéo vào Tag Table / Watch Table / code editor — double-click chỉ chèn một lần IO.TenTag"
+                                                        Style="{StaticResource ToolboxItemButton}">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" SharedSizeGroup="MapGlyph" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" Text="{Binding MapGlyph}" Margin="0,0,7,0"
+                                                                   FontSize="10" VerticalAlignment="Center"
+                                                                   Foreground="{Binding IsMapped, Converter={StaticResource MapGlyphBrush}}" />
+                                                        <TextBlock Grid.Column="1" Text="{Binding Name}" Style="{StaticResource LabelText}"
+                                                                   FontSize="12" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Grid.Column="2" Text="{Binding Address}" Style="{StaticResource MonospaceText}"
+                                                                   FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0"
+                                                                   Foreground="{DynamicResource TextSecondary}" />
+                                                    </Grid>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.Resources>
+                                    </ItemsControl>
+                                </Expander>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </StackPanel>
-            </ScrollViewer>
+                </ScrollViewer>
+            </DockPanel>
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:CodeEditorViewModel}">
@@ -399,35 +451,55 @@
             </MenuItem>
         </Menu>
 
+        <!-- Toolbar kiểu Visual Studio: nút chỉ icon vuông nhỏ, nhãn nằm trong tooltip,
+             nhóm lệnh ngăn bằng vạch mảnh. Deploy giữ màu accent để nổi bật. -->
         <Border DockPanel.Dock="Top" Background="{DynamicResource HeaderBg}"
-                BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,2" Padding="6,5">
+                BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Padding="6,3">
             <StackPanel Orientation="Horizontal">
-                <Button Style="{StaticResource FlatButton}" Command="{Binding NewProjectCommand}" ToolTip="New project">
-                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="New" /></StackPanel>
+                <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding NewProjectCommand}"
+                        Content="&#xE8A5;" ToolTip="New project" />
+                <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding OpenProjectCommand}"
+                        Content="&#xE8E5;" ToolTip="Open project" />
+                <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding SaveAllCommand}"
+                        Content="&#xE74E;" ToolTip="Save all (Ctrl+S)" />
+                <Rectangle Width="1" Height="18" Margin="6,0" Fill="{DynamicResource BorderColor}" />
+                <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding CompileCommand}"
+                        IsEnabled="{Binding CanCompile}" Content="&#xE943;" ToolTip="Build (Ctrl+Shift+B)" />
+                <Button Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}"
+                        ToolTip="Deploy to Runtime (F5)" Padding="7"
+                        Background="{DynamicResource AccentColor}" Foreground="White"
+                        FontFamily="Segoe MDL2 Assets" FontSize="15" Cursor="Hand"
+                        MinWidth="30" MinHeight="30" Margin="1,0">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Root" Background="{TemplateBinding Background}"
+                                    CornerRadius="4" SnapsToDevicePixels="True">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  Margin="{TemplateBinding Padding}" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Root" Property="Opacity" Value="0.85" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Root" Property="Opacity" Value="0.7" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.35" />
+                                    <Setter Property="Cursor" Value="Arrow" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <TextBlock Text="&#xE898;" />
                 </Button>
-                <Button Style="{StaticResource FlatButton}" Command="{Binding OpenProjectCommand}" ToolTip="Open project">
-                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="Open" /></StackPanel>
-                </Button>
-                <Button Style="{StaticResource FlatButton}" Command="{Binding SaveAllCommand}" ToolTip="Save all">
-                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="Save" /></StackPanel>
-                </Button>
-                <Rectangle Width="1" Margin="8,4" Fill="{DynamicResource BorderColor}" />
-                <Button Style="{StaticResource FlatButton}" Command="{Binding CompileCommand}" IsEnabled="{Binding CanCompile}" ToolTip="Build (Ctrl+Shift+B)">
-                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE943;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="Build" /></StackPanel>
-                </Button>
-                <Button Style="{StaticResource AccentButton}" Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}" ToolTip="Deploy (F5)">
-                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="Deploy" /></StackPanel>
-                </Button>
-                <Rectangle Width="1" Margin="8,4" Fill="{DynamicResource BorderColor}" />
-                <Button Style="{StaticResource FlatButton}" Command="{Binding StartRuntimeCommand}" IsEnabled="{Binding CanStart}" ToolTip="Start Runtime">
-                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="Start" /></StackPanel>
-                </Button>
-                <Button Style="{StaticResource FlatButton}" Command="{Binding StopRuntimeCommand}" IsEnabled="{Binding CanStop}" ToolTip="Stop Runtime">
-                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="Stop" /></StackPanel>
-                </Button>
-                <Button Style="{StaticResource FlatButton}" Command="{Binding ResetRuntimeCommand}" IsEnabled="{Binding CanReset}" ToolTip="Reset Runtime">
-                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" /><TextBlock Text="Reset" /></StackPanel>
-                </Button>
+                <Rectangle Width="1" Height="18" Margin="6,0" Fill="{DynamicResource BorderColor}" />
+                <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding StartRuntimeCommand}"
+                        IsEnabled="{Binding CanStart}" Content="&#xE768;" ToolTip="Start Runtime" />
+                <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding StopRuntimeCommand}"
+                        IsEnabled="{Binding CanStop}" Content="&#xE71A;" ToolTip="Stop Runtime" />
+                <Button Style="{StaticResource ToolBarIconButton}" Command="{Binding ResetRuntimeCommand}"
+                        IsEnabled="{Binding CanReset}" Content="&#xE72C;" ToolTip="Reset Runtime" />
             </StackPanel>
         </Border>
 

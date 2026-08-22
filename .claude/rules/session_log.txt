@@ -47,3 +47,17 @@
 [2026-07-27 02:25] DECISION: client đặt ở Studio.Core, marshal event bằng SynchronizationContext thay Dispatcher — tầng lõi không kéo WPF vào mà vẫn test được
 [2026-07-27 02:28] DONE phase-03: cắt ProjectReference Studio -> Runtime. IRuntimeClient/NamedPipe/Fake/ProcessLauncher. Xoá LiveMonitoringService
 [2026-07-27 02:30] DONE phase-03: test 187/187, build 0 warning/0 error
+[2026-08-21 22:30] START /awf-brainstorm — đại tu UI Studio (theme VS, toolbox hỏng, hiện đại hoá)
+[2026-08-21 22:30] FOUND T-1: InsertAtCaret ghi VM nhưng RoslynCodeEditor không sync ngược VM->editor — chèn không hiện trên màn hình
+[2026-08-21 22:30] FOUND T-2: CaretLine/CaretColumn không bao giờ được cập nhật từ editor — chèn luôn vào đầu dòng 1
+[2026-08-21 22:30] FOUND T-3: Ctrl+T / Ctrl+S quảng cáo trên UI nhưng không bind phím nào
+[2026-08-21 22:31] DECISION: user chọn xoá docs cũ có chủ ý; đại tu MỘT THỂ; bám sát màu Visual Studio thật
+[2026-08-21 22:32] DONE docs/BRIEF.md — 3 phase A/B/C, backlog 3 mục
+[2026-08-22 10:10] START /loop-plan — plan.md theo schema loop-plan/v1 (2 phase: sửa hỏng Toolbox, hệ token VS)
+[2026-08-22 10:10] BASELINE: commit d84d269, build 0/0, test 258/260 (2 jitter flaky CPU — rerun pass)
+[2026-08-22 10:15] codex-plan-review round 1: 8 findings (1 critical converter không refresh khi swap theme) — ACCEPTED all
+[2026-08-22 10:20] round 2: 7 findings (CRLF offset .NET chuẩn 
+=2 offset; Ctrl+T phải ToolboxPane.Show() không đụng ActiveContent; TryTakePendingCaretOffset public API) — ACCEPTED all
+[2026-08-22 10:25] round 3: 4 findings (ThemeBrushConverter IMultiValueConverter; xoá contract Ctrl+T trùng; bỏ VM timestamp guard test; attach-sau-init) — ACCEPTED all
+[2026-08-22 10:30] rounds 4-7: 5 findings (MappedToBrushConverter vào gate; reload same-value hole; init-write protection; PositionChanged attach ngay từ Loaded) — ACCEPTED all
+[2026-08-22 10:40] DONE plan.md APPROVE round 8 sau 23 finding đã xử lý — sẵn sàng cho loop-implement
