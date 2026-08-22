@@ -316,6 +316,13 @@ public partial class ProjectTreeViewModel : PaneViewModelBase
         {
             node.ContextMenuItems.Add(new MenuActionViewModel("Open", openNodeCommand, node));
         }
+        else if (node.Kind == ProjectNodeKind.DeviceConfiguration ||
+                 node.Kind == ProjectNodeKind.Device ||
+                 node.Kind == ProjectNodeKind.OnlineDiagnostics ||
+                 node.Kind == ProjectNodeKind.ForceTable)
+        {
+            node.ContextMenuItems.Add(new MenuActionViewModel("Open", openNodeCommand, node));
+        }
 
         foreach (ProjectNode child in node.Children)
         {

@@ -287,16 +287,35 @@ public partial class ShellViewModel : ObservableObject
         }
 
         if (node.Kind == ProjectNodeKind.OnlineDiagnostics)
-            Inspector.LogInformation("Diagnostics will open as a separate document.");
-        else if (node.Kind == ProjectNodeKind.DeviceConfiguration && Project is not null)
-            Editors.OpenDeviceConfiguration(Project, _projects, Runtime, _prompt);
-        else if (node.Kind == ProjectNodeKind.WatchTable && Project is not null && node.Payload is WatchTable watch)
+        {
+            Inspector.SelectedTabIndex = 2;
+            Inspector.LogDiagnostic($"[Online Diagnostics] Trạng thái Runtime: {Runtime.State} · Project: {Project?.Name ?? "(không có)"}");
+            return;
+        }
+        
+        if ((node.Kind == ProjectNodeKind.DeviceConfiguration || node.Kind == ProjectNodeKind.Device) && Project is not null)
+        {
+            var doc = Editors.OpenDeviceConfiguration(Project, _projects, Runtime, _prompt);
+            if (node.Payload is DeviceConfig dev)
+            {
+                var row = doc.Devices.FirstOrDefault(d => string.Equals(d.Name, dev.Name, StringComparison.OrdinalIgnoreCase));
+                if (row is not null) doc.SelectedRow = row;
+            }
+            return;
+        }
+
+        if (node.Kind == ProjectNodeKind.WatchTable && Project is not null && node.Payload is WatchTable watch)
+        {
             Editors.OpenWatchTable(Project, watch, Runtime, _projects);
-        else if (node.Kind == ProjectNodeKind.ForceTable)
+            return;
+        }
+
+        if (node.Kind == ProjectNodeKind.ForceTable)
         {
             var forceTable = Editors.OpenForceTable(Runtime, Project);
             forceTable.ForcesChanged -= OnForcesChanged;
             forceTable.ForcesChanged += OnForcesChanged;
+            return;
         }
     }
 
