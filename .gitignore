@@ -10,6 +10,7 @@ publish/
 *.user
 *.userosv
 *.suo
+*_wpftmp.csproj
 
 ## Ignore NuGet Packages
 *.nupkg
