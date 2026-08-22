@@ -27,3 +27,9 @@ Desktop.ini
 ## bỏ qua log đã xoay vòng
 .claude/rules/session_log_*.txt
 .claude/rules/handover.md.consumed
+
+## Codex review session data — output tạm của /codex-*-review, không commit
+.codex-review/
+
+## Claude Code cục bộ — quyền tool riêng từng máy
+.claude/settings.json
