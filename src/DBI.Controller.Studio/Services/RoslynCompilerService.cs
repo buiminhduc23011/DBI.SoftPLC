@@ -27,6 +27,7 @@ public sealed class RoslynCompilerService : IProjectCompiler
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
         var globalUsingsTree = CSharpSyntaxTree.ParseText(
             """
             global using global::System;
