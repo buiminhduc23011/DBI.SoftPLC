@@ -414,6 +414,8 @@ public partial class TaskCardsViewModel : PaneViewModelBase
     [ObservableProperty]
     private bool _showInstructions = true;
 
+    partial void OnShowInstructionsChanged(bool value) => RefreshFiltered();
+
     partial void OnFilterTextChanged(string value) => RefreshFiltered();
 
     /// <summary>Kéo/thả/double-click một tag từ Toolbox.</summary>

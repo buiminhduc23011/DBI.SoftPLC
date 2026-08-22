@@ -60,7 +60,9 @@
                       behaviors:ProjectTreeBehaviors.SelectedNode="{Binding SelectedNode, Mode=TwoWay}"
                       behaviors:ProjectTreeBehaviors.ActivateTarget="{Binding}">
                 <TreeView.ItemContainerStyle>
-                    <Style TargetType="TreeViewItem">
+                    <!-- BasedOn implicit style để giữ template theme (expander/selection) —
+                         style local chỉ thêm binding VM, không thay thế template. -->
+                    <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
                         <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
                         <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
@@ -68,7 +70,7 @@
                             <Setter.Value>
                                 <ContextMenu ItemsSource="{Binding ContextMenuItems}">
                                     <ContextMenu.ItemContainerStyle>
-                                        <Style TargetType="MenuItem">
+                                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
                                             <Setter Property="Header" Value="{Binding Title}" />
                                             <Setter Property="Command" Value="{Binding Command}" />
                                             <Setter Property="CommandParameter" Value="{Binding Parameter}" />

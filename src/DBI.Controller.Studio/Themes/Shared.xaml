@@ -253,10 +253,8 @@
         <Setter Property="FontSize" Value="13" />
     </Style>
 
-    <Style TargetType="MenuItem">
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
-        <Setter Property="Padding" Value="8,4" />
-    </Style>
+    <!-- MenuItem implicit duy nhất nằm ở phần "Menu chuột phải + menu con" dưới cuối file —
+         hai implicit style cùng key trong một dictionary là lỗi MC/ResourceDictionary. -->
 
     <Style TargetType="Separator">
         <Setter Property="Background" Value="{DynamicResource BorderColor}" />
@@ -470,6 +468,7 @@
                                           VerticalAlignment="Center"
                                           HorizontalAlignment="Left" />
                         <Popup x:Name="PART_Popup" IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                               PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
                                Placement="Bottom" AllowsTransparency="True" PopupAnimation="None"
                                StaysOpen="False">
                             <Border Background="{DynamicResource SubMenuBg}"
@@ -637,6 +636,7 @@
                         </Border>
                         <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True"
                                PopupAnimation="None" Focusable="False"
+                               PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
                                IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}">
                             <Border Background="{DynamicResource SubMenuBg}"
                                     BorderBrush="{DynamicResource SubMenuBorder}" BorderThickness="1"
@@ -784,19 +784,44 @@
                 <ControlTemplate TargetType="ScrollBar">
                     <Grid Background="{TemplateBinding Background}">
                         <!-- IsDirectionReversed chỉ đúng cho vertical (trigger bên dưới);
-                             horizontal để False — ngược lại là kéo ngược hướng (review #8). -->
+                             horizontal để False — ngược lại là kéo ngược hướng (review #8).
+                             Paging: Decrease/Increase RepeatButton với lệnh PageUp/PageDown
+                             (vertical); trigger Horizontal đổi sang PageLeft/PageRight. -->
                         <Track x:Name="PART_Track" IsDirectionReversed="False"
                                Orientation="{TemplateBinding Orientation}">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton x:Name="DecreaseBtn" Command="ScrollBar.PageUpCommand" Focusable="False">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Rectangle Fill="Transparent" />
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.DecreaseRepeatButton>
                             <Track.Thumb>
                                 <Thumb Background="{DynamicResource ScrollbarThumb}"
                                        Template="{StaticResource FlatScrollbarThumb}" />
                             </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton x:Name="IncreaseBtn" Command="ScrollBar.PageDownCommand" Focusable="False">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Rectangle Fill="Transparent" />
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.IncreaseRepeatButton>
                         </Track>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="Orientation" Value="Vertical">
                             <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="True" />
                         </Trigger>
+                        <!-- Horizontal: paging lệnh trái/phải (khác vertical up/down) -->
+                        <DataTrigger Binding="{Binding Orientation, RelativeSource={RelativeSource Self}}" Value="Horizontal">
+                            <Setter TargetName="DecreaseBtn" Property="Command" Value="ScrollBar.PageLeftCommand" />
+                            <Setter TargetName="IncreaseBtn" Property="Command" Value="ScrollBar.PageRightCommand" />
+                        </DataTrigger>
                         <Trigger Property="Orientation" Value="Horizontal">
                             <Setter Property="Width" Value="Auto" />
                             <Setter Property="Height" Value="10" />

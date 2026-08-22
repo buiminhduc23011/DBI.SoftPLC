@@ -142,4 +142,18 @@ public sealed class TaskCardsViewModelTests
 
         Assert.Same(tag, requested);
     }
+
+    [Fact]
+    public void ShowInstructions_DoiDocKhongCode_NhomHienLai()
+    {
+        var cards = new TaskCardsViewModel();
+
+        // Code → non-code: nhóm Instructions biến mất
+        cards.ShowInstructions = false;
+        Assert.DoesNotContain(cards.Groups, g => g.Title == "Instructions");
+
+        // non-code → code: nhóm Instructions quay lại
+        cards.ShowInstructions = true;
+        Assert.Contains(cards.Groups, g => g.Title == "Instructions");
+    }
 }
