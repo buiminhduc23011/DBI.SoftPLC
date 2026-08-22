@@ -27,12 +27,24 @@ public sealed class RoslynCompilerService : IProjectCompiler
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
+        var globalUsingsTree = CSharpSyntaxTree.ParseText(
+            """
+            global using global::System;
+            global using global::System.Collections.Generic;
+            global using global::System.IO;
+            global using global::System.Linq;
+            global using global::System.Threading;
+            global using global::System.Threading.Tasks;
+            """,
+            parseOptions,
+            path: "global_usings.g.cs");
+
         var syntaxTrees = request.Sources
             .Select(source => CSharpSyntaxTree.ParseText(
                 SourceText.From(source.Text),
                 parseOptions,
                 path: NormalizePath(source.Path)))
+            .Append(globalUsingsTree)
             .Concat(LoadSdkSyntaxTrees(parseOptions))
             .ToList();
 
@@ -97,7 +109,13 @@ public sealed class RoslynCompilerService : IProjectCompiler
         if (!string.IsNullOrWhiteSpace(trustedPlatformAssemblies))
         {
             foreach (string path in trustedPlatformAssemblies.Split(Path.PathSeparator))
+            {
+                // Không nạp lại DBI.Controller.SDK.dll vì mã nguồn SDK đã được nạp trực tiếp qua LoadSdkSyntaxTrees
+                if (Path.GetFileName(path).Equals("DBI.Controller.SDK.dll", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
                 references.Add(path);
+            }
         }
 
         return references
