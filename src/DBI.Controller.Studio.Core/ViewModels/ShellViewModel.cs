@@ -775,8 +775,9 @@ public partial class ShellViewModel : ObservableObject
 
     private void EnsureGeneratedCode(DbiProject project)
     {
-        if (_generator.NeedsRegeneration(project))
-            OnGeneratedCodeChanged(this, _generator.WriteIfChanged(project));
+        var result = _generator.WriteIfChanged(project);
+        if (result.Changed)
+            OnGeneratedCodeChanged(this, result);
     }
 
     private void OnTagTableValidationIssuesChanged(object? sender, IReadOnlyList<ValidationIssue> issues)

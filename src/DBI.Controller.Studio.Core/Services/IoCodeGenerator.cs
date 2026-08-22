@@ -164,7 +164,7 @@ public sealed class IoCodeGenerator
     {
         string normalized = string.Join("\n",
             project.TagTables.SelectMany(t => t.Tags)
-                .Select(t => $"{t.Name}|{t.DataType}|{t.Direction}|{t.Device}|{t.Comment}"));
+                .Select(t => $"{t.Name}|{SanitizePropertyName(t.Name)}|{t.DataType}|{t.Direction}|{t.Device}|{t.Comment}"));
 
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(normalized)));
     }
