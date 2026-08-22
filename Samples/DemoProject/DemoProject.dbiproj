@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "name": "DemoProject",
+  "description": "Project demo test UI — simulation driver",
+  "runtime": {
+    "transportType": "NamedPipe",
+    "pipeName": "DBI.Runtime",
+    "host": "127.0.0.1",
+    "port": 5580
+  },
+  "devices": [
+    {
+      "name": "Sim",
+      "driverType": "DBI.Controller.Driver.Simulation",
+      "settings": {}
+    }
+  ],
+  "tagTables": [
+    {
+      "name": "Main",
+      "tags": [
+        { "name": "StartButton", "dataType": "Bool", "direction": "Input", "device": "Sim", "address": "Input_0", "comment": "Nút Start" },
+        { "name": "StopButton", "dataType": "Bool", "direction": "Input", "device": "Sim", "address": "Input_1", "comment": "Nút Stop" },
+        { "name": "SensorPart", "dataType": "Bool", "direction": "Input", "device": "Sim", "address": "Input_2", "comment": "Cảm biến có phôi" },
+        { "name": "ConveyorRun", "dataType": "Bool", "direction": "Output", "device": "Sim", "address": "Output_0", "comment": "Băng tải chạy" },
+        { "name": "ClampDown", "dataType": "Bool", "direction": "Output", "device": "Sim", "address": "Output_1", "comment": "Kẹp phôi" },
+        { "name": "CycleCount", "dataType": "Int", "direction": "Memory", "device": "", "address": "", "comment": "Đếm chu kỳ" },
+        { "name": "SpeedPercent", "dataType": "Real", "direction": "Memory", "device": "", "address": "", "comment": "Tốc độ %" }
+      ]
+    }
+  ],
+  "blocks": [
+    { "name": "Main", "kind": "Main", "fileName": "Blocks/Main.cs", "comment": "Khối chính" },
+    { "name": "Conveyor", "kind": "FunctionBlock", "fileName": "Blocks/Conveyor.cs", "comment": "Logic băng tải" }
+  ],
+  "watchTables": []
+}

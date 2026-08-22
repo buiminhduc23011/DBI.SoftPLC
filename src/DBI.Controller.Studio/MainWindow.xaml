@@ -455,13 +455,14 @@
                 <Border DockPanel.Dock="Top" Background="{DynamicResource WarningColor}" Padding="8" Margin="0,0,0,8">
                     <TextBlock Text="{Binding BannerMessage}" Foreground="{DynamicResource TextOnAccent}" TextWrapping="Wrap" />
                 </Border>
-                <avalonedit:TextEditor Text="{Binding Text}" IsReadOnly="True"
+                <avalonedit:TextEditor IsReadOnly="True"
                                        SyntaxHighlighting="C#"
                                        FontFamily="Consolas"
                                        FontSize="13"
                                        ShowLineNumbers="True"
                                        Background="{DynamicResource CardBg}"
-                                       Foreground="{DynamicResource TextPrimary}" />
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       behaviors:BindableTextEditor.Text="{Binding Text}" />
             </DockPanel>
         </DataTemplate>
     </Window.Resources>
