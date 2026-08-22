@@ -356,7 +356,10 @@ public class ShellViewModelTests
         File.Delete(temp.At("Blocks", "Main.cs"));
         shell.Editors.OpenBlock(shell.Project!.Blocks[0], shell.Project.ProjectDirectory);
 
-        Assert.Contains(shell.Inspector.Information, e => e.Message.Contains("không tồn tại"));
+        lock (shell.Inspector.LogLock)
+        {
+            Assert.Contains(shell.Inspector.Information.ToList(), e => e.Message.Contains("không tồn tại"));
+        }
     }
 
     // ── Inspector ────────────────────────────────────────────────────────────────

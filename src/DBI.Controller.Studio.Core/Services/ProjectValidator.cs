@@ -62,6 +62,11 @@ public static class ProjectValidator
                 issues.Add(new ValidationIssue(IssueSeverity.Error,
                     $"Tên tag '{tag.Name}' không hợp lệ. Tên tag không được để trống hoặc chứa ký tự đặc biệt.", tag.Name));
             }
+            else if (ReservedKeywords.Contains(tag.Name))
+            {
+                issues.Add(new ValidationIssue(IssueSeverity.Error,
+                    $"Tên tag '{tag.Name}' trùng với từ khoá C#. Vui lòng đổi tên khác.", tag.Name));
+            }
 
             if (!seen.Add(tag.Name))
             {

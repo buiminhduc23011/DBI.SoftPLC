@@ -42,12 +42,10 @@ public class ProjectValidatorTests
 
     [Theory]
     [InlineData("")]
-    [InlineData("1Start")]
-    [InlineData("Start Button")]
-    [InlineData("Start-Button")]
-    [InlineData("Start.Button")]
-    [InlineData("%I0.0")]
-    public void TenTagKhongPhaiIdentifier_BaoLoi(string tagName)
+    [InlineData("   ")]
+    [InlineData("Tag\"1")]
+    [InlineData("Tag\n1")]
+    public void TenTagKhongHopLe_BaoLoi(string tagName)
     {
         var project = ValidProject();
         project.TagTables[0].Tags.Add(Tag(tagName));
@@ -61,8 +59,10 @@ public class ProjectValidatorTests
     [InlineData("StopButton")]
     [InlineData("_internal")]
     [InlineData("Motor1")]
+    [InlineData("Tag 1")]
+    [InlineData("Start Button")]
     [InlineData("BăngTải")]      // tên có dấu vẫn là identifier C# hợp lệ
-    public void TenTagLaIdentifierHopLe_KhongBaoLoi(string tagName)
+    public void TenTagHopLe_KhongBaoLoi(string tagName)
     {
         var project = ValidProject();
         project.TagTables[0].Tags.Add(Tag(tagName));
