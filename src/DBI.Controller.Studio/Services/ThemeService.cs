@@ -52,6 +52,10 @@ public class ThemeService : IThemeSwitcher
 
         _current = next;
         IsDark = dark;
+
+        // Báo cho mọi MultiBinding gắn ThemeVersion đánh giá lại — binding-qua-converter tra
+        // brush mới từ resources (IValueConverter thường giữ instance cũ sau swap).
+        ThemeVersion.Instance.RaiseAll();
     }
 
     private ResourceDictionary? FindTheme() =>

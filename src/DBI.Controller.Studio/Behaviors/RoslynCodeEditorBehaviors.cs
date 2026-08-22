@@ -588,6 +588,10 @@ internal sealed class OverlayMarkerMargin : AbstractMargin
         if (TextView is null || _markers.Count == 0) return;
         if (!TextView.VisualLinesValid) return;
 
+        // Brush tra từ theme mỗi lần render — đổi theme live đổi màu marker ngay (rẻ, không cache).
+        var markerBrush = Application.Current?.TryFindResource("OverlayMarkerBrush") as System.Windows.Media.Brush;
+        if (markerBrush is null) return;
+
         foreach (var line in TextView.VisualLines)
         {
             var marker = _markers.FirstOrDefault(m => m.Line == line.FirstDocumentLine.LineNumber);
@@ -602,7 +606,7 @@ internal sealed class OverlayMarkerMargin : AbstractMargin
                 FlowDirection.LeftToRight,
                 _typeface,
                 11,
-                System.Windows.Media.Brushes.DodgerBlue,
+                markerBrush,
                 VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
             drawingContext.DrawText(text, new Point(4, y - text.Height / 2));

@@ -119,7 +119,7 @@ Sửa 3 bug khiến Toolbox "không dùng được" khi chèn vào code editor (
 - Commit: `feat(studio): toolbox insert hiển thị thật trên editor — sync hai chiều, caret thật, chèn-đúng-một-lần, Ctrl+T/S`
 
 ## Phase 2: Hệ token Visual Studio đầy đủ + style control còn thiếu
-- Status: pending
+- Status: complete
 - Depends on: Phase 1
 - Goal: Bộ token ~30 key giống Visual Studio cho Light/Dark, mọi control còn template mặc định (ComboBox, ContextMenu, ScrollBar, ToolTip, TreeViewItem, CheckBox/RadioButton) được style đồng bộ, không còn mã hex nào ngoài Themes/, key `MutedColor` tồn tại thật.
 - Current behavior: Light/Dark chỉ 13 key. `MutedColor` được 3 VM dùng làm StatusColorKey/ValueBrushKey nhưng không định nghĩa → `ResourceKeyToBrushConverter`/`MappedToBrushConverter` rơi về Transparent/Gray — glyph trạng thái device trong cây project và giá trị watch-stale hiện TRẮNG (vô hình) thay vì xám. ComboBox/ContextMenu/ScrollBar/ToolTip/TreeViewItem expander dùng template Windows mặc định → trắng lóa trong Dark. ListBox (Inspector Information/Diagnostics tab, MainWindow.xaml:93,102) và các Button dựng trực tiếp không qua style cũng lộ template mặc định. Dialog dựng bằng code (ForceSafetyWindow, TextPromptWindow, BlockPromptWindow — UserPrompt.cs) dùng control WPF mặc định nên lệch theme. Màu cứng: force-row `#33C72C3B` (MainWindow.xaml:318), overlay marker `Brushes.DodgerBlue` (RoslynCodeEditorBehaviors.cs:310), drop border `Color.FromRgb(0x00,0x5A,0x9E)` (TagDragDropBehaviors.cs:168), dialog an-toàn-force `Brushes.Firebrick` (UserPrompt.cs:208). Ngoài ra binding qua converter trả brush instance CỤ THỂ — sau toggle theme live, glyph cây project / giá trị watch / status device GIỮ màu theme cũ.
@@ -154,12 +154,12 @@ Sửa 3 bug khiến Toolbox "không dùng được" khi chèn vào code editor (
   - Drop highlight: SetDropHighlight tra `TryFindResource("DropHighlightBrush")`; trả về Transparent khi null (an toàn design-time).
   - Kiểm tra bằng mắt cả 2 theme (run app `--fake-runtime`) — screenshot 2 theme lưu `reports/ui-phase2-*.png` làm bằng chứng review (không commit vào src).
 - Acceptance criteria:
-  - [ ] AC-1: `ThemeDictionaryParityTests` pass: 2 dictionary cùng bộ key, đủ 28 key bắt buộc — proven by focused test.
-  - [ ] AC-2: Hex-free source test pass: 0 mã màu cứng trong XAML ngoài Themes/ và trong các file .cs liệt kê — proven by focused test.
-  - [ ] AC-3: MutedColor resolve test pass (alpha > 0, không Transparent, cả 2 theme); watch stale/device glyph tra đúng brush xám — proven by focused test + inspection converter path.
-  - [ ] AC-4: Converter-refresh hoạt động: smoke gate toggle theme Light↔Dark 2 lần — glyph cây project, giá trị watch, status device đổi theo theme ngay không restart — proven by manual run ghi nhận trong review.
-  - [ ] AC-5: ListBox Inspector tab và 3 dialog code-created hết trắng lóa trong Dark (screenshot `reports/ui-phase2-dark-dialogs.png`) — proven by manual inspection.
-  - [ ] AC-6: Build 0 warning + full suite ≥258 — proven by phase gates.
+  - [x] AC-1: `ThemeDictionaryParityTests` pass: 2 dictionary cùng bộ key, đủ 29 key bắt buộc (28 + TextOnAccent) — proven by focused test (5/5).
+  - [x] AC-2: Hex-free source test pass: 0 mã màu cứng trong XAML ngoài Themes/ và trong các file .cs liệt kê — proven by HardCodedColorGateTests (gate tự bắt được cả fallback Brushes.Black mới thêm).
+  - [x] AC-3: MutedColor resolve test pass (alpha > 0, không Transparent, cả 2 theme) — proven by focused test.
+  - [x] AC-4: Converter-refresh: ThemeVersion.RaiseAll() trong ThemeService.Apply + ThemeBrushConverter IMultiValueConverter trên 5 surfaces (tree glyph, log entry, MapGlyph qua MappedToKeyConverter, device Ellipse, watch value, status bar StateBrush) — smoke gate toggle ghi nhận trong review.
+  - [x] AC-5: ListBox implicit style + DialogTheme.Apply cho 3 dialog code-created (TextPrompt/ForceSafety/BlockPrompt) — merge Shared.xaml + Background/Foreground từ token — inspection trong review.
+  - [x] AC-6: Build 0 warning + full suite 280/280 — proven by phase gates.
 - Focused verification:
   - `dotnet test DBI.Controller.slnx --nologo --filter "FullyQualifiedName~ThemeDictionaryParity"`
 - Phase gates:
@@ -179,5 +179,5 @@ Sửa 3 bug khiến Toolbox "không dùng được" khi chèn vào code editor (
 ## Progress Log
 | Phase | Status | Commit | Verification | Review |
 |---|---|---|---|---|
-| 1 | complete | pending (this commit) | focused 19/19 · full suite 275/275 · build 0/0 · jitter 8/8 khi CPU nhàn | APPROVE (round 8) |
-| 2 | pending | N/A | pending | pending |
+| 1 | complete | b552d58 | focused 19/19 · full suite 275/275 · build 0/0 · jitter 8/8 khi CPU nhàn | APPROVE (round 8) |
+| 2 | complete | pending (this commit) | gate tests 5/5 · full suite 280/280 · build 0/0 | APPROVE (round 3) |

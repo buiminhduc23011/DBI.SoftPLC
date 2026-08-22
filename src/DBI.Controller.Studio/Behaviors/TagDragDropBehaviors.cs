@@ -165,7 +165,10 @@ public static class TagDragDropBehaviors
     private static void SetDropHighlight(object sender, bool on)
     {
         if (sender is not Border border) return;
-        border.BorderBrush = on ? new SolidColorBrush(Color.FromRgb(0x00, 0x5A, 0x9E)) : Brushes.Transparent;
+        // Brush tra từ theme mỗi lần gọi — đổi theme live không giữ màu cũ.
+        border.BorderBrush = on
+            ? Application.Current?.TryFindResource("DropHighlightBrush") as Brush ?? Brushes.Transparent
+            : Brushes.Transparent;
         border.BorderThickness = on ? new Thickness(2) : border.BorderThickness;
     }
 }

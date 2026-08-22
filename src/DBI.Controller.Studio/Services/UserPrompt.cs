@@ -100,6 +100,26 @@ public class UserPrompt : IUserPrompt
         MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
 }
 
+/// <summary>
+/// Gắn theme tường minh cho dialog dựng bằng code (plan phase-2, finding #7): merge
+/// Shared.xaml để implicit style Button/TextBox/CheckBox áp cho control con, nền/foreground
+/// từ token hiện tại — hết trắng lóa trong Dark.
+/// </summary>
+internal static class DialogTheme
+{
+    public static void Apply(Window window)
+    {
+        window.Background = Application.Current?.TryFindResource("CardBg") as System.Windows.Media.Brush
+            ?? System.Windows.Media.Brushes.Transparent;
+        window.Foreground = Application.Current?.TryFindResource("TextPrimary") as System.Windows.Media.Brush
+            ?? System.Windows.Media.Brushes.Transparent;
+        window.Resources.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("Themes/Shared.xaml", UriKind.Relative)
+        });
+    }
+}
+
 internal sealed class TextPromptWindow : Window
 {
     private readonly TextBox _textBox;
@@ -111,6 +131,7 @@ internal sealed class TextPromptWindow : Window
         Height = 170;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ResizeMode = ResizeMode.NoResize;
+        DialogTheme.Apply(this);
 
         _textBox = new TextBox { Margin = new Thickness(0, 8, 0, 12), Text = initialValue };
 
@@ -134,12 +155,18 @@ internal sealed class TextPromptWindow : Window
         DialogResult = true;
     }
 
+    /// <summary>Nút dialog dùng style theme (AccentButton cho nút chính, FlatButton cho phụ).</summary>
+    internal static Style? ThemeStyle(string key) =>
+        Application.Current?.TryFindResource(key) as Style;
+
     internal static UIElement CreateButtons(RoutedEventHandler okHandler)
     {
         var ok = new Button { Content = "OK", Width = 80, Margin = new Thickness(0, 0, 8, 0), IsDefault = true };
+        ok.Style = ThemeStyle("FlatButton");
         ok.Click += okHandler;
 
         var cancel = new Button { Content = "Cancel", Width = 80, IsCancel = true };
+        cancel.Style = ThemeStyle("FlatButton");
 
         return new StackPanel
         {
@@ -151,6 +178,9 @@ internal sealed class TextPromptWindow : Window
 
     internal static UIElement CreateButtons2(Button primary, Button secondary)
     {
+        primary.Style = ThemeStyle("AccentButton");
+        secondary.Style = ThemeStyle("FlatButton");
+
         var panel = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -177,6 +207,7 @@ internal sealed class ForceSafetyWindow : Window
         Height = 280;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ResizeMode = ResizeMode.NoResize;
+        DialogTheme.Apply(this);
 
         var forceButton = new Button { Content = "Force", Width = 90, Margin = new Thickness(0, 0, 8, 0), IsEnabled = false };
 
@@ -190,7 +221,7 @@ internal sealed class ForceSafetyWindow : Window
 
         forceButton.Click += (_, _) => DialogResult = true;
 
-        var cancel = new Button { Content = "Huỷ", Width = 80, IsCancel = true };
+        var cancel = new Button { Content = "Huỷ", Width = 80, IsCancel = true, Style = TextPromptWindow.ThemeStyle("FlatButton") };
 
         var warning = new TextBlock
         {
@@ -205,7 +236,8 @@ internal sealed class ForceSafetyWindow : Window
             Text = "⚠️ CẢNH BÁO AN TOÀN",
             FontWeight = FontWeights.Bold,
             FontSize = 15,
-            Foreground = System.Windows.Media.Brushes.Firebrick
+            Foreground = System.Windows.Application.Current?.TryFindResource("DangerColor")
+                as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.Transparent
         };
 
         Content = new StackPanel
@@ -229,6 +261,7 @@ internal sealed class BlockPromptWindow : Window
         Height = 360;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ResizeMode = ResizeMode.NoResize;
+        DialogTheme.Apply(this);
 
         _choices = new Dictionary<BlockKind, RadioButton>
         {

@@ -15,7 +15,7 @@ public class MappedToBrushConverter : IValueConverter
     {
         var mapped = value is true;
         var key = mapped ? "SuccessColor" : "IdleColor";
-        return Application.Current?.TryFindResource(key) as Brush ?? Brushes.Gray;
+        return Application.Current?.TryFindResource(key) as Brush ?? Brushes.Transparent;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>

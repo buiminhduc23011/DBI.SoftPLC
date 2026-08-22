@@ -8,6 +8,7 @@
         xmlns:vm="clr-namespace:DBI.Controller.Studio.Core.ViewModels;assembly=DBI.Controller.Studio.Core"
         xmlns:behaviors="clr-namespace:DBI.Controller.Studio.Behaviors"
         xmlns:converters="clr-namespace:DBI.Controller.Studio.Converters"
+        xmlns:services="clr-namespace:DBI.Controller.Studio.Services"
         xmlns:local="clr-namespace:DBI.Controller.Studio"
         Title="DBI.Studio - Soft PLC Engineering"
         Height="850" Width="1360"
@@ -32,6 +33,7 @@
 
     <Window.Resources>
         <converters:ResourceKeyToBrushConverter x:Key="BrushFromKey" />
+        <converters:ThemeBrushConverter x:Key="ThemeBrush" />
         <converters:InverseBoolConverter x:Key="InverseBool" />
         <converters:EmptyStringToVisibilityConverter x:Key="EmptyStringToVisibility" />
         <converters:MappedToBrushConverter x:Key="MapGlyphBrush" />
@@ -42,8 +44,14 @@
                 <TextBlock Text="{Binding TimeText}" Style="{StaticResource MonospaceText}"
                            FontSize="11" Foreground="{DynamicResource TextSecondary}" Margin="0,0,8,0" />
                 <TextBlock Text="{Binding Message}" Style="{StaticResource LabelText}" FontSize="11"
-                           TextWrapping="Wrap"
-                           Foreground="{Binding BrushKey, Converter={StaticResource BrushFromKey}}" />
+                           TextWrapping="Wrap">
+                    <TextBlock.Foreground>
+                        <MultiBinding Converter="{StaticResource ThemeBrush}">
+                            <Binding Path="BrushKey" />
+                            <Binding Path="Version" Source="{x:Static services:ThemeVersion.Instance}" />
+                        </MultiBinding>
+                    </TextBlock.Foreground>
+                </TextBlock>
             </StackPanel>
         </DataTemplate>
 
@@ -76,8 +84,15 @@
                     <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                         <StackPanel Orientation="Horizontal" Margin="4,3">
                             <TextBlock Text="{Binding Title}" Style="{StaticResource LabelText}" />
-                            <TextBlock Text="{Binding StatusGlyph}"
-                                       Foreground="{Binding StatusColorKey, Converter={StaticResource BrushFromKey}}" />
+                            <!-- MultiBinding với ThemeVersion: đổi theme live thì glyph tra lại brush mới -->
+                            <TextBlock Text="{Binding StatusGlyph}">
+                                <TextBlock.Foreground>
+                                    <MultiBinding Converter="{StaticResource ThemeBrush}">
+                                        <Binding Path="StatusColorKey" />
+                                        <Binding Path="Version" Source="{x:Static services:ThemeVersion.Instance}" />
+                                    </MultiBinding>
+                                </TextBlock.Foreground>
+                            </TextBlock>
                         </StackPanel>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
@@ -178,8 +193,18 @@
                                                             <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
                                                         <TextBlock Grid.Column="0" Text="{Binding MapGlyph}" Margin="0,0,7,0"
-                                                                   FontSize="10" VerticalAlignment="Center"
-                                                                   Foreground="{Binding IsMapped, Converter={StaticResource MapGlyphBrush}}" />
+                                                                   FontSize="10" VerticalAlignment="Center">
+                                                            <TextBlock.Foreground>
+                                                                <MultiBinding Converter="{StaticResource ThemeBrush}">
+                                                                    <Binding Path="IsMapped">
+                                                                        <Binding.Converter>
+                                                                            <converters:MappedToKeyConverter />
+                                                                        </Binding.Converter>
+                                                                    </Binding>
+                                                                    <Binding Path="Version" Source="{x:Static services:ThemeVersion.Instance}" />
+                                                                </MultiBinding>
+                                                            </TextBlock.Foreground>
+                                                        </TextBlock>
                                                         <TextBlock Grid.Column="1" Text="{Binding Name}" Style="{StaticResource LabelText}"
                                                                    FontSize="12" TextTrimming="CharacterEllipsis" />
                                                         <TextBlock Grid.Column="2" Text="{Binding Address}" Style="{StaticResource MonospaceText}"
@@ -282,8 +307,14 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Ellipse Width="9" Height="9" VerticalAlignment="Center"
-                                                 Fill="{Binding StatusColorKey, Converter={StaticResource BrushFromKey}}" />
+                                        <Ellipse Width="9" Height="9" VerticalAlignment="Center">
+                                            <Ellipse.Fill>
+                                                <MultiBinding Converter="{StaticResource ThemeBrush}">
+                                                    <Binding Path="StatusColorKey" />
+                                                    <Binding Path="Version" Source="{x:Static services:ThemeVersion.Instance}" />
+                                                </MultiBinding>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
                                         <TextBlock Text="{Binding StatusText}" Margin="6,0,0,0" VerticalAlignment="Center"
                                                    ToolTip="{Binding StatusDetail}" />
                                     </StackPanel>
@@ -327,7 +358,7 @@
                                     <Setter Property="Background" Value="{DynamicResource WarningColor}" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding IsForced}" Value="True">
-                                    <Setter Property="Background" Value="#33C72C3B" />
+                                    <Setter Property="Background" Value="{DynamicResource ForceRowBg}" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding IsStale}" Value="True">
                                     <Setter Property="Background" Value="Transparent" />
@@ -355,8 +386,14 @@
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <TextBlock Text="⚠️" Visibility="{Binding IsStale, Converter={StaticResource BoolToVisibility}}"
                                                    ToolTip="Mất kết nối — giữ giá trị cuối cùng" Margin="0,0,4,0" />
-                                        <TextBlock Text="{Binding ValueText}"
-                                                   Foreground="{Binding ValueBrushKey, Converter={StaticResource BrushFromKey}}" />
+                                        <TextBlock Text="{Binding ValueText}">
+                                            <TextBlock.Foreground>
+                                                <MultiBinding Converter="{StaticResource ThemeBrush}">
+                                                    <Binding Path="ValueBrushKey" />
+                                                    <Binding Path="Version" Source="{x:Static services:ThemeVersion.Instance}" />
+                                                </MultiBinding>
+                                            </TextBlock.Foreground>
+                                        </TextBlock>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -414,7 +451,7 @@
         <DataTemplate DataType="{x:Type vm:GeneratedCodeViewModel}">
             <DockPanel Margin="6">
                 <Border DockPanel.Dock="Top" Background="{DynamicResource WarningColor}" Padding="8" Margin="0,0,0,8">
-                    <TextBlock Text="{Binding BannerMessage}" Foreground="White" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding BannerMessage}" Foreground="{DynamicResource TextOnAccent}" TextWrapping="Wrap" />
                 </Border>
                 <avalonedit:TextEditor Text="{Binding Text}" IsReadOnly="True"
                                        SyntaxHighlighting="C#"
@@ -467,7 +504,7 @@
                         IsEnabled="{Binding CanCompile}" Content="&#xE943;" ToolTip="Build (Ctrl+Shift+B)" />
                 <Button Command="{Binding DeployCommand}" IsEnabled="{Binding CanDeploy}"
                         ToolTip="Deploy to Runtime (F5)" Padding="7"
-                        Background="{DynamicResource AccentColor}" Foreground="White"
+                        Background="{DynamicResource AccentColor}" Foreground="{DynamicResource TextOnAccent}"
                         FontFamily="Segoe MDL2 Assets" FontSize="15" Cursor="Hand"
                         MinWidth="30" MinHeight="30" Margin="1,0">
                     <Button.Template>
@@ -514,9 +551,14 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0" Padding="8,2" Margin="0,0,10,0"
-                        Background="{Binding StateBrushKey, Converter={StaticResource BrushFromKey}}">
-                    <TextBlock Text="{Binding StateLabel}" Foreground="White"
+                <Border Grid.Column="0" Padding="8,2" Margin="0,0,10,0">
+                    <Border.Background>
+                        <MultiBinding Converter="{StaticResource ThemeBrush}">
+                            <Binding Path="StateBrushKey" />
+                            <Binding Path="Version" Source="{x:Static services:ThemeVersion.Instance}" />
+                        </MultiBinding>
+                    </Border.Background>
+                    <TextBlock Text="{Binding StateLabel}" Foreground="{DynamicResource TextOnAccent}"
                                FontWeight="SemiBold" FontSize="11" />
                 </Border>
 
@@ -534,7 +576,7 @@
                         Visibility="{Binding DataContext.HasActiveForces, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}"
                         ToolTip="Force ghi đè tín hiệu thật. Mở Force Table để gỡ.">
                     <TextBlock Text="{Binding DataContext.ForceBanner, RelativeSource={RelativeSource AncestorType=Window}}"
-                               Foreground="White" FontWeight="Bold" FontSize="11" />
+                               Foreground="{DynamicResource TextOnAccent}" FontWeight="Bold" FontSize="11" />
                 </Border>
 
                 <TextBlock Grid.Column="4" Style="{StaticResource MutedText}" FontSize="11">
