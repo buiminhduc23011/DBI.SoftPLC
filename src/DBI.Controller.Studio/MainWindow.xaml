@@ -258,11 +258,11 @@
                                 <Expander IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
                                           Style="{StaticResource ToolboxGroupExpander}">
                                     <Expander.Header>
-                                        <Grid Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Expander}}">
+                                        <Grid HorizontalAlignment="Stretch">
                                             <TextBlock Text="{Binding Title}" Style="{StaticResource SectionHeader}"
                                                        FontWeight="Bold" FontSize="12.5" Margin="0" />
                                             <TextBlock HorizontalAlignment="Right" Style="{StaticResource MutedText}"
-                                                       FontSize="12" Margin="0,0,20,0" Text="{Binding Items.Count}" />
+                                                       FontSize="12" Margin="0,0,8,0" Text="{Binding Items.Count}" />
                                         </Grid>
                                     </Expander.Header>
                                     <ItemsControl ItemsSource="{Binding Items}">

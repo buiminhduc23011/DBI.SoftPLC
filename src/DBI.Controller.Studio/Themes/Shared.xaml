@@ -245,47 +245,52 @@
         </Setter>
     </Style>
 
-    <!-- ── Expander nhóm trong Toolbox ──────────────────────────────────────── -->
-    <Style x:Key="ToolboxGroupExpander" TargetType="Expander">
+    <!-- ── Expander nhóm trong Toolbox phong cách Visual Studio ─────────────── -->
+    <ControlTemplate x:Key="ToolboxGroupHeaderButtonTemplate" TargetType="{x:Type ToggleButton}">
+        <Border x:Name="Root" Background="{DynamicResource HeaderBg}" Padding="8,5" SnapsToDevicePixels="True"
+                BorderThickness="0,0,0,1" BorderBrush="{DynamicResource BorderColor}" Cursor="Hand">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <iconPacks:PackIconCodicons x:Name="Chevron" Grid.Column="0" Kind="ChevronDown" Width="12" Height="12"
+                                           Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                <ContentPresenter Grid.Column="1" Content="{TemplateBinding Content}"
+                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                  VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="False">
+                <Setter TargetName="Chevron" Property="Kind" Value="ChevronRight" />
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Root" Property="Background" Value="{DynamicResource HoverBg}" />
+                <Setter TargetName="Chevron" Property="Foreground" Value="{DynamicResource TextPrimary}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style x:Key="ToolboxGroupExpander" TargetType="{x:Type Expander}">
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
         <Setter Property="Background" Value="Transparent" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="Expander">
-                    <StackPanel Background="{TemplateBinding Background}">
-                        <ToggleButton x:Name="Header" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
-                                      Cursor="Hand" Focusable="False">
-                            <ToggleButton.Template>
-                                <ControlTemplate TargetType="ToggleButton">
-                                    <Border x:Name="Root" Background="{DynamicResource HeaderBg}" Padding="10,6" SnapsToDevicePixels="True"
-                                            BorderThickness="0,0,0,1" BorderBrush="{DynamicResource BorderColor}">
-                                        <ContentPresenter ContentSource="Content" VerticalAlignment="Center" />
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource HoverBg}" />
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </ToggleButton.Template>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <iconPacks:PackIconCodicons x:Name="Chevron" Grid.Column="0" Kind="ChevronDown" Width="12" Height="12"
-                                                           Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                                <ContentPresenter Grid.Column="1" />
-                            </Grid>
-                        </ToggleButton>
-                        <ItemsPresenter x:Name="Body" />
-                    </StackPanel>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsExpanded" Value="False">
-                            <Setter TargetName="Body" Property="Visibility" Value="Collapsed" />
-                            <Setter TargetName="Chevron" Property="Kind" Value="ChevronRight" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
+                <ControlTemplate TargetType="{x:Type Expander}">
+                    <DockPanel Background="{TemplateBinding Background}">
+                        <ToggleButton x:Name="HeaderBtn" DockPanel.Dock="Top"
+                                      Template="{StaticResource ToolboxGroupHeaderButtonTemplate}"
+                                      IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Content="{TemplateBinding Header}"
+                                      ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                      Focusable="False" />
+                        <ContentPresenter x:Name="ExpandSite" DockPanel.Dock="Bottom"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          Visibility="{TemplateBinding IsExpanded, Converter={StaticResource BoolToVisibility}}" />
+                    </DockPanel>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
