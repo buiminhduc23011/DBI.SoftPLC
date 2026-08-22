@@ -7,7 +7,7 @@ using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 namespace DBI.Controller.Studio.Services;
 
 /// <summary>
-/// Cung cấp bảng màu cú pháp C# chuẩn Visual Studio 2022 (Dark Theme & Light Theme) cho AvalonEdit.
+/// Cung cấp bảng màu cú pháp C# chuẩn Visual Studio 2022 (Dark Theme) cho AvalonEdit.
 /// </summary>
 public static class StudioSyntaxHighlighting
 {
@@ -18,18 +18,24 @@ public static class StudioSyntaxHighlighting
         get
         {
             if (_csharpDark is not null) return _csharpDark;
-
-            using var reader = new StringReader(DarkThemeXshd);
-            using var xmlReader = XmlReader.Create(reader);
-            _csharpDark = HighlightingLoader.Load(xmlReader, HighlightingManager.Instance);
+            _csharpDark = CreateDarkDefinition();
             return _csharpDark;
         }
+    }
+
+    private static IHighlightingDefinition CreateDarkDefinition()
+    {
+        // Sử dụng XSHD chuẩn của AvalonEdit nhưng áp bảng màu Visual Studio 2022 Dark
+        using var reader = new StringReader(DarkThemeXshd);
+        using var xmlReader = XmlReader.Create(reader);
+        return HighlightingLoader.Load(xmlReader, HighlightingManager.Instance);
     }
 
     private const string DarkThemeXshd = """
         <?xml version="1.0"?>
         <SyntaxDefinition name="C#-Dark" extensions=".cs" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
             <Color name="Comment" foreground="#57A64A" />
+            <Color name="DocComment" foreground="#608B4E" />
             <Color name="String" foreground="#D69D85" />
             <Color name="Char" foreground="#D69D85" />
             <Color name="Preprocessor" foreground="#9B9B9B" />
@@ -40,7 +46,6 @@ public static class StudioSyntaxHighlighting
             <Color name="NumberLiteral" foreground="#B5CEA8" />
             <Color name="Keywords" foreground="#569CD6" />
             <Color name="ControlKeywords" foreground="#C586C0" />
-            <Color name="OperatorKeywords" foreground="#569CD6" />
             <Color name="TrueFalse" foreground="#569CD6" />
             <Color name="Null" foreground="#569CD6" />
 
@@ -53,6 +58,15 @@ public static class StudioSyntaxHighlighting
             </RuleSet>
 
             <RuleSet>
+                <!-- Doc Comments /// -->
+                <Span color="DocComment">
+                    <Begin>///</Begin>
+                    <RuleSet>
+                        <Import ruleSet="CommentMarkerSet" />
+                    </RuleSet>
+                </Span>
+
+                <!-- Single-line comments // -->
                 <Span color="Comment">
                     <Begin>//</Begin>
                     <RuleSet>
@@ -60,6 +74,7 @@ public static class StudioSyntaxHighlighting
                     </RuleSet>
                 </Span>
 
+                <!-- Multi-line comments /* */ -->
                 <Span color="Comment" multiline="true">
                     <Begin>/\*</Begin>
                     <End>\*/</End>
@@ -68,42 +83,45 @@ public static class StudioSyntaxHighlighting
                     </RuleSet>
                 </Span>
 
+                <!-- Regular Strings " " -->
                 <Span color="String">
                     <Begin>"</Begin>
                     <End>"</End>
                     <RuleSet>
-                        <Span begin="\\\\" end="." />
+                        <Span begin="\\" end="." />
                     </RuleSet>
                 </Span>
 
-                <Span color="String">
-                    <Begin>\$"</Begin>
-                    <End>"</End>
-                </Span>
-
+                <!-- Verbatim Strings @" " -->
                 <Span color="String" multiline="true">
                     <Begin>@"</Begin>
                     <End>"</End>
                     <RuleSet>
-                        <Span begin="&quot;&quot;" end="" />
+                        <Span begin="&quot;&quot;" />
                     </RuleSet>
                 </Span>
 
+                <!-- Interpolated Strings $" " -->
+                <Span color="String">
+                    <Begin>\$"</Begin>
+                    <End>"</End>
+                    <RuleSet>
+                        <Span begin="\\" end="." />
+                    </RuleSet>
+                </Span>
+
+                <!-- Characters ' ' -->
                 <Span color="Char">
                     <Begin>'</Begin>
                     <End>'</End>
                     <RuleSet>
-                        <Span begin="\\\\" end="." />
+                        <Span begin="\\" end="." />
                     </RuleSet>
                 </Span>
 
+                <!-- Preprocessor directives # -->
                 <Span color="Preprocessor">
-                    <Begin>#</Begin>
-                    <RuleSet>
-                        <Span color="Comment">
-                            <Begin>//</Begin>
-                        </Span>
-                    </RuleSet>
+                    <Begin>\#</Begin>
                 </Span>
 
                 <Keywords color="TrueFalse">
