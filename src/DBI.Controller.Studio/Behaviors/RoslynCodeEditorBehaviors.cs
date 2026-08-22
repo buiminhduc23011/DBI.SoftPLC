@@ -238,29 +238,53 @@ public static class RoslynCodeEditorBehaviors
     {
         if (d is not RoslynCodeEditor editor) return;
 
+        editor.Loaded -= OnLoaded;
+        editor.Unloaded -= OnUnloaded;
+        editor.DataContextChanged -= OnDataContextChanged;
+
         if ((bool)e.NewValue)
         {
-            editor.Loaded -= OnLoaded;
             editor.Loaded += OnLoaded;
-            editor.Unloaded -= OnUnloaded;
             editor.Unloaded += OnUnloaded;
+            editor.DataContextChanged += OnDataContextChanged;
+
+            if (editor.IsLoaded && editor.DataContext is CodeEditorViewModel)
+            {
+                AttachEditor(editor);
+            }
         }
         else
         {
-            editor.Loaded -= OnLoaded;
-            editor.Unloaded -= OnUnloaded;
+            DetachEditor(editor);
             editor.TextChanged -= OnTextChanged;
+        }
+    }
+
+    private static void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (sender is not RoslynCodeEditor editor) return;
+        DetachEditor(editor);
+        if (editor.IsLoaded && editor.DataContext is CodeEditorViewModel)
+        {
+            AttachEditor(editor);
         }
     }
 
     private static void OnLoaded(object? sender, RoutedEventArgs e)
     {
         if (sender is not RoslynCodeEditor editor) return;
+        if (editor.DataContext is CodeEditorViewModel)
+        {
+            AttachEditor(editor);
+        }
+    }
+
+    private static void AttachEditor(RoslynCodeEditor editor)
+    {
         if (GetLoaded(editor)) return;
+        if (editor.DataContext is not CodeEditorViewModel model) return;
 
         SetLoaded(editor, true);
-
-        if (editor.DataContext is not CodeEditorViewModel model) return;
 
         // Chiều editor→VM attach NGAY: keystrokes + caret của user trong lúc Roslyn init
         // vẫn cập nhật VM (plan phase-1 — race #16/#19).
@@ -270,6 +294,12 @@ public static class RoslynCodeEditorBehaviors
         editor.TextArea.Caret.PositionChanged -= OnCaretPositionChanged;
         editor.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
         UpdateCaretOnModel(editor, model);
+
+        // Nạp nội dung model.Text vào editor ngay từ đầu
+        if (editor.Text != model.Text)
+        {
+            ApplyModelTextToEditor(editor, model);
+        }
 
         if (StudioRoslynWorkspace.Current is null)
         {
@@ -485,7 +515,11 @@ public static class RoslynCodeEditorBehaviors
     private static void OnUnloaded(object? sender, RoutedEventArgs e)
     {
         if (sender is not RoslynCodeEditor editor) return;
+        DetachEditor(editor);
+    }
 
+    private static void DetachEditor(RoslynCodeEditor editor)
+    {
         editor.TextChanged -= OnTextChanged;
         editor.TextArea.Caret.PositionChanged -= OnCaretPositionChanged;
 
