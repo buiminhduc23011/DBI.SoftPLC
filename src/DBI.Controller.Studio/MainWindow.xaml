@@ -24,7 +24,8 @@
         RenderOptions.ClearTypeHint="Enabled"
         RenderOptions.BitmapScalingMode="HighQuality"
         FontFamily="Segoe UI"
-        FontSize="13">
+        FontSize="13"
+        Validation.ErrorTemplate="{x:Null}">
 
     <Window.InputBindings>
         <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewProjectCommand}" />
@@ -729,7 +730,7 @@
         </DataTemplate>
     </Window.Resources>
 
-    <DockPanel>
+    <DockPanel Validation.ErrorTemplate="{x:Null}">
         <!-- Top App Chrome: Menu Bar + Command ToolBar -->
         <Border DockPanel.Dock="Top" Background="{DynamicResource HeaderBg}"
                 BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1">
@@ -918,6 +919,7 @@
 
         <!-- Trung tâm làm việc với AvalonDock -->
         <avalondock:DockingManager x:Name="Docking"
+                                   Validation.ErrorTemplate="{x:Null}"
                                    DocumentsSource="{Binding Editors.Documents}"
                                    ActiveContent="{Binding Editors.ActiveDocument, Mode=TwoWay}">
             <avalondock:DockingManager.LayoutItemContainerStyle>

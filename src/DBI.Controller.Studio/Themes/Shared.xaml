@@ -630,6 +630,7 @@
         <Setter Property="FontFamily" Value="Segoe UI" />
         <Setter Property="FontSize" Value="12.5" />
         <Setter Property="Padding" Value="4" />
+        <Setter Property="Validation.ErrorTemplate" Value="{x:Null}" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
     </Style>
 
@@ -638,6 +639,7 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay, FallbackValue=True, RelativeSource={RelativeSource Self}}" />
         <Setter Property="MinHeight" Value="26" />
+        <Setter Property="Validation.ErrorTemplate" Value="{x:Null}" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
@@ -706,6 +708,7 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="Validation.ErrorTemplate" Value="{x:Null}" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
     </Style>
 
@@ -714,6 +717,7 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Padding" Value="8,4" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Validation.ErrorTemplate" Value="{x:Null}" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
@@ -891,6 +895,7 @@
         <Setter Property="Background" Value="{DynamicResource CardBg}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
         <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="Validation.ErrorTemplate" Value="{x:Null}" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
     </Style>
 
@@ -900,6 +905,7 @@
         <Setter Property="FontFamily" Value="Segoe UI" />
         <Setter Property="FontSize" Value="12.5" />
         <Setter Property="Height" Value="28" />
+        <Setter Property="Validation.ErrorTemplate" Value="{x:Null}" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
@@ -1154,6 +1160,7 @@
         <Setter Property="Background" Value="{DynamicResource WindowBg}" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
         <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Validation.ErrorTemplate" Value="{x:Null}" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
     </Style>
 
@@ -1162,6 +1169,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
         <Setter Property="Margin" Value="0" />
         <Setter Property="Padding" Value="0" />
+        <Setter Property="Validation.ErrorTemplate" Value="{x:Null}" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
     </Style>
 
@@ -1170,6 +1178,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
         <Setter Property="Margin" Value="0" />
         <Setter Property="Padding" Value="0" />
+        <Setter Property="Validation.ErrorTemplate" Value="{x:Null}" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
     </Style>
 
