@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using DBI.Controller.Studio.Core.ViewModels;
@@ -25,6 +26,10 @@ public partial class MainWindow : Window
         ProjectPane.Content = _shell.ProjectTree;
         InspectorPane.Content = _shell.Inspector;
         ToolboxPane.Content = _shell.TaskCards;
+
+        // Đồng bộ hóa đa luồng cho các ObservableCollection được ghi từ thread nền (build / deploy)
+        BindingOperations.EnableCollectionSynchronization(_shell.Inspector.Information, _shell.Inspector.LogLock);
+        BindingOperations.EnableCollectionSynchronization(_shell.Inspector.Diagnostics, _shell.Inspector.LogLock);
 
         // DockingManager chỉ tồn tại sau InitializeComponent, nên dịch vụ bố cục phải ráp ở đây.
         // Nó vẫn đi qua interface ILayoutPersistence — ShellViewModel không biết AvalonDock là gì.

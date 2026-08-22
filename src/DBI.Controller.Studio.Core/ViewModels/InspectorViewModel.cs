@@ -69,6 +69,7 @@ public partial class InspectorViewModel : PaneViewModelBase
         Append(Information, new LogEntry(severity, message, DateTimeOffset.Now));
 
     private readonly object _logLock = new();
+    public object LogLock => _logLock;
 
     public void LogInformation(IEnumerable<ValidationIssue> issues)
     {
