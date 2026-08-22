@@ -1233,7 +1233,9 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <ContentPresenter ContentSource="Content" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock Grid.Column="0" Text="{Binding Model.Title, RelativeSource={RelativeSource TemplatedParent}}"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type adcontrols:LayoutDocumentTabItem}}}"
+                                       FontFamily="Segoe UI" FontSize="12.5" VerticalAlignment="Center" Margin="0,0,8,0" TextTrimming="CharacterEllipsis" />
                             <Button x:Name="PART_CloseButton" Grid.Column="1"
                                     Command="{Binding Model.CloseCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                     Visibility="{Binding Model.CanClose, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BoolToVisibility}}"

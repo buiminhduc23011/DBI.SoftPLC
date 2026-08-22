@@ -329,6 +329,7 @@
                     behaviors:TagDragDropBehaviors.DropTarget="True">
                 <roslynpad:RoslynCodeEditor behaviors:RoslynCodeEditorBehaviors.EnableRoslyn="True"
                                             behaviors:RoslynCodeEditorBehaviors.EnableOverlay="True"
+                                            SyntaxHighlighting="C#"
                                             FontFamily="Cascadia Code,Consolas"
                                             FontSize="14"
                                             ShowLineNumbers="True"
