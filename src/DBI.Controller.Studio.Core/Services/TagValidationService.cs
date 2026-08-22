@@ -28,8 +28,12 @@ public static class TagValidationService
         var deviceErrors = new List<string>();
         var addressErrors = new List<string>();
 
-        if (!ProjectValidator.IsValidCSharpIdentifier(tag.Name))
-            nameErrors.Add($"Tên tag '{tag.Name}' không hợp lệ. Tên phải là identifier C# hợp lệ.");
+        if (string.IsNullOrWhiteSpace(tag.Name))
+            nameErrors.Add("Tên tag không được để trống.");
+        else if (tag.Name.Contains(' '))
+            nameErrors.Add($"Tên tag '{tag.Name}' chứa khoảng trắng (hãy dùng '{tag.Name.Replace(' ', '_')}' thay thế).");
+        else if (!ProjectValidator.IsValidCSharpIdentifier(tag.Name))
+            nameErrors.Add($"Tên tag '{tag.Name}' không hợp lệ. Tên phải bắt đầu bằng chữ cái hoặc '_' và không chứa ký tự đặc biệt.");
         else if (IsReservedKeyword(tag.Name))
             nameErrors.Add($"'{tag.Name}' là từ khoá C#, không dùng làm tên tag được.");
 

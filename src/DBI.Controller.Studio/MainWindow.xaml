@@ -329,7 +329,7 @@
                     behaviors:TagDragDropBehaviors.DropTarget="True">
                 <roslynpad:RoslynCodeEditor behaviors:RoslynCodeEditorBehaviors.EnableRoslyn="True"
                                             behaviors:RoslynCodeEditorBehaviors.EnableOverlay="True"
-                                            SyntaxHighlighting="C#"
+                                            SyntaxHighlighting="{x:Static services:StudioSyntaxHighlighting.CSharpDark}"
                                             FontFamily="Cascadia Code,Consolas"
                                             FontSize="14"
                                             ShowLineNumbers="True"
@@ -366,12 +366,14 @@
                             <DataGridTemplateColumn Header="Name" Width="180">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Name}" FontWeight="Medium" VerticalAlignment="Center" Margin="8,0" />
+                                        <TextBlock Text="{Binding Name}" FontWeight="Medium" VerticalAlignment="Center" Margin="8,0"
+                                                   ToolTip="{Binding (Validation.Errors)[0].ErrorContent, RelativeSource={RelativeSource Self}}" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                                 <DataGridTemplateColumn.CellEditingTemplate>
                                     <DataTemplate>
-                                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
+                                                 ToolTip="{Binding (Validation.Errors)[0].ErrorContent, RelativeSource={RelativeSource Self}}" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellEditingTemplate>
                             </DataGridTemplateColumn>
@@ -407,7 +409,8 @@
                             <DataGridTemplateColumn Header="Device" Width="170">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Device}" VerticalAlignment="Center" Margin="8,0" />
+                                        <TextBlock Text="{Binding Device}" VerticalAlignment="Center" Margin="8,0"
+                                                   ToolTip="{Binding (Validation.Errors)[0].ErrorContent, RelativeSource={RelativeSource Self}}" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                                 <DataGridTemplateColumn.CellEditingTemplate>
@@ -422,12 +425,15 @@
                             <DataGridTemplateColumn Header="Address" Width="150">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Address}" Style="{StaticResource MonospaceText}" VerticalAlignment="Center" Margin="8,0" />
+                                        <TextBlock Text="{Binding Address}" Style="{StaticResource MonospaceText}" VerticalAlignment="Center" Margin="8,0"
+                                                   ToolTip="{Binding (Validation.Errors)[0].ErrorContent, RelativeSource={RelativeSource Self}}" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                                 <DataGridTemplateColumn.CellEditingTemplate>
                                     <DataTemplate>
-                                        <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MonospaceTextBox}" />
+                                        <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
+                                                 Style="{StaticResource MonospaceTextBox}"
+                                                 ToolTip="{Binding (Validation.Errors)[0].ErrorContent, RelativeSource={RelativeSource Self}}" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellEditingTemplate>
                             </DataGridTemplateColumn>
@@ -712,7 +718,7 @@
                     <TextBlock Text="{Binding BannerMessage}" Foreground="{DynamicResource TextOnAccent}" TextWrapping="Wrap" FontSize="12.5" />
                 </Border>
                 <avalonedit:TextEditor IsReadOnly="True"
-                                       SyntaxHighlighting="C#"
+                                       SyntaxHighlighting="{x:Static services:StudioSyntaxHighlighting.CSharpDark}"
                                        FontFamily="Cascadia Code,Consolas"
                                        FontSize="14"
                                        ShowLineNumbers="True"

@@ -92,14 +92,15 @@ public sealed class IoCodeGenerator
                 _ => "SetBool"
             };
 
+            string propName = SanitizePropertyName(tag.Name);
             if (tag.Direction == Models.TagDirection.Input)
             {
-                sb.AppendLine($"    public {typeName} {tag.Name} => {getter}(\"{tag.Name}\");");
+                sb.AppendLine($"    public {typeName} {propName} => {getter}(\"{tag.Name}\");");
             }
             else
             {
                 sb.AppendLine(
-                    $"    public {typeName} {tag.Name} {{ get => {getter}(\"{tag.Name}\"); set => {setter}(\"{tag.Name}\", value); }}");
+                    $"    public {typeName} {propName} {{ get => {getter}(\"{tag.Name}\"); set => {setter}(\"{tag.Name}\", value); }}");
             }
 
             sb.AppendLine();
@@ -107,6 +108,21 @@ public sealed class IoCodeGenerator
 
         sb.AppendLine("}");
         return sb.ToString();
+    }
+
+    public static string SanitizePropertyName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "UnnamedTag";
+        var sb = new StringBuilder();
+        foreach (char c in name.Trim())
+        {
+            if (char.IsLetterOrDigit(c) || c == '_') sb.Append(c);
+            else sb.Append('_');
+        }
+        string result = sb.ToString();
+        if (result.Length == 0) return "UnnamedTag";
+        if (char.IsDigit(result[0])) result = "_" + result;
+        return result;
     }
 
     public IReadOnlyList<RuntimeTagRoute> ExportRoutes(DbiProject project) =>
